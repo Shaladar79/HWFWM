@@ -1,14 +1,18 @@
 import { RANKS, RANK_ORDER } from "./ranks.mjs";
-import { RACES, RACE_ORDER } from "./races.mjs";
 import { ROLES, ROLE_ORDER } from "./roles.mjs";
+import { RACES, RACE_ORDER } from "./races.mjs";
+import { BACKGROUNDS, BACKGROUND_ORDER } from "./backgrounds.mjs";
 
 export const HWFWM_CONFIG = {
   ranks: RANKS,
   rankOrder: RANK_ORDER,
 
+  roles: ROLES,
+  roleOrder: ROLE_ORDER,
+
   races: RACES,
   raceOrder: RACE_ORDER,
 
-  roles: ROLES,
-  roleOrder: ROLE_ORDER
+  backgrounds: BACKGROUNDS,
+  backgroundOrder: BACKGROUND_ORDER
 };
