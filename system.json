@@ -3,21 +3,19 @@
   "title": "He Who Fights With Monsters - Dev",
   "description": "A Foundry VTT game system inspired by the He Who Fights With Monsters LitRPG series.",
   "version": "0.0.52",
-  "authors": [
-    {
-      "name": "Shaladar"
-    }
-  ],
+  "authors": [{ "name": "Shaladar" }],
   "compatibility": {
     "minimum": "13",
     "verified": "13"
   },
-  "esmodules": [
-    "system.mjs"
-  ],
-  "styles": [
-    "styles/main.css"
-  ],
+  "esmodules": ["system.mjs"],
+
+  "documentTypes": {
+    "Actor": ["pc"]
+  },
+
+  "template": "template.json",
+
   "manifest": "https://raw.githubusercontent.com/Shaladar79/HWFWM/main/system.json",
   "download": "https://github.com/Shaladar79/HWFWM/archive/refs/heads/main.zip"
 }
