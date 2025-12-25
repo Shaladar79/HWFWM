@@ -10,7 +10,6 @@
   },
   "esmodules": ["system.mjs"],
   "styles": ["styles/main.css", "styles/sheet.css"],
-
   "documentTypes": {
     "Actor": {
       "pc": {}
