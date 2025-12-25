@@ -7,12 +7,13 @@ Hooks.once("init", () => {
   // Register system-wide config namespace
   CONFIG["hwfwm-system"] = HWFWM_CONFIG;
 
-  // Helper used by the sheet template (safe to register once)
+  // Helper used by the sheet template
   Handlebars.registerHelper("eq", (a, b) => a === b);
 
-  // Register the Actor sheet (applies to all actor types for now)
-  // Do NOT unregister core during early dev; it can cause avoidable issues.
-  Actors.registerSheet("hwfwm-system", HwfwmActorSheet, {
+  // v13+ namespaced Actors collection (avoids deprecation warning)
+  const ActorsCollection = foundry.documents.collections.Actors;
+
+  ActorsCollection.registerSheet("hwfwm-system", HwfwmActorSheet, {
     makeDefault: true,
     label: "HWFWM Actor Sheet"
   });
