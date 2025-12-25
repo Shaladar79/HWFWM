@@ -9,7 +9,7 @@
     "verified": "13"
   },
   "esmodules": ["system.mjs"],
-  "styles": ["styles/main.css", "styles/sheet.css"]
+  "styles": ["styles/main.css", "styles/sheet.css"],
 
   "documentTypes": {
     "Actor": {
