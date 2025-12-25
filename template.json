@@ -3,9 +3,9 @@
     "character": {
       "system": {
         "details": {
+          "roleKey": "",
           "rankKey": "",
-          "raceKey": "",
-          "backgroundKey": ""
+          "raceKey": ""
         }
       }
     }
