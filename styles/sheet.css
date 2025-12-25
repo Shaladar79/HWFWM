@@ -239,3 +239,48 @@
   background: #ffffff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
 }
+/* Status > Attributes table */
+.hwfwm-attr-table {
+  display: grid;
+  gap: 8px;
+}
+
+.hwfwm-attr-head,
+.hwfwm-attr-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 70px 90px 90px 90px 74px;
+  gap: 10px;
+  align-items: center;
+}
+
+.hwfwm-attr-head {
+  font-size: 11px;
+  font-weight: 800;
+  color: rgba(0, 0, 0, 0.65);
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.hwfwm-attr-label {
+  font-weight: 800;
+}
+
+.hwfwm-attr-num,
+.hwfwm-attr-base,
+.hwfwm-attr-mod,
+.hwfwm-attr-total {
+  text-align: right;
+}
+
+.hwfwm-roll {
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  background: rgba(255, 255, 255, 0.85);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.hwfwm-roll:hover {
+  background: #ffffff;
+}
