@@ -1,94 +1,16 @@
 <div class="hwfwm-sheet__root">
 
-  <header class="hwfwm-sheet__header">
-  <input
-    class="hwfwm-sheet__name"
-    name="name"
-    type="text"
-    value="{{document.name}}"
-    placeholder="Name"
-  />
+  {{> "systems/hwfwm-system/templates/actor/parts/header.hbs" }}
 
-  <div class="hwfwm-header-meta">
-    <select name="system.details.rankKey">
-      <option value="">Rank</option>
-      {{#each rankOptions as |opt|}}
-        <option value="{{opt.value}}" {{#if (eq ../details.rankKey opt.value)}}selected{{/if}}>
-          {{opt.label}}
-        </option>
-      {{/each}}
-    </select>
-
-    <select name="system.details.raceKey">
-      <option value="">Race</option>
-      {{#each raceOptions as |opt|}}
-        <option value="{{opt.value}}" {{#if (eq ../details.raceKey opt.value)}}selected{{/if}}>
-          {{opt.label}}
-        </option>
-      {{/each}}
-    </select>
-
-    <select name="system.details.roleKey">
-      <option value="">Role</option>
-      {{#each roleOptions as |opt|}}
-        <option value="{{opt.value}}" {{#if (eq ../details.roleKey opt.value)}}selected{{/if}}>
-          {{opt.label}}
-        </option>
-      {{/each}}
-    </select>
-  </div>
-</header>
-
+  {{> "systems/hwfwm-system/templates/actor/parts/tabs-nav.hbs" }}
 
   <section class="hwfwm-sheet__body">
-    <div class="hwfwm-layout">
+    <div class="tab" data-tab="overview">
+      {{> "systems/hwfwm-system/templates/actor/tabs/overview.hbs" }}
+    </div>
 
-      <!-- Left column: Identity -->
-      <div class="hwfwm-card">
-        <div class="hwfwm-card__title">Identity</div>
-
-        <div class="hwfwm-grid">
-          <div class="hwfwm-field">
-            <label class="hwfwm-label">Role</label>
-            <select class="hwfwm-select" name="system.details.roleKey">
-              <option value="">—</option>
-              {{#each roleOptions as |opt|}}
-                <option value="{{opt.value}}" {{#if (eq ../details.roleKey opt.value)}}selected{{/if}}>{{opt.label}}</option>
-              {{/each}}
-            </select>
-          </div>
-
-          <div class="hwfwm-field">
-            <label class="hwfwm-label">Rank</label>
-            <select class="hwfwm-select" name="system.details.rankKey">
-              <option value="">—</option>
-              {{#each rankOptions as |opt|}}
-                <option value="{{opt.value}}" {{#if (eq ../details.rankKey opt.value)}}selected{{/if}}>{{opt.label}}</option>
-              {{/each}}
-            </select>
-          </div>
-
-          <div class="hwfwm-field">
-            <label class="hwfwm-label">Race</label>
-            <select class="hwfwm-select" name="system.details.raceKey">
-              <option value="">—</option>
-              {{#each raceOptions as |opt|}}
-                <option value="{{opt.value}}" {{#if (eq ../details.raceKey opt.value)}}selected{{/if}}>{{opt.label}}</option>
-              {{opt.label}}</option>
-              {{/each}}
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <!-- Right column: Placeholder -->
-      <div class="hwfwm-card hwfwm-card--muted">
-        <div class="hwfwm-card__title">Coming Next</div>
-        <div class="hwfwm-muted">
-          Attributes, status, and tabs will go here once we finish the baseline layout.
-        </div>
-      </div>
-
+    <div class="tab" data-tab="attributes">
+      {{> "systems/hwfwm-system/templates/actor/tabs/attributes.hbs" }}
     </div>
   </section>
 
