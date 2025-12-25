@@ -13,8 +13,10 @@ Hooks.once("init", () => {
   // v13+ namespaced Actors collection (avoids deprecation warning)
   const ActorsCollection = foundry.documents.collections.Actors;
 
+  // Register our sheet for PC actors only (prevents "type may not be undefined")
   ActorsCollection.registerSheet("hwfwm-system", HwfwmActorSheet, {
+    types: ["pc"],
     makeDefault: true,
-    label: "HWFWM Actor Sheet"
+    label: "HWFWM PC Sheet"
   });
 });
