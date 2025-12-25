@@ -39,6 +39,19 @@
 /* ---------------------------------------------------------
    Header
    --------------------------------------------------------- */
+/* Header grid: two columns of dropdowns */
+.hwfwm-header-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 20px;
+  align-items: start;
+}
+
+/* Each column stacks its fields */
+.hwfwm-header-col {
+  display: grid;
+  gap: 10px;
+}
 
 .hwfwm-sheet__header {
   display: flex;
