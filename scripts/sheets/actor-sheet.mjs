@@ -45,7 +45,8 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     context.details = {
       roleKey: details.roleKey ?? "",
       rankKey: details.rankKey ?? "",
-      raceKey: details.raceKey ?? ""
+      raceKey: details.raceKey ?? "",
+      backgroundKey: details.backgroundKey ?? ""
     };
 
     return context;
