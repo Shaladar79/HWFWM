@@ -7,10 +7,13 @@ Hooks.once("init", () => {
   // Register system-wide config namespace
   CONFIG["hwfwm-system"] = HWFWM_CONFIG;
 
- // Register the Actor sheet (applies to all actor types for now)
-Actors.unregisterSheet("core", BaseActorSheet ?? ActorSheet);
-Actors.registerSheet("hwfwm-system", HwfwmActorSheet, {
-  makeDefault: true,
-  label: "HWFWM Actor Sheet"
-});
+  // Helper used by the sheet template (safe to register once)
+  Handlebars.registerHelper("eq", (a, b) => a === b);
+
+  // Register the Actor sheet (applies to all actor types for now)
+  // Do NOT unregister core during early dev; it can cause avoidable issues.
+  Actors.registerSheet("hwfwm-system", HwfwmActorSheet, {
+    makeDefault: true,
+    label: "HWFWM Actor Sheet"
+  });
 });
