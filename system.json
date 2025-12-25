@@ -8,17 +8,16 @@
     "minimum": "13",
     "verified": "13"
   },
-  "esmodules": ["system.mjs"],
+   "esmodules": ["system.mjs"],
+  "styles": ["styles/main.css"],
 
   "documentTypes": {
     "Actor": {
       "pc": {}
-    },
+    }
+  },
 
   "template": "template.json",
-    "styles": [
-    "styles/main.css"
-  ],
 
   "manifest": "https://raw.githubusercontent.com/Shaladar79/HWFWM/main/system.json",
   "download": "https://github.com/Shaladar79/HWFWM/archive/refs/heads/main.zip"
