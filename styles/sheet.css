@@ -1,12 +1,10 @@
-/* styles/sheet.css
-   Minimal baseline styling for the HWFWM PC sheet
-*/
-
+/* The V2 sheet root gets these classes via DEFAULT_OPTIONS.classes */
 .hwfwm-sheet {
   height: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+}
+
+/* Foundry wraps content; this gives sane spacing */
+.hwfwm-sheet .window-content {
   padding: 12px;
 }
 
@@ -15,6 +13,7 @@
   align-items: center;
   gap: 10px;
   padding-bottom: 10px;
+  margin-bottom: 10px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -23,12 +22,11 @@
   font-size: 20px;
   font-weight: 600;
   padding: 10px 12px;
+  border-radius: 6px;
 }
 
 .hwfwm-sheet__body {
-  flex: 1;
   overflow: auto;
-  padding-top: 6px;
 }
 
 .hwfwm-grid {
@@ -51,10 +49,5 @@
 .hwfwm-select {
   width: 100%;
   padding: 8px 10px;
-}
-
-/* Small visual polish for inputs/selects inside our sheet */
-.hwfwm-sheet input,
-.hwfwm-sheet select {
   border-radius: 6px;
 }
