@@ -1,41 +1,37 @@
-<form class="hwfwm-actor-sheet {{cssClass}}" autocomplete="off">
-  <header class="sheet-header">
-    <h1>
-      <input name="name" type="text" value="{{document.name}}" placeholder="Name" />
-    </h1>
-  </header>
+<header class="hwfwm-sheet__header">
+  <input class="hwfwm-sheet__name" name="name" type="text" value="{{document.name}}" placeholder="Name" />
+</header>
 
-  <section class="sheet-body">
-    <div class="grid grid-3col">
-      <div class="field">
-        <label>Role</label>
-        <select name="system.details.roleKey">
-          <option value="">—</option>
-          {{#each roleOptions as |opt|}}
-            <option value="{{opt.value}}" {{#if (eq ../details.roleKey opt.value)}}selected{{/if}}>{{opt.label}}</option>
-          {{/each}}
-        </select>
-      </div>
-
-      <div class="field">
-        <label>Rank</label>
-        <select name="system.details.rankKey">
-          <option value="">—</option>
-          {{#each rankOptions as |opt|}}
-            <option value="{{opt.value}}" {{#if (eq ../details.rankKey opt.value)}}selected{{/if}}>{{opt.label}}</option>
-          {{/each}}
-        </select>
-      </div>
-
-      <div class="field">
-        <label>Race</label>
-        <select name="system.details.raceKey">
-          <option value="">—</option>
-          {{#each raceOptions as |opt|}}
-            <option value="{{opt.value}}" {{#if (eq ../details.raceKey opt.value)}}selected{{/if}}>{{opt.label}}</option>
-          {{/each}}
-        </select>
-      </div>
+<section class="hwfwm-sheet__body">
+  <div class="hwfwm-grid">
+    <div class="hwfwm-field">
+      <label class="hwfwm-label">Role</label>
+      <select class="hwfwm-select" name="system.details.roleKey">
+        <option value="">—</option>
+        {{#each roleOptions as |opt|}}
+          <option value="{{opt.value}}" {{#if (eq ../details.roleKey opt.value)}}selected{{/if}}>{{opt.label}}</option>
+        {{/each}}
+      </select>
     </div>
-  </section>
-</form>
+
+    <div class="hwfwm-field">
+      <label class="hwfwm-label">Rank</label>
+      <select class="hwfwm-select" name="system.details.rankKey">
+        <option value="">—</option>
+        {{#each rankOptions as |opt|}}
+          <option value="{{opt.value}}" {{#if (eq ../details.rankKey opt.value)}}selected{{/if}}>{{opt.label}}</option>
+        {{/each}}
+      </select>
+    </div>
+
+    <div class="hwfwm-field">
+      <label class="hwfwm-label">Race</label>
+      <select class="hwfwm-select" name="system.details.raceKey">
+        <option value="">—</option>
+        {{#each raceOptions as |opt|}}
+          <option value="{{opt.value}}" {{#if (eq ../details.raceKey opt.value)}}selected{{/if}}>{{opt.label}}</option>
+        {{/each}}
+      </select>
+    </div>
+  </div>
+</section>
