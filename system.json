@@ -15,6 +15,6 @@
   "esmodules": [
     "system.mjs"
   ],
-  "manifest": "https://raw.githubusercontent.com/Shaladar79/hwfwm-system/main/system.json",
-  "download": "https://github.com/Shaladar79/hwfwm-system/releases/download/v0.0.1/hwfwm-system.zip"
+  "manifest": "https://raw.githubusercontent.com/Shaladar79/hwfwm/main/system.json",
+  "download": "https://github.com/Shaladar79/hwfwm/releases/download/v0.0.1/hwfwm-system.zip"
 }
