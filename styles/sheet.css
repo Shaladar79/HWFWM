@@ -1,39 +1,45 @@
-/* The V2 sheet root gets these classes via DEFAULT_OPTIONS.classes */
-.hwfwm-sheet {
-  height: 100%;
-}
+/* styles/sheet.css - HWFWM PC sheet baseline */
 
-/* Foundry wraps content; this gives sane spacing */
 .hwfwm-sheet .window-content {
-  padding: 12px;
+  padding: 0;
 }
 
-.hwfwm-sheet__header {
+/* Our template root */
+.hwfwm-sheet__root {
+  height: 100%;
+  padding: 14px 16px;
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding-bottom: 10px;
-  margin-bottom: 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Header */
+.hwfwm-sheet__header {
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
 }
 
 .hwfwm-sheet__name {
   width: 100%;
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
   padding: 10px 12px;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
+/* Body */
 .hwfwm-sheet__body {
+  flex: 1;
   overflow: auto;
 }
 
+/* Field layout */
 .hwfwm-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 12px;
-  max-width: 520px;
+  gap: 14px;
+  max-width: 560px;
 }
 
 .hwfwm-field {
@@ -42,12 +48,23 @@
 }
 
 .hwfwm-label {
-  font-weight: 600;
-  opacity: 0.9;
+  font-weight: 700;
+  opacity: 0.95;
 }
 
-.hwfwm-select {
+/* Controls */
+.hwfwm-sheet__root input,
+.hwfwm-sheet__root select {
   width: 100%;
-  padding: 8px 10px;
-  border-radius: 6px;
+  padding: 10px 12px;
+  border-radius: 8px;
+}
+
+.hwfwm-sheet__root select {
+  cursor: pointer;
+}
+
+/* Slightly tighten the default Foundry spacing inside our sheet */
+.hwfwm-sheet__root option {
+  color: inherit;
 }
