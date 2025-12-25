@@ -1,30 +1,51 @@
-/* styles/sheet.css - HWFWM PC sheet baseline */
+/* =========================================================
+   HWFWM PC Sheet – Visual Baseline
+   ApplicationV2-safe, Foundry v13+
+   ========================================================= */
 
+/* Ensure the sheet has a defined surface */
 .hwfwm-sheet .window-content {
   padding: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(22, 22, 28, 0.96),
+    rgba(16, 16, 22, 0.96)
+  );
 }
 
+/* Root wrapper inside the V2 form */
 .hwfwm-sheet__root {
   height: 100%;
-  padding: 14px 16px;
+  padding: 16px 18px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
+  color: #e6e6eb;
 }
+
+/* ---------------------------------------------------------
+   Header
+   --------------------------------------------------------- */
 
 .hwfwm-sheet__header {
   padding-bottom: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .hwfwm-sheet__name {
   width: 100%;
   font-size: 22px;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.25;
   padding: 10px 12px;
   border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
 }
+
+/* ---------------------------------------------------------
+   Body / Layout
+   --------------------------------------------------------- */
 
 .hwfwm-sheet__body {
   flex: 1;
@@ -35,39 +56,57 @@
 .hwfwm-layout {
   display: grid;
   grid-template-columns: 360px 1fr;
-  gap: 14px;
+  gap: 16px;
   align-items: start;
 }
 
-/* Card/panel */
+/* ---------------------------------------------------------
+   Cards / Panels
+   --------------------------------------------------------- */
+
 .hwfwm-card {
-  padding: 12px 12px 14px;
+  padding: 14px 14px 16px;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  background: rgba(0, 0, 0, 0.20);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(
+    180deg,
+    rgba(40, 40, 52, 0.55),
+    rgba(26, 26, 36, 0.55)
+  );
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .hwfwm-card--muted {
-  background: rgba(0, 0, 0, 0.12);
+  background: linear-gradient(
+    180deg,
+    rgba(30, 30, 40, 0.45),
+    rgba(22, 22, 30, 0.45)
+  );
+  opacity: 0.9;
 }
 
 .hwfwm-card__title {
   font-weight: 800;
-  letter-spacing: 0.3px;
-  margin-bottom: 10px;
+  letter-spacing: 0.4px;
+  margin-bottom: 12px;
   opacity: 0.95;
 }
 
 .hwfwm-muted {
   opacity: 0.75;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
-/* Field layout */
+/* ---------------------------------------------------------
+   Fields
+   --------------------------------------------------------- */
+
 .hwfwm-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 12px;
+  gap: 14px;
 }
 
 .hwfwm-field {
@@ -77,17 +116,45 @@
 
 .hwfwm-label {
   font-weight: 700;
+  font-size: 13px;
   opacity: 0.95;
 }
 
-/* Controls */
+/* ---------------------------------------------------------
+   Inputs & Selects
+   --------------------------------------------------------- */
+
 .hwfwm-sheet__root input,
 .hwfwm-sheet__root select {
   width: 100%;
   padding: 10px 12px;
   border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.14);
 }
 
 .hwfwm-sheet__root select {
   cursor: pointer;
+}
+
+/* Hover / focus polish */
+.hwfwm-sheet__root input:focus,
+.hwfwm-sheet__root select:focus {
+  outline: none;
+  border-color: rgba(120, 170, 255, 0.6);
+  box-shadow: 0 0 0 2px rgba(120, 170, 255, 0.25);
+}
+
+/* ---------------------------------------------------------
+   Scrollbar polish (optional but nice)
+   --------------------------------------------------------- */
+
+.hwfwm-sheet__body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.hwfwm-sheet__body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
 }
