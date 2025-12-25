@@ -61,23 +61,24 @@
 }
 
 /* Rank / Race / Role row */
-.hwfwm-header-meta {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.hwfwm-header-meta select {
-  min-width: 120px;
-  padding: 8px 10px;
-  font-size: 13px;
+/* Header dropdowns: prevent clipped text */
+.hwfwm-header-meta select,
+.hwfwm-header-select {
+  height: 34px;          /* explicit control height */
+  line-height: 34px;     /* vertically center the selected text */
+  padding: 0 10px;       /* NO vertical padding (this causes clipping) */
   border-radius: 8px;
+
   background: #ffffff;
   color: #1b1b1b;
   border: 1px solid rgba(0, 0, 0, 0.25);
-  cursor: pointer;
+
+  /* Prevent Foundry/theme overrides from breaking native rendering */
+  appearance: auto;
+  -webkit-appearance: menulist;
+  -moz-appearance: menulist;
 }
+
 
 .hwfwm-header-meta select:focus {
   outline: none;
