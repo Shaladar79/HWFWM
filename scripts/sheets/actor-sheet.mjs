@@ -1,21 +1,22 @@
-const BaseActorSheet = foundry.appv1?.sheets?.ActorSheet ?? ActorSheet;
+export class HwfwmActorSheet extends foundry.applications.sheets.ActorSheetV2 {
+  static DEFAULT_OPTIONS = foundry.utils.mergeObject(
+    super.DEFAULT_OPTIONS,
+    {
+      classes: ["hwfwm-system", "sheet", "actor", "pc"],
+      position: { width: 700, height: 500 }
+    }
+  );
 
-export class HwfwmActorSheet extends BaseActorSheet {
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      classes: ["hwfwm-system", "sheet", "actor"],
-      width: 700,
-      height: 500,
-      resizable: true
-    });
-  }
+  /** @override */
+  static PARTS = {
+    form: {
+      template: "systems/hwfwm-system/templates/actor/actor-sheet.hbs"
+    }
+  };
 
-  get template() {
-    return "systems/hwfwm-system/templates/actor/actor-sheet.hbs";
-  }
-
-  async getData(options = {}) {
-    const context = await super.getData(options);
+  /** @override */
+  async _prepareContext(options) {
+    const context = await super._prepareContext(options);
 
     const cfg = CONFIG["hwfwm-system"] ?? {};
 
@@ -32,7 +33,7 @@ export class HwfwmActorSheet extends BaseActorSheet {
     context.rankOptions = rankOrder.map((k) => ({ value: k, label: ranks[k] ?? k }));
     context.raceOptions = raceOrder.map((k) => ({ value: k, label: races[k] ?? k }));
 
-    const details = this.actor?.system?.details ?? {};
+    const details = this.document?.system?.details ?? {};
     context.details = {
       roleKey: details.roleKey ?? "",
       rankKey: details.rankKey ?? "",
