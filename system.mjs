@@ -20,7 +20,9 @@ Hooks.once("init", async () => {
 
     // Tabs
     "systems/hwfwm-system/templates/actor/tabs/overview.hbs",
-    "systems/hwfwm-system/templates/actor/tabs/attributes.hbs"
+    "systems/hwfwm-system/templates/actor/tabs/attributes.hbs",
+    "systems/hwfwm-system/templates/actor/tabs/status/attributes.hbs",
+
   ]);
 
   // v13+ namespaced Actors collection (avoids deprecation warning)
