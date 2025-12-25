@@ -33,9 +33,13 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     const races = cfg.races ?? {};
     const raceOrder = cfg.raceOrder ?? Object.keys(races);
 
+    const backgrounds = cfg.backgrounds ?? {};
+    const backgroundOrder = cfg.backgroundOrder ?? Object.keys(backgrounds);
+
     context.roleOptions = roleOrder.map((k) => ({ value: k, label: roles[k] ?? k }));
     context.rankOptions = rankOrder.map((k) => ({ value: k, label: ranks[k] ?? k }));
     context.raceOptions = raceOrder.map((k) => ({ value: k, label: races[k] ?? k }));
+    context.backgroundOptions = backgroundOrder.map(k => ({ value: k, label: backgrounds[k] ?? k }));
 
     const details = this.document?.system?.details ?? {};
     context.details = {
