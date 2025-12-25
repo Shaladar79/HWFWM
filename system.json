@@ -11,8 +11,9 @@
   "esmodules": ["system.mjs"],
 
   "documentTypes": {
-    "Actor": ["pc"]
-  },
+    "Actor": {
+      "pc": {}
+    },
 
   "template": "template.json",
 
