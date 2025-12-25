@@ -1,0 +1,145 @@
+<div class="hwfwm-card">
+  <div class="hwfwm-card__title">Attributes</div>
+
+  <div class="hwfwm-attr-table">
+
+    <div class="hwfwm-attr-head">
+      <div>Attribute</div>
+      <div>Rank</div>
+      <div>Num</div>
+      <div>Base</div>
+      <div>Mod</div>
+      <div>Total</div>
+      <div></div>
+    </div>
+
+    {{!-- Power --}}
+    <div class="hwfwm-attr-row">
+      <div class="hwfwm-attr-label">Power</div>
+
+      <select class="hwfwm-attr-select" name="system.attributes.power.rankKey">
+        <option value="">—</option>
+        {{#each rankOptions as |opt|}}
+          <option value="{{opt.value}}" {{#if (eq ../system.attributes.power.rankKey opt.value)}}selected{{/if}}>
+            {{opt.label}}
+          </option>
+        {{/each}}
+      </select>
+
+      <input class="hwfwm-attr-num" type="number" min="0" max="9"
+             name="system.attributes.power.num"
+             value="{{system.attributes.power.num}}" placeholder="0" />
+
+      <input class="hwfwm-attr-base" type="number"
+             name="system.attributes.power.base"
+             value="{{system.attributes.power.base}}" placeholder="0" />
+
+      <input class="hwfwm-attr-mod" type="number"
+             name="system.attributes.power.mod"
+             value="{{system.attributes.power.mod}}" placeholder="0" />
+
+      <input class="hwfwm-attr-total" type="number"
+             name="system.attributes.power.total"
+             value="{{system.attributes.power.total}}" placeholder="0" />
+
+      <button type="button" class="hwfwm-roll" data-roll="power">Roll</button>
+    </div>
+
+    {{!-- Speed --}}
+    <div class="hwfwm-attr-row">
+      <div class="hwfwm-attr-label">Speed</div>
+
+      <select class="hwfwm-attr-select" name="system.attributes.speed.rankKey">
+        <option value="">—</option>
+        {{#each rankOptions as |opt|}}
+          <option value="{{opt.value}}" {{#if (eq ../system.attributes.speed.rankKey opt.value)}}selected{{/if}}>
+            {{opt.label}}
+          </option>
+        {{/each}}
+      </select>
+
+      <input class="hwfwm-attr-num" type="number" min="0" max="9"
+             name="system.attributes.speed.num"
+             value="{{system.attributes.speed.num}}" placeholder="0" />
+
+      <input class="hwfwm-attr-base" type="number"
+             name="system.attributes.speed.base"
+             value="{{system.attributes.speed.base}}" placeholder="0" />
+
+      <input class="hwfwm-attr-mod" type="number"
+             name="system.attributes.speed.mod"
+             value="{{system.attributes.speed.mod}}" placeholder="0" />
+
+      <input class="hwfwm-attr-total" type="number"
+             name="system.attributes.speed.total"
+             value="{{system.attributes.speed.total}}" placeholder="0" />
+
+      <button type="button" class="hwfwm-roll" data-roll="speed">Roll</button>
+    </div>
+
+    {{!-- Spirit --}}
+    <div class="hwfwm-attr-row">
+      <div class="hwfwm-attr-label">Spirit</div>
+
+      <select class="hwfwm-attr-select" name="system.attributes.spirit.rankKey">
+        <option value="">—</option>
+        {{#each rankOptions as |opt|}}
+          <option value="{{opt.value}}" {{#if (eq ../system.attributes.spirit.rankKey opt.value)}}selected{{/if}}>
+            {{opt.label}}
+          </option>
+        {{/each}}
+      </select>
+
+      <input class="hwfwm-attr-num" type="number" min="0" max="9"
+             name="system.attributes.spirit.num"
+             value="{{system.attributes.spirit.num}}" placeholder="0" />
+
+      <input class="hwfwm-attr-base" type="number"
+             name="system.attributes.spirit.base"
+             value="{{system.attributes.spirit.base}}" placeholder="0" />
+
+      <input class="hwfwm-attr-mod" type="number"
+             name="system.attributes.spirit.mod"
+             value="{{system.attributes.spirit.mod}}" placeholder="0" />
+
+      <input class="hwfwm-attr-total" type="number"
+             name="system.attributes.spirit.total"
+             value="{{system.attributes.spirit.total}}" placeholder="0" />
+
+      <button type="button" class="hwfwm-roll" data-roll="spirit">Roll</button>
+    </div>
+
+    {{!-- Recovery --}}
+    <div class="hwfwm-attr-row">
+      <div class="hwfwm-attr-label">Recovery</div>
+
+      <select class="hwfwm-attr-select" name="system.attributes.recovery.rankKey">
+        <option value="">—</option>
+        {{#each rankOptions as |opt|}}
+          <option value="{{opt.value}}" {{#if (eq ../system.attributes.recovery.rankKey opt.value)}}selected{{/if}}>
+            {{opt.label}}
+          </option>
+        {{/each}}
+      </select>
+
+      <input class="hwfwm-attr-num" type="number" min="0" max="9"
+             name="system.attributes.recovery.num"
+             value="{{system.attributes.recovery.num}}" placeholder="0" />
+
+      <input class="hwfwm-attr-base" type="number"
+             name="system.attributes.recovery.base"
+             value="{{system.attributes.recovery.base}}" placeholder="0" />
+
+      <input class="hwfwm-attr-mod" type="number"
+             name="system.attributes.recovery.mod"
+             value="{{system.attributes.recovery.mod}}" placeholder="0" />
+
+      <input class="hwfwm-attr-total" type="number"
+             name="system.attributes.recovery.total"
+             value="{{system.attributes.recovery.total}}" placeholder="0" />
+
+      <button type="button" class="hwfwm-roll" data-roll="recovery">Roll</button>
+    </div>
+
+  </div>
+</div>
