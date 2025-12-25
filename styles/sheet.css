@@ -184,3 +184,27 @@
   background: rgba(0, 0, 0, 0.3);
   border-radius: 4px;
 }
+
+/* Tabs */
+.hwfwm-tabs {
+  display: flex;
+  gap: 10px;
+  padding: 8px 0 2px;
+}
+
+.hwfwm-tab {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  background: rgba(255, 255, 255, 0.75);
+  color: #1b1b1b;
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.hwfwm-tab.is-active {
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
+}
