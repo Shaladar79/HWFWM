@@ -1,7 +1,6 @@
 const BaseActorSheet = foundry.appv1?.sheets?.ActorSheet ?? ActorSheet;
 
 export class HwfwmActorSheet extends BaseActorSheet {
-
   static get defaultOptions() {
     return foundry.utils.mergeObject(super.defaultOptions, {
       classes: ["hwfwm-system", "sheet", "actor"],
@@ -16,7 +15,7 @@ export class HwfwmActorSheet extends BaseActorSheet {
   }
 
   async getData(options = {}) {
-    const data = await super.getData(options);
+    const context = await super.getData(options);
 
     const cfg = CONFIG["hwfwm-system"] ?? {};
 
@@ -29,19 +28,17 @@ export class HwfwmActorSheet extends BaseActorSheet {
     const races = cfg.races ?? {};
     const raceOrder = cfg.raceOrder ?? Object.keys(races);
 
-    // Build ordered arrays so the dropdown order is deterministic
-    data.roleOptions = roleOrder.map((k) => ({ value: k, label: roles[k] ?? k }));
-    data.rankOptions = rankOrder.map((k) => ({ value: k, label: ranks[k] ?? k }));
-    data.raceOptions = raceOrder.map((k) => ({ value: k, label: races[k] ?? k }));
+    context.roleOptions = roleOrder.map((k) => ({ value: k, label: roles[k] ?? k }));
+    context.rankOptions = rankOrder.map((k) => ({ value: k, label: ranks[k] ?? k }));
+    context.raceOptions = raceOrder.map((k) => ({ value: k, label: races[k] ?? k }));
 
-    // Safe defaults (template.json not yet in use)
-    const details = data.actor.system?.details ?? {};
-    data.details = {
+    const details = this.actor?.system?.details ?? {};
+    context.details = {
       roleKey: details.roleKey ?? "",
       rankKey: details.rankKey ?? "",
       raceKey: details.raceKey ?? ""
     };
 
-    return data;
+    return context;
   }
 }
