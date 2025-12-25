@@ -15,5 +15,5 @@
   "esmodules": [
     "system.mjs"
   ],
-  "manifest": "https://raw.githubusercontent.com/Shaladar79/HWFWM/main/system.json",
+  "manifest": "https://raw.githubusercontent.com/Shaladar79/HWFWM/main/system.json"
 }
