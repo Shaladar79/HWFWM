@@ -1,13 +1,16 @@
-export class HwfwmActorSheet extends foundry.applications.sheets.ActorSheetV2 {
-  static DEFAULT_OPTIONS = foundry.utils.mergeObject(
-    super.DEFAULT_OPTIONS,
-    {
-      classes: ["hwfwm-system", "sheet", "actor", "pc"],
-      position: { width: 700, height: 500 }
-    }
-  );
+const { HandlebarsApplicationMixin } = foundry.applications.api;
 
-  /** @override */
+/**
+ * V2 Actor Sheet using Handlebars rendering.
+ */
+export class HwfwmActorSheet extends HandlebarsApplicationMixin(
+  foundry.applications.sheets.ActorSheetV2
+) {
+  static DEFAULT_OPTIONS = foundry.utils.mergeObject(super.DEFAULT_OPTIONS, {
+    classes: ["hwfwm-system", "sheet", "actor", "pc"],
+    position: { width: 700, height: 500 }
+  });
+
   static PARTS = {
     form: {
       template: "systems/hwfwm-system/templates/actor/actor-sheet.hbs"
@@ -37,7 +40,7 @@ export class HwfwmActorSheet extends foundry.applications.sheets.ActorSheetV2 {
     context.details = {
       roleKey: details.roleKey ?? "",
       rankKey: details.rankKey ?? "",
-      raceKey: details.raceKey ?? ""
+      raceKey: details.raceKey ?? "",
     };
 
     return context;
