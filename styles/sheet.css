@@ -1,3 +1,21 @@
+/* Sheet chrome (application root) */
+.hwfwm-sheet {
+  background: rgba(230, 232, 238, 0.96);
+  color: #111;
+}
+
+/* Header bar / title area if present in your Foundry theme */
+.hwfwm-sheet .window-header {
+  background: rgba(215, 218, 226, 0.96);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  color: #111;
+}
+
+/* Content area */
+.hwfwm-sheet .window-content {
+  background: rgba(230, 232, 238, 0.96);
+}
+
 /* =========================================================
    HWFWM PC Sheet – Visual Baseline
    ApplicationV2-safe, Foundry v13+
