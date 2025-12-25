@@ -4,8 +4,13 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
   foundry.applications.sheets.ActorSheetV2
 ) {
   static DEFAULT_OPTIONS = foundry.utils.mergeObject(super.DEFAULT_OPTIONS, {
+    tag: "form", // CRITICAL: make the application root a <form>
     classes: ["hwfwm-system", "sheet", "actor", "pc", "hwfwm-sheet"],
-    position: { width: 700, height: 500 }
+    position: { width: 700, height: 500 },
+    form: {
+      submitOnChange: true,   // autosave on dropdown change
+      closeOnSubmit: false
+    }
   });
 
   static PARTS = {
@@ -40,43 +45,5 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     };
 
     return context;
-  }
-
-  /** After render, wire up change handlers so fields save. */
-  _onRender(...args) {
-    super._onRender(...args);
-
-    // The V2 sheet renders inside this.element
-    const root = this.element;
-    if (!root) return;
-
-    const form = root.querySelector("form");
-    if (!form) return;
-
-    // Save on any change to inputs/selects
-    form.addEventListener("change", async (event) => {
-      const el = event.target;
-      if (!(el instanceof HTMLElement)) return;
-
-      // Only react to fields that have a name attribute
-      if (!el.getAttribute("name")) return;
-
-      await this._updateFromForm(form);
-    });
-
-    // Prevent default submit behavior; save through update
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      await this._updateFromForm(form);
-    });
-  }
-
-  async _updateFromForm(form) {
-    // Expand to object form, e.g. { system: { details: { roleKey: "..." } } }
-    const fd = new FormData(form);
-    const data = foundry.utils.expandObject(Object.fromEntries(fd.entries()));
-
-    // Update the underlying Actor document
-    await this.document.update(data);
   }
 }
