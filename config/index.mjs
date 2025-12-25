@@ -1,7 +1,10 @@
+import { RANKS, RANK_ORDER } from "./ranks.mjs";
+
 /**
  * HWFWM system configuration root.
- * Individual config domains (ranks, races, backgrounds, etc.)
- * will be added and imported here as needed.
+ * Add domains here as needed (races, backgrounds, roles, etc.).
  */
-
-export const HWFWM_CONFIG = {};
+export const HWFWM_CONFIG = {
+  ranks: RANKS,
+  rankOrder: RANK_ORDER
+};
