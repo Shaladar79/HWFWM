@@ -4,7 +4,6 @@
   padding: 0;
 }
 
-/* Our template root */
 .hwfwm-sheet__root {
   height: 100%;
   padding: 14px 16px;
@@ -13,7 +12,6 @@
   gap: 14px;
 }
 
-/* Header */
 .hwfwm-sheet__header {
   padding-bottom: 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.10);
@@ -28,18 +26,48 @@
   border-radius: 8px;
 }
 
-/* Body */
 .hwfwm-sheet__body {
   flex: 1;
   overflow: auto;
+}
+
+/* Two-column layout */
+.hwfwm-layout {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+/* Card/panel */
+.hwfwm-card {
+  padding: 12px 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(0, 0, 0, 0.20);
+}
+
+.hwfwm-card--muted {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.hwfwm-card__title {
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  margin-bottom: 10px;
+  opacity: 0.95;
+}
+
+.hwfwm-muted {
+  opacity: 0.75;
+  line-height: 1.4;
 }
 
 /* Field layout */
 .hwfwm-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 14px;
-  max-width: 560px;
+  gap: 12px;
 }
 
 .hwfwm-field {
@@ -62,9 +90,4 @@
 
 .hwfwm-sheet__root select {
   cursor: pointer;
-}
-
-/* Slightly tighten the default Foundry spacing inside our sheet */
-.hwfwm-sheet__root option {
-  color: inherit;
 }
