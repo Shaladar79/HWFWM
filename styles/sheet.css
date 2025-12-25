@@ -1,0 +1,60 @@
+/* styles/sheet.css
+   Minimal baseline styling for the HWFWM PC sheet
+*/
+
+.hwfwm-sheet {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+}
+
+.hwfwm-sheet__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.hwfwm-sheet__name {
+  width: 100%;
+  font-size: 20px;
+  font-weight: 600;
+  padding: 10px 12px;
+}
+
+.hwfwm-sheet__body {
+  flex: 1;
+  overflow: auto;
+  padding-top: 6px;
+}
+
+.hwfwm-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  max-width: 520px;
+}
+
+.hwfwm-field {
+  display: grid;
+  gap: 6px;
+}
+
+.hwfwm-label {
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.hwfwm-select {
+  width: 100%;
+  padding: 8px 10px;
+}
+
+/* Small visual polish for inputs/selects inside our sheet */
+.hwfwm-sheet input,
+.hwfwm-sheet select {
+  border-radius: 6px;
+}
