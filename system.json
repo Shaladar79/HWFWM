@@ -1,8 +1,8 @@
 {
   "id": "hwfwm-system",
   "title": "He Who Fights With Monsters - Dev",
-  "description": "A Foundry VTT game system based on the popular LitRPG series by Shirtaloon.",
-  "version": "0.0.0.01",
+  "description": "A Foundry VTT game system inspired by the He Who Fights With Monsters LitRPG series.",
+  "version": "0.0.1",
   "authors": [
     {
       "name": "Shaladar"
@@ -14,6 +14,7 @@
   },
   "esmodules": [
     "system.mjs"
-  ]
+  ],
+  "manifest": "https://raw.githubusercontent.com/Shaladar79/hwfwm-system/main/system.json",
+  "download": "https://github.com/Shaladar79/hwfwm-system/releases/download/v0.0.1/hwfwm-system.zip"
 }
-
