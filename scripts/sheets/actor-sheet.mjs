@@ -4,11 +4,11 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
   foundry.applications.sheets.ActorSheetV2
 ) {
   static DEFAULT_OPTIONS = foundry.utils.mergeObject(super.DEFAULT_OPTIONS, {
-    tag: "form", // CRITICAL: make the application root a <form>
+    tag: "form", // make the application root a <form> so V2 form handling works
     classes: ["hwfwm-system", "sheet", "actor", "pc", "hwfwm-sheet"],
     position: { width: 700, height: 500 },
     form: {
-      submitOnChange: true,   // autosave on dropdown change
+      submitOnChange: true, // autosave on dropdown change
       closeOnSubmit: false
     }
   });
@@ -45,5 +45,48 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     };
 
     return context;
+  }
+
+  /**
+   * Minimal V2-safe tabs.
+   * Requires:
+   * - nav:  .hwfwm-tabs[data-group="primary"] with links .hwfwm-tab[data-tab]
+   * - panels: .tab[data-group="primary"][data-tab="..."]
+   */
+  _onRender(...args) {
+    super._onRender(...args);
+
+    const root = this.element;
+    if (!root) return;
+
+    const nav = root.querySelector('.hwfwm-tabs[data-group="primary"]');
+    if (!nav) return;
+
+    const panels = Array.from(root.querySelectorAll('.tab[data-group="primary"]'));
+    const links = Array.from(nav.querySelectorAll(".hwfwm-tab[data-tab]"));
+
+    const activate = (tabName) => {
+      for (const p of panels) {
+        p.style.display = p.dataset.tab === tabName ? "" : "none";
+      }
+      for (const a of links) {
+        a.classList.toggle("is-active", a.dataset.tab === tabName);
+      }
+    };
+
+    // Determine initial tab (default to overview)
+    const initial =
+      links.find((a) => a.classList.contains("is-active"))?.dataset.tab ||
+      links[0]?.dataset.tab ||
+      "overview";
+
+    activate(initial);
+
+    nav.addEventListener("click", (ev) => {
+      const a = ev.target.closest(".hwfwm-tab[data-tab]");
+      if (!a) return;
+      ev.preventDefault();
+      activate(a.dataset.tab);
+    });
   }
 }
