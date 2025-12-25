@@ -14,13 +14,17 @@ Hooks.once("init", async () => {
   await loadTemplates([
     "systems/hwfwm-system/templates/actor/actor-sheet.hbs",
 
-    // Parts
+    // Parts-main sheet
     "systems/hwfwm-system/templates/actor/parts/header.hbs",
     "systems/hwfwm-system/templates/actor/parts/tabs-nav.hbs",
 
     // Tabs
     "systems/hwfwm-system/templates/actor/tabs/overview.hbs",
     "systems/hwfwm-system/templates/actor/tabs/attributes.hbs",
+    "systems/hwfwm-system/templates/actor/tabs/status.hbs",
+
+    //Tab Sections
+    // Status
     "systems/hwfwm-system/templates/actor/tabs/status/attributes.hbs",
 
   ]);
