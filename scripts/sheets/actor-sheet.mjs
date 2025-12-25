@@ -1,4 +1,7 @@
-export class HwfwmActorSheet extends ActorSheet {
+const BaseActorSheet = foundry.appv1?.sheets?.ActorSheet ?? ActorSheet;
+
+export class HwfwmActorSheet extends BaseActorSheet {
+
   static get defaultOptions() {
     return foundry.utils.mergeObject(super.defaultOptions, {
       classes: ["hwfwm-system", "sheet", "actor"],
