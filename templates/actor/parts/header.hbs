@@ -50,16 +50,18 @@
         </select>
       </div>
 
-      <div class="hwfwm-header-field">
-        <label class="hwfwm-header-label">Background</label>
-        <select class="hwfwm-header-select" name="system.details.backgroundKey">
-          <option value="">—</option>
-          <option value="commoner">Commoner</option>
-          <option value="criminal">Criminal</option>
-          <option value="artisan">Artisan</option>
-          <option value="noble">Noble</option>
-        </select>
-      </div>
+     <div class="hwfwm-header-field">
+  <label class="hwfwm-header-label">Background</label>
+  <select class="hwfwm-header-select" name="system.details.backgroundKey">
+    <option value="">—</option>
+    {{#each backgroundOptions as |opt|}}
+      <option value="{{opt.value}}" {{#if (eq ../details.backgroundKey opt.value)}}selected{{/if}}>
+        {{opt.label}}
+      </option>
+    {{/each}}
+  </select>
+</div>
+
     </div>
 
   </div>
