@@ -33,13 +33,6 @@
           "survival": { "name": "Survival", "attribute": "Recovery", "total": 0, "notes": "" }
         },
 
-        "specialtyCatalog": {
-          "athletics": { "name": "Athletics", "attribute": "Power" },
-          "acrobatics": { "name": "Acrobatics", "attribute": "Speed" },
-          "perception": { "name": "Perception", "attribute": "Spirit" },
-          "survival": { "name": "Survival", "attribute": "Recovery" }
-        },
-
         "specialtiesCustom": {},
 
         "affinities": {
