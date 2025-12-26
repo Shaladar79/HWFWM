@@ -90,15 +90,18 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     context.system._ui = context.system._ui ?? {};
     context.system._ui.addSpecialtyKey = context.system._ui.addSpecialtyKey ?? "";
     context.system._ui.addAffinityKey = context.system._ui.addAffinityKey ?? "";
+    context.system._ui.addResistanceKey = context.system._ui.addResistanceKey ?? "";
 
     /**
      * Config-backed catalogs used by dropdowns.
      * IMPORTANT:
      * - Specialties HBS should iterate `specialtyCatalog` (top-level)
      * - Affinities HBS should iterate `affinityCatalog` (top-level)
+     * - Resistances HBS should iterate `resistanceCatalog` (top-level)
      */
     context.specialtyCatalog = cfg.specialtyCatalog ?? {};
     context.affinityCatalog = cfg.affinityCatalog ?? {};
+    context.resistanceCatalog = cfg.resistanceCatalog ?? {};
 
     return context;
   }
@@ -156,7 +159,9 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
             "add-specialty",
             "remove-specialty",
             "add-affinity",
-            "remove-affinity"
+            "remove-affinity",
+            "add-resistance",
+            "remove-resistance"
           ]);
           if (!allowed.has(action)) return;
 
@@ -275,6 +280,50 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
 
             await this.document.update({
               "system.affinities": current
+            });
+
+            return;
+          }
+
+          if (action === "add-resistance") {
+            // Read the current select value from the DOM (submitOnChange may be asynchronous)
+            const select = root.querySelector('select[name="system._ui.addResistanceKey"]');
+            const keyFromDom = (select?.value ?? "").trim();
+
+            const key = keyFromDom || (this.document?.system?._ui?.addResistanceKey ?? "");
+            if (!key) return;
+
+            // Catalog comes from CONFIG (authoritative)
+            const catalog = CONFIG["hwfwm-system"]?.resistanceCatalog ?? {};
+            const entry = catalog[key];
+            if (!entry) return;
+
+            // Prevent duplicates
+            const has = !!this.document?.system?.resistances?.[key];
+            if (has) {
+              await this.document.update({ "system._ui.addResistanceKey": "" });
+              return;
+            }
+
+            await this.document.update({
+              [`system.resistances.${key}`]: { name: entry.name ?? key },
+              "system._ui.addResistanceKey": ""
+            });
+
+            return;
+          }
+
+          if (action === "remove-resistance") {
+            const key = actionBtn.dataset.key;
+            if (!key) return;
+
+            const current = foundry.utils.deepClone(this.document?.system?.resistances ?? {});
+            if (!(key in current)) return;
+
+            delete current[key];
+
+            await this.document.update({
+              "system.resistances": current
             });
 
             return;
