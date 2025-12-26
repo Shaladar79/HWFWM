@@ -17,6 +17,11 @@
           "reaction": { "value": 0 },
           "shielding": { "value": 0 },
           "armor": { "value": 0, "max": 0 }
+        },
+        "defense": {
+          "base": 0,
+          "mod": 0,
+          "total": 0
         }
       }
     }
