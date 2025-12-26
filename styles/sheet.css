@@ -358,3 +358,55 @@
   width: 4.5ch;
   min-width: 4.5ch;
 }
+
+/* =========================================================
+   Status > Resources (organized rows)
+   ========================================================= */
+
+.hwfwm-resources-grid {
+  display: grid;
+  gap: 12px;
+}
+
+/* Each row is: label+field, label+field */
+.hwfwm-res-row--2col {
+  display: grid;
+  grid-template-columns: auto 1fr auto 1fr;
+  gap: 8px 10px;
+  align-items: center;
+}
+
+/* Pair inputs: value / max */
+.hwfwm-resource-pair {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  gap: 6px;
+  align-items: center;
+  justify-content: start;
+}
+
+.hwfwm-label--inline {
+  justify-self: end;
+}
+
+.hwfwm-resource-sep {
+  font-weight: 800;
+  color: rgba(0, 0, 0, 0.55);
+  text-align: center;
+  min-width: 8px;
+}
+
+/* Digit-sized inputs */
+.hwfwm-input-4d {
+  width: 4.5ch;
+  min-width: 4.5ch;
+  padding: 8px 10px;
+  text-align: right;
+}
+
+.hwfwm-input-3d {
+  width: 3.5ch;
+  min-width: 3.5ch;
+  padding: 8px 8px;
+  text-align: right;
+}
