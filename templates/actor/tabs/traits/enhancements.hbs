@@ -35,7 +35,8 @@
       <button type="button"
               class="hwfwm-roll"
               data-roll="specialty"
-              data-key="{{key}}">
+              data-key="{{key}}"
+              {{#unless spec.total}}disabled{{/unless}}>
         Roll
       </button>
     </div>
