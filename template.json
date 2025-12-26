@@ -22,6 +22,41 @@
           "base": 0,
           "mod": 0,
           "total": 0
+        },
+
+        "specialties": {
+          "athletics": { "name": "Athletics", "attribute": "Power", "total": 0, "notes": "" },
+          "acrobatics": { "name": "Acrobatics", "attribute": "Speed", "total": 0, "notes": "" },
+          "perception": { "name": "Perception", "attribute": "Spirit", "total": 0, "notes": "" },
+          "survival": { "name": "Survival", "attribute": "Recovery", "total": 0, "notes": "" }
+        },
+
+        "affinities": {
+          "Fire": false,
+          "Ice": false,
+          "Lightning": false,
+          "Earth": false,
+          "Life": false,
+          "Nature": false,
+          "Astral": false
+        },
+
+        "aptitudes": {
+          "SpecialAttack": false,
+          "Spell": false,
+          "Boon": false,
+          "Curse": false,
+          "SpecialAbility": false
+        },
+
+        "resistances": {
+          "Fire": false,
+          "Ice": false,
+          "Lightning": false,
+          "Earth": false,
+          "Life": false,
+          "Nature": false,
+          "Astral": false
         }
       }
     }
