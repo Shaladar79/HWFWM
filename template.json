@@ -23,11 +23,12 @@
         "defense": { "base": 0, "mod": 0, "total": 0 },
 
         "_ui": {
-  "addSpecialtyKey": "",
-  "addAffinityKey": "",
-  "addResistanceKey": "",
-  "addAptitudeKey": ""
-},
+          "addSpecialtyKey": "",
+          "addAffinityKey": "",
+          "addResistanceKey": "",
+          "addAptitudeKey": "",
+          "essenceSubTab": "power"
+        },
 
         "specialties": {
           "athletics": { "name": "Athletics", "attribute": "Power", "total": 0, "notes": "" },
@@ -39,11 +40,22 @@
         "specialtiesCustom": {},
 
         "affinities": {},
+        "aptitudes": {},
+        "resistances": {},
 
-       "aptitudes": {},
+        "essences": {
+          "powerKey": "",
+          "speedKey": "",
+          "spiritKey": "",
+          "recoveryKey": ""
+        },
 
-
-        "resistances": {}
+        "confluenceEssences": {
+          "powerKey": "",
+          "speedKey": "",
+          "spiritKey": "",
+          "recoveryKey": ""
+        }
       }
     }
   }
