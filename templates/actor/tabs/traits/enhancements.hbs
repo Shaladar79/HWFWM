@@ -7,7 +7,9 @@
     <select name="system._ui.addSpecialtyKey">
       <option value="">— Add Specialty —</option>
       {{#each system.specialtyCatalog as |s key|}}
-        <option value="{{key}}">{{s.name}}</option>
+        <option value="{{key}}" {{#if (eq key ../system._ui.addSpecialtyKey)}}selected{{/if}}>
+          {{s.name}}
+        </option>
       {{/each}}
     </select>
 
@@ -47,13 +49,15 @@
              value="{{spec.notes}}"
              placeholder="Description" />
 
-      <button type="button"
-              class="hwfwm-roll"
-              data-roll="specialty"
-              data-key="{{key}}"
-              {{#unless spec.total}}disabled{{/unless}}>
-        Roll
-      </button>
+      <div class="hwfwm-spec-actions">
+        <button type="button"
+                class="hwfwm-roll"
+                data-roll="specialty"
+                data-key="{{key}}"
+                {{#unless spec.total}}disabled{{/unless}}>
+          Roll
+        </button>
+      </div>
     </div>
     {{/each}}
 
@@ -101,7 +105,6 @@
 
 
 <div class="hwfwm-card">
-
   <div class="hwfwm-card__title">Affinities</div>
 
   <div class="hwfwm-checkgrid">
@@ -114,12 +117,10 @@
       </label>
     {{/each}}
   </div>
-
 </div>
 
 
 <div class="hwfwm-card">
-
   <div class="hwfwm-card__title">Aptitudes</div>
 
   <div class="hwfwm-checkgrid">
@@ -132,12 +133,10 @@
       </label>
     {{/each}}
   </div>
-
 </div>
 
 
 <div class="hwfwm-card">
-
   <div class="hwfwm-card__title">Resistances</div>
 
   <div class="hwfwm-checkgrid">
@@ -150,5 +149,4 @@
       </label>
     {{/each}}
   </div>
-
 </div>
