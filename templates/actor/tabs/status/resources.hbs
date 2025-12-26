@@ -1,10 +1,10 @@
 <div class="hwfwm-card">
   <div class="hwfwm-card__title">Resources</div>
 
-  <div class="hwfwm-grid">
+  <div class="hwfwm-resources-grid">
 
-    <!-- LifeForce (4 digits each) -->
-    <div class="hwfwm-field">
+    <!-- Row 1: LifeForce | Shielding | Trauma -->
+    <div class="hwfwm-field hwfwm-res-life">
       <label class="hwfwm-label">LifeForce</label>
       <div class="hwfwm-resource-row">
         <input type="number"
@@ -19,8 +19,16 @@
       </div>
     </div>
 
-    <!-- Trauma (3 digits each) -->
-    <div class="hwfwm-field">
+    <div class="hwfwm-field hwfwm-res-shield">
+      <label class="hwfwm-label">Shielding</label>
+      <input class="hwfwm-shielding-input"
+             type="number"
+             name="system.resources.shielding.value"
+             value="{{system.resources.shielding.value}}"
+             placeholder="0" />
+    </div>
+
+    <div class="hwfwm-field hwfwm-res-trauma">
       <label class="hwfwm-label">Trauma</label>
       <div class="hwfwm-resource-row hwfwm-resource-row--trauma">
         <input type="number"
@@ -35,8 +43,8 @@
       </div>
     </div>
 
-    <!-- Mana (4 digits each) -->
-    <div class="hwfwm-field">
+    <!-- Row 2: Mana | Stamina -->
+    <div class="hwfwm-field hwfwm-res-mana">
       <label class="hwfwm-label">Mana</label>
       <div class="hwfwm-resource-row">
         <input type="number"
@@ -51,8 +59,7 @@
       </div>
     </div>
 
-    <!-- Stamina (4 digits each) -->
-    <div class="hwfwm-field">
+    <div class="hwfwm-field hwfwm-res-stamina">
       <label class="hwfwm-label">Stamina</label>
       <div class="hwfwm-resource-row">
         <input type="number"
@@ -67,8 +74,8 @@
       </div>
     </div>
 
-    <!-- Pace (4 digits each) -->
-    <div class="hwfwm-field">
+    <!-- Row 3: Pace | Reaction -->
+    <div class="hwfwm-field hwfwm-res-pace">
       <label class="hwfwm-label">Pace</label>
       <div class="hwfwm-resource-row">
         <input type="number"
@@ -83,8 +90,7 @@
       </div>
     </div>
 
-    <!-- Reaction (4 digits each) -->
-    <div class="hwfwm-field">
+    <div class="hwfwm-field hwfwm-res-reaction">
       <label class="hwfwm-label">Reaction</label>
       <div class="hwfwm-resource-row">
         <input type="number"
@@ -97,16 +103,6 @@
                value="{{system.resources.reaction.max}}"
                placeholder="0" />
       </div>
-    </div>
-
-    <!-- Shielding (single value, 4 digits) -->
-    <div class="hwfwm-field">
-      <label class="hwfwm-label">Shielding</label>
-      <input class="hwfwm-shielding-input"
-             type="number"
-             name="system.resources.shielding.value"
-             value="{{system.resources.shielding.value}}"
-             placeholder="0" />
     </div>
 
   </div>
