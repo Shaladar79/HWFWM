@@ -82,7 +82,7 @@
   overflow: auto;
 }
 
-/* Legacy helper (not currently used by Status, kept for future) */
+/* Legacy helper (kept for future use) */
 .hwfwm-layout {
   display: grid;
   grid-template-columns: 360px 1fr;
@@ -90,7 +90,6 @@
   align-items: start;
 }
 
-/* Simple stack helper */
 .hwfwm-stack {
   display: grid;
   gap: 16px;
@@ -106,28 +105,12 @@
 }
 
 .hwfwm-status__top {
-  /* full width */
+  /* full width container */
 }
 
-/* IMPORTANT: minmax(0,1fr) prevents overflow forcing a wrap */
+/* If any old markup still uses status__bottom, keep it from breaking layout */
 .hwfwm-status__bottom {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 16px;
-  align-items: start;
-}
-
-/* Ensure children respect the grid column */
-.hwfwm-status__bottom > .hwfwm-card {
-  width: 100%;
-  min-width: 0;
-}
-
-/* Stack on smaller widths */
-@media (max-width: 760px) {
-  .hwfwm-status__bottom {
-    grid-template-columns: 1fr;
-  }
+  display: block;
 }
 
 /* =========================================================
@@ -258,7 +241,7 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
 }
 
-/* Sheet-scoped tab visibility (DO NOT affect Foundry globally) */
+/* Sheet-scoped tab visibility */
 .hwfwm-sheet .hwfwm-sheet__body > .tab[data-group="primary"] {
   display: none;
 }
@@ -280,13 +263,13 @@
 .hwfwm-attr-row {
   display: grid;
   grid-template-columns:
-    1fr         /* Attribute */
-    160px       /* Rank (wider) */
-    56px        /* Num (3 digits) */
-    72px        /* Base (4 digits) */
-    72px        /* Mod (4 digits) */
-    72px        /* Total (4 digits) */
-    74px;       /* Roll */
+    1fr
+    160px
+    56px
+    72px
+    72px
+    72px
+    74px;
   gap: 10px;
   align-items: center;
 }
@@ -324,60 +307,7 @@
 }
 
 /* =========================================================
-   11) Status > Resources (organized rows)
-   ========================================================= */
-
-.hwfwm-resources-grid {
-  display: grid;
-  gap: 12px;
-}
-
-/* Each row is: label+field, label+field */
-.hwfwm-res-row--2col {
-  display: grid;
-  grid-template-columns: auto 1fr auto 1fr;
-  gap: 8px 10px;
-  align-items: center;
-}
-
-/* Pair inputs: value / max */
-.hwfwm-resource-pair {
-  display: grid;
-  grid-template-columns: auto auto auto;
-  gap: 6px;
-  align-items: center;
-  justify-content: start;
-}
-
-.hwfwm-label--inline {
-  justify-self: end;
-}
-
-/* Shared separator */
-.hwfwm-resource-sep {
-  font-weight: 800;
-  color: rgba(0, 0, 0, 0.55);
-  text-align: center;
-  min-width: 8px;
-}
-
-/* Digit-sized inputs */
-.hwfwm-input-4d {
-  width: 4.5ch;
-  min-width: 4.5ch;
-  padding: 8px 10px;
-  text-align: right;
-}
-
-.hwfwm-input-3d {
-  width: 3.5ch;
-  min-width: 3.5ch;
-  padding: 8px 8px;
-  text-align: right;
-}
-
-/* =========================================================
-  12) Status > Resources (full-width 4-across + Defense row)
+   11) Status > Resources (full-width 4-across + Defense row)
    ========================================================= */
 
 .hwfwm-res-full {
@@ -385,17 +315,19 @@
   gap: 12px;
 }
 
+/* 4-across rows (Resources) */
 .hwfwm-res-row4 {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
   align-items: start;
 }
 
+/* 3-across row (Defense) */
 .hwfwm-res-row3 {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
   align-items: start;
 }
 
@@ -420,12 +352,6 @@
   justify-content: start;
 }
 
-/* tighter inputs so 4 cells fit comfortably */
-.hwfwm-input-tight {
-  padding: 6px 8px;
-  line-height: 1.1;
-}
-
 /* separator between resources and defense */
 .hwfwm-res-separator {
   font-weight: 900;
@@ -436,25 +362,38 @@
   margin-top: 2px;
 }
 
+/* Shared separator used inside value/max */
+.hwfwm-resource-sep {
+  font-weight: 800;
+  color: rgba(0, 0, 0, 0.55);
+  text-align: center;
+  min-width: 8px;
+}
+
+/* Digit-sized inputs */
+.hwfwm-input-4d {
+  width: 4.3ch;
+  min-width: 4.3ch;
+  padding: 6px 8px;
+  text-align: right;
+}
+
+.hwfwm-input-3d {
+  width: 3.3ch;
+  min-width: 3.3ch;
+  padding: 6px 7px;
+  text-align: right;
+}
+
+/* slightly tighter inputs when explicitly requested */
+.hwfwm-input-tight {
+  padding: 6px 8px;
+  line-height: 1.1;
+}
+
 /* optional: stack to 2 columns on narrow sheets */
 @media (max-width: 900px) {
   .hwfwm-res-row4 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-}
-
-
-/* =========================================================
-   13) Status > Defense
-   ========================================================= */
-
-.hwfwm-defense-row {
-  display: grid;
-  grid-template-columns: auto auto auto;
-  gap: 16px;
-  align-items: end;
-}
-
-.hwfwm-defense-field {
-  min-width: 0;
 }
