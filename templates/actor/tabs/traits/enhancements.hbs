@@ -7,9 +7,7 @@
     <select name="system._ui.addSpecialtyKey">
       <option value="">— Add Specialty —</option>
       {{#each system.specialtyCatalog as |s key|}}
-        <option value="{{key}}" {{#if (eq key ../system._ui.addSpecialtyKey)}}selected{{/if}}>
-          {{s.name}}
-        </option>
+        <option value="{{key}}">{{s.name}}</option>
       {{/each}}
     </select>
 
@@ -103,7 +101,6 @@
   </div>
 </div>
 
-
 <div class="hwfwm-card">
   <div class="hwfwm-card__title">Affinities</div>
 
@@ -119,7 +116,6 @@
   </div>
 </div>
 
-
 <div class="hwfwm-card">
   <div class="hwfwm-card__title">Aptitudes</div>
 
@@ -134,7 +130,6 @@
     {{/each}}
   </div>
 </div>
-
 
 <div class="hwfwm-card">
   <div class="hwfwm-card__title">Resistances</div>
