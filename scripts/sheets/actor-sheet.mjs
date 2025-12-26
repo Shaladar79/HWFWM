@@ -20,7 +20,7 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
   };
 
   _activeTab = "overview";
-  _activeSubTabs = { traits: "enhancements" };
+  _activeSubTabs = { traits: "enhancements", essence: "power" };
 
   /**
    * AbortController used to ensure we never stack handlers,
@@ -93,13 +93,12 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     context.system._ui.addResistanceKey = context.system._ui.addResistanceKey ?? "";
     context.system._ui.addAptitudeKey = context.system._ui.addAptitudeKey ?? "";
 
+    // NEW: keep a safe value for HBS "is-active" checks (your essence.hbs uses system._ui.essenceSubTab)
+    context.system._ui.essenceSubTab =
+      context.system._ui.essenceSubTab ?? this._activeSubTabs.essence ?? "power";
+
     /**
      * Config-backed catalogs used by dropdowns.
-     * IMPORTANT:
-     * - Specialties HBS should iterate `specialtyCatalog` (top-level)
-     * - Affinities HBS should iterate `affinityCatalog` (top-level)
-     * - Resistances HBS should iterate `resistanceCatalog` (top-level)
-     * - Aptitudes HBS should iterate `aptitudeCatalog` (top-level)
      */
     context.specialtyCatalog = cfg.specialtyCatalog ?? {};
     context.affinityCatalog = cfg.affinityCatalog ?? {};
@@ -140,6 +139,21 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
       defaultTab: "enhancements",
       getPersisted: () => this._activeSubTabs.traits,
       setPersisted: (t) => (this._activeSubTabs.traits = t),
+      signal
+    });
+
+    // NEW: Essence subtabs
+    this._activateTabGroup(root, {
+      group: "essence",
+      navSelector: '.hwfwm-tabs[data-group="essence"]',
+      defaultTab: "power",
+      getPersisted: () => this._activeSubTabs.essence,
+      setPersisted: (t) => {
+        this._activeSubTabs.essence = t;
+        // keep the UI mirror in sync so your HBS active class checks match what is displayed
+        // (do not await; we don't want to block tab switching)
+        this.document?.update?.({ "system._ui.essenceSubTab": t }).catch(() => {});
+      },
       signal
     });
 
@@ -196,19 +210,16 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
           }
 
           if (action === "add-specialty") {
-            // Read the current select value from the DOM (submitOnChange may be asynchronous)
             const select = root.querySelector('select[name="system._ui.addSpecialtyKey"]');
             const keyFromDom = (select?.value ?? "").trim();
 
             const key = keyFromDom || (this.document?.system?._ui?.addSpecialtyKey ?? "");
             if (!key) return;
 
-            // Catalog comes from CONFIG (authoritative)
             const catalog = CONFIG["hwfwm-system"]?.specialtyCatalog ?? {};
             const entry = catalog[key];
             if (!entry) return;
 
-            // Prevent duplicates across base + custom
             const baseHas = !!this.document?.system?.specialties?.[key];
             const customHas = !!this.document?.system?.specialtiesCustom?.[key];
             if (baseHas || customHas) {
@@ -233,7 +244,6 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
             const key = actionBtn.dataset.key;
             if (!key) return;
 
-            // Robust delete: clone object, delete key, write back
             const current = foundry.utils.deepClone(this.document?.system?.specialtiesCustom ?? {});
             if (!(key in current)) return;
 
@@ -247,19 +257,16 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
           }
 
           if (action === "add-affinity") {
-            // Read the current select value from the DOM (submitOnChange may be asynchronous)
             const select = root.querySelector('select[name="system._ui.addAffinityKey"]');
             const keyFromDom = (select?.value ?? "").trim();
 
             const key = keyFromDom || (this.document?.system?._ui?.addAffinityKey ?? "");
             if (!key) return;
 
-            // Catalog comes from CONFIG (authoritative)
             const catalog = CONFIG["hwfwm-system"]?.affinityCatalog ?? {};
             const entry = catalog[key];
             if (!entry) return;
 
-            // Prevent duplicates
             const has = !!this.document?.system?.affinities?.[key];
             if (has) {
               await this.document.update({ "system._ui.addAffinityKey": "" });
@@ -291,19 +298,16 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
           }
 
           if (action === "add-resistance") {
-            // Read the current select value from the DOM (submitOnChange may be asynchronous)
             const select = root.querySelector('select[name="system._ui.addResistanceKey"]');
             const keyFromDom = (select?.value ?? "").trim();
 
             const key = keyFromDom || (this.document?.system?._ui?.addResistanceKey ?? "");
             if (!key) return;
 
-            // Catalog comes from CONFIG (authoritative)
             const catalog = CONFIG["hwfwm-system"]?.resistanceCatalog ?? {};
             const entry = catalog[key];
             if (!entry) return;
 
-            // Prevent duplicates
             const has = !!this.document?.system?.resistances?.[key];
             if (has) {
               await this.document.update({ "system._ui.addResistanceKey": "" });
@@ -335,19 +339,16 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
           }
 
           if (action === "add-aptitude") {
-            // Read the current select value from the DOM (submitOnChange may be asynchronous)
             const select = root.querySelector('select[name="system._ui.addAptitudeKey"]');
             const keyFromDom = (select?.value ?? "").trim();
 
             const key = keyFromDom || (this.document?.system?._ui?.addAptitudeKey ?? "");
             if (!key) return;
 
-            // Catalog comes from CONFIG (authoritative)
             const catalog = CONFIG["hwfwm-system"]?.aptitudeCatalog ?? {};
             const entry = catalog[key];
             if (!entry) return;
 
-            // Prevent duplicates
             const has = !!this.document?.system?.aptitudes?.[key];
             if (has) {
               await this.document.update({ "system._ui.addAptitudeKey": "" });
@@ -405,7 +406,6 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
 
         if (!Number.isFinite(total) || total <= 0) return;
 
-        // Placeholder roll (simple d100 <= total) with 95–100 hard fail safeguard
         const roll = await new Roll("1d100").evaluate();
         const hardFail = roll.total >= 95;
         const success = !hardFail && roll.total <= total;
