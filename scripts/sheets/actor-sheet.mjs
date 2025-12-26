@@ -34,6 +34,13 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     traits: "enhancements"
   };
 
+  /**
+   * Guard flags so we don't stack listeners across rerenders.
+   * @private
+   */
+  _actionsBound = false;
+  _rollsBound = false;
+
   async _prepareContext(options) {
     const context = await super._prepareContext(options);
 
@@ -99,7 +106,7 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
   }
 
   /**
-   * Tabs + Item button actions (V2-safe)
+   * Tabs + Item button actions + Roll buttons (V2-safe)
    */
   _onRender(...args) {
     super._onRender(...args);
@@ -178,6 +185,51 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
           ]);
           return;
         }
+      });
+    }
+
+    // -----------------------------
+    // Roll buttons (event delegation) — bind once
+    // Supports: data-roll="specialty" data-key="..."
+    // -----------------------------
+    if (!this._rollsBound) {
+      this._rollsBound = true;
+
+      root.addEventListener("click", async (ev) => {
+        const btn = ev.target.closest("[data-roll]");
+        if (!btn) return;
+
+        const rollType = btn.dataset.roll;
+        if (rollType !== "specialty") return;
+
+        ev.preventDefault();
+
+        const key = btn.dataset.key;
+        if (!key) return;
+
+        const spec = this.document?.system?.specialties?.[key];
+        if (!spec) return;
+
+        const total = Number(spec.total ?? 0);
+        const name = spec.name ?? key;
+
+        // If button is disabled or total is not usable, do nothing.
+        if (!Number.isFinite(total) || total <= 0) return;
+
+        // Placeholder roll (simple d100 <= total).
+        // We'll upgrade to your success/crit bands next.
+        const roll = await (new Roll("1d100")).evaluate();
+
+        // Apply your "95–100 always fail" rule as a safeguard
+        const hardFail = roll.total >= 95;
+        const success = !hardFail && roll.total <= total;
+
+        const speaker = ChatMessage.getSpeaker({ actor: this.document });
+
+        await roll.toMessage({
+          speaker,
+          flavor: `Specialty: ${name} (TN ${total}) — ${success ? "Success" : "Failure"}`
+        });
       });
     }
   }
