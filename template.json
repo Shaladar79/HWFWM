@@ -24,7 +24,8 @@
 
         "_ui": {
           "addSpecialtyKey": "",
-          "addAffinityKey": ""
+          "addAffinityKey": "",
+          "addResistanceKey": ""
         },
 
         "specialties": {
@@ -46,15 +47,7 @@
           "SpecialAbility": false
         },
 
-        "resistances": {
-          "Fire": false,
-          "Ice": false,
-          "Lightning": false,
-          "Earth": false,
-          "Life": false,
-          "Nature": false,
-          "Astral": false
-        }
+        "resistances": {}
       }
     }
   }
