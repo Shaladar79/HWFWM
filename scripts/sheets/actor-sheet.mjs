@@ -52,41 +52,52 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     return context;
   }
 
-  /**
+    /**
    * Minimal V2-safe tabs.
    * Requires:
-   * - nav:  .hwfwm-tabs[data-group="primary"] with links .hwfwm-tab[data-tab]
+   * - nav:    .hwfwm-tabs[data-group="primary"] with links .hwfwm-tab[data-tab]
    * - panels: .tab[data-group="primary"][data-tab="..."]
    */
   _onRender(...args) {
     super._onRender(...args);
 
-    const root = this.element;
-    if (!root) return;
+    // In ApplicationV2 + PARTS, `this.element` may be an HTMLElement OR a collection.
+    // Normalize to a single root HTMLElement.
+    let root = this.element;
+    if (Array.isArray(root)) root = root[0];
+    // Some mixins/compat layers expose a jQuery-like collection with [0]
+    if (root && !(root instanceof HTMLElement) && root[0] instanceof HTMLElement) root = root[0];
+
+    if (!(root instanceof HTMLElement)) return;
 
     const nav = root.querySelector('.hwfwm-tabs[data-group="primary"]');
     if (!nav) return;
 
-    const panels = Array.from(root.querySelectorAll('.tab[data-group="primary"]'));
-    const links = Array.from(nav.querySelectorAll(".hwfwm-tab[data-tab]"));
+    const panels = Array.from(root.querySelectorAll('.tab[data-group="primary"][data-tab]'));
+    const links = Array.from(nav.querySelectorAll('.hwfwm-tab[data-tab]'));
+
+    if (!panels.length || !links.length) return;
 
     const activate = (tabName) => {
       for (const p of panels) {
-        p.style.display = p.dataset.tab === tabName ? "" : "none";
+        const isActive = p.dataset.tab === tabName;
+        p.classList.toggle("is-active", isActive);
+        // Force visibility regardless of theme CSS defaults
+        p.style.display = isActive ? "" : "none";
       }
       for (const a of links) {
         a.classList.toggle("is-active", a.dataset.tab === tabName);
       }
     };
 
-    // Determine initial tab (default to overview)
+    // Default to overview unless a link is already marked active
     const initial =
       links.find((a) => a.classList.contains("is-active"))?.dataset.tab ||
-      links[0]?.dataset.tab ||
       "overview";
 
     activate(initial);
 
+    // Avoid stacking listeners across rerenders
     nav.addEventListener("click", (ev) => {
       const a = ev.target.closest(".hwfwm-tab[data-tab]");
       if (!a) return;
@@ -94,4 +105,5 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
       activate(a.dataset.tab);
     });
   }
+
 }
