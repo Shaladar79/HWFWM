@@ -149,15 +149,44 @@
 <div class="hwfwm-card">
   <div class="hwfwm-card__title">Aptitudes</div>
 
-  <div class="hwfwm-checkgrid">
-    {{#each system.aptitudes as |val key|}}
-      <label class="hwfwm-check">
-        <input type="checkbox"
-               name="system.aptitudes.{{key}}"
-               {{#if val}}checked{{/if}} />
-        <span>{{key}}</span>
-      </label>
+  <!-- Add Aptitude Controls -->
+  <div class="hwfwm-spec-add">
+    <select name="system._ui.addAptitudeKey">
+      <option value="">— Add Aptitude —</option>
+      {{!-- iterate the injected top-level aptitude catalog (from _prepareContext) --}}
+      {{#each aptitudeCatalog as |a key|}}
+        <option value="{{key}}">Aptitude: {{a.name}}</option>
+      {{/each}}
+    </select>
+
+    <button type="button" class="hwfwm-itembtn" data-action="add-aptitude">
+      Add
+    </button>
+  </div>
+
+  <!-- Selected Aptitudes List -->
+  <div class="hwfwm-spec-table">
+
+    <div class="hwfwm-spec-head">
+      <div>Aptitude</div>
+      <div></div>
+    </div>
+
+    {{#each system.aptitudes as |a key|}}
+    <div class="hwfwm-spec-row">
+      <div class="hwfwm-spec-name">Aptitude: {{a.name}}</div>
+
+      <div class="hwfwm-spec-actions">
+        <button type="button"
+                class="hwfwm-itembtn hwfwm-itembtn--danger"
+                data-action="remove-aptitude"
+                data-key="{{key}}">
+          Remove
+        </button>
+      </div>
+    </div>
     {{/each}}
+
   </div>
 </div>
 
