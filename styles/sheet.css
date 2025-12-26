@@ -377,7 +377,75 @@
 }
 
 /* =========================================================
-   12) Status > Defense
+  12) Status > Resources (full-width 4-across + Defense row)
+   ========================================================= */
+
+.hwfwm-res-full {
+  display: grid;
+  gap: 12px;
+}
+
+.hwfwm-res-row4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.hwfwm-res-row3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.hwfwm-res-cell {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.hwfwm-res-label {
+  font-weight: 800;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.75);
+}
+
+/* value/max container */
+.hwfwm-res-pair {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  gap: 6px;
+  align-items: center;
+  justify-content: start;
+}
+
+/* tighter inputs so 4 cells fit comfortably */
+.hwfwm-input-tight {
+  padding: 6px 8px;
+  line-height: 1.1;
+}
+
+/* separator between resources and defense */
+.hwfwm-res-separator {
+  font-weight: 900;
+  letter-spacing: 0.6px;
+  color: rgba(0, 0, 0, 0.7);
+  padding-top: 6px;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+  margin-top: 2px;
+}
+
+/* optional: stack to 2 columns on narrow sheets */
+@media (max-width: 900px) {
+  .hwfwm-res-row4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+
+/* =========================================================
+   13) Status > Defense
    ========================================================= */
 
 .hwfwm-defense-row {
