@@ -26,7 +26,8 @@ Hooks.once("init", async () => {
     // Tab Sections
     // Status
     "systems/hwfwm-system/templates/actor/tabs/status/attributes.hbs",
-    "systems/hwfwm-system/templates/actor/tabs/status/resources.hbs"
+    "systems/hwfwm-system/templates/actor/tabs/status/resources.hbs",
+    "systems/hwfwm-system/templates/actor/tabs/status/defense.hbs"
   ]);
 
   // v13+ namespaced Actors collection (avoids deprecation warning)
