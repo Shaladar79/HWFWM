@@ -22,6 +22,10 @@
 
         "defense": { "base": 0, "mod": 0, "total": 0 },
 
+        "_ui": {
+          "addSpecialtyKey": ""
+        },
+
         "specialties": {
           "athletics": { "name": "Athletics", "attribute": "Power", "total": 0, "notes": "" },
           "acrobatics": { "name": "Acrobatics", "attribute": "Speed", "total": 0, "notes": "" },
