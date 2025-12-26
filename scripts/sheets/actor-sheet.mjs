@@ -133,51 +133,53 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     });
 
     // -----------------------------
-    // Item action buttons (event delegation)
+    // Item action buttons (event delegation) — bind once
     // -----------------------------
-    root.addEventListener("click", async (ev) => {
-      const btn = ev.target.closest("[data-action]");
-      if (!btn) return;
+    if (!this._actionsBound) {
+      this._actionsBound = true;
 
-      const action = btn.dataset.action;
+      root.addEventListener("click", async (ev) => {
+        const btn = ev.target.closest("[data-action]");
+        if (!btn) return;
 
-      // Only handle actions used in Traits > Features
-      if (!["open-item", "delete-item", "create-talent"].includes(action)) return;
+        const action = btn.dataset.action;
+        if (!["open-item", "delete-item", "create-talent"].includes(action)) return;
 
-      ev.preventDefault();
+        ev.preventDefault();
 
-      // Open existing item
-      if (action === "open-item") {
-        const id = btn.dataset.itemId;
-        const item = this.document?.items?.get(id);
-        if (!item) return;
-        item.sheet?.render(true);
-        return;
-      }
+        // Open existing item
+        if (action === "open-item") {
+          const id = btn.dataset.itemId;
+          const item = this.document?.items?.get(id);
+          if (!item) return;
+          item.sheet?.render(true);
+          return;
+        }
 
-      // Delete item (Talents section)
-      if (action === "delete-item") {
-        const id = btn.dataset.itemId;
-        const item = this.document?.items?.get(id);
-        if (!item) return;
-        await item.delete();
-        return;
-      }
+        // Delete item (Talents section)
+        if (action === "delete-item") {
+          const id = btn.dataset.itemId;
+          const item = this.document?.items?.get(id);
+          if (!item) return;
+          await item.delete();
+          return;
+        }
 
-      // Create a new Talent item
-      if (action === "create-talent") {
-        await this.document.createEmbeddedDocuments("Item", [
-          {
-            name: "New Talent",
-            type: "talent",
-            system: {
-              talentType: ""
+        // Create a new Talent item
+        if (action === "create-talent") {
+          await this.document.createEmbeddedDocuments("Item", [
+            {
+              name: "New Talent",
+              type: "talent",
+              system: {
+                talentType: ""
+              }
             }
-          }
-        ]);
-        return;
-      }
-    });
+          ]);
+          return;
+        }
+      });
+    }
   }
 
   /**
@@ -206,13 +208,17 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
       }
     };
 
-    // Prefer persisted; fall back to any pre-marked active; then default
     const initial =
       getPersisted?.() ||
       links.find((a) => a.classList.contains("is-active"))?.dataset.tab ||
       defaultTab;
 
     activate(initial);
+
+    // Avoid stacking listeners on rerender
+    const boundKey = `tabBound:${group}`;
+    if (nav.dataset[boundKey] === "1") return;
+    nav.dataset[boundKey] = "1";
 
     nav.addEventListener("click", (ev) => {
       const a = ev.target.closest(`.hwfwm-tab[data-tab]`);
