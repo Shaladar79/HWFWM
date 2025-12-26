@@ -487,6 +487,24 @@
       74px;
   }
 }
+/* Specialties: Add control row */
+.hwfwm-spec-add {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.hwfwm-spec-add select {
+  max-width: 260px;
+}
+
+.hwfwm-spec-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  align-items: center;
+}
 
 
 /* =========================================================
