@@ -6,7 +6,7 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
   static DEFAULT_OPTIONS = foundry.utils.mergeObject(super.DEFAULT_OPTIONS, {
     tag: "form", // make the application root a <form> so V2 form handling works
     classes: ["hwfwm-system", "sheet", "actor", "pc", "hwfwm-sheet"],
-    position: { width: 700, height: 500 },
+    position: { width: 875, height: 500 },
     form: {
       submitOnChange: true, // autosave on dropdown change
       closeOnSubmit: false
