@@ -87,6 +87,20 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     context.system._ui = context.system._ui ?? {};
     context.system._ui.addSpecialtyKey = context.system._ui.addSpecialtyKey ?? "";
 
+    /**
+     * FIX: Ensure specialtyCatalog exists in the render context so the dropdown can populate.
+     * Preferred source: CONFIG (stable reference list)
+     * Fallback: actor system data if you still store it there
+     *
+     * IMPORTANT:
+     * Your HBS should iterate `{{#each specialtyCatalog as |s key|}}`
+     * not `system.specialtyCatalog` to avoid coupling to persisted actor data.
+     */
+    context.specialtyCatalog =
+      cfg.specialtyCatalog ??
+      this.document?.system?.specialtyCatalog ??
+      {};
+
     return context;
   }
 
@@ -171,10 +185,23 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
           }
 
           if (action === "add-specialty") {
-            const key = this.document?.system?._ui?.addSpecialtyKey;
+            /**
+             * FIX: Read the current select value from the DOM.
+             * Relying on this.document.system._ui.addSpecialtyKey can be stale because the
+             * form submits asynchronously (submitOnChange).
+             */
+            const select = root.querySelector('select[name="system._ui.addSpecialtyKey"]');
+            const keyFromDom = (select?.value ?? "").trim();
+
+            const key = keyFromDom || (this.document?.system?._ui?.addSpecialtyKey ?? "");
             if (!key) return;
 
-            const catalog = this.document?.system?.specialtyCatalog ?? {};
+            // Prefer CONFIG catalog (stable), fallback to actor system storage.
+            const catalog =
+              CONFIG["hwfwm-system"]?.specialtyCatalog ??
+              this.document?.system?.specialtyCatalog ??
+              {};
+
             const entry = catalog[key];
             if (!entry) return;
 
