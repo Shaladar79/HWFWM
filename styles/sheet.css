@@ -317,3 +317,35 @@
 .hwfwm-roll:hover {
   background: #ffffff;
 }
+
+/* =========================================================
+   11) Status > Resources
+   ========================================================= */
+
+/* Current / Max inline row */
+.hwfwm-resource-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 6px;
+  align-items: center;
+}
+
+/* Separator between current and max */
+.hwfwm-resource-sep {
+  font-weight: 800;
+  color: rgba(0, 0, 0, 0.55);
+  text-align: center;
+  min-width: 8px;
+}
+
+/* Resource inputs are slightly tighter than normal fields */
+.hwfwm-resource-row input {
+  padding: 8px 10px;
+  text-align: right;
+}
+
+/* Shielding (single-value resource) */
+.hwfwm-field > input[type="number"] {
+  text-align: right;
+}
+
