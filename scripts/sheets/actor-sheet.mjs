@@ -34,6 +34,10 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
 
     const cfg = CONFIG["hwfwm-system"] ?? {};
 
+    // IMPORTANT: bind system context to the actual actor system data
+    // so templates using `system.*` have the real document values.
+    context.system = this.document?.system ?? context.system ?? {};
+
     const roles = cfg.roles ?? {};
     const roleOrder = cfg.roleOrder ?? Object.keys(roles);
 
@@ -83,23 +87,18 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
       .sort((a, b) => a.name.localeCompare(b.name));
 
     // Ensure UI holder exists so the Add Specialty select has a bound value
-    context.system = context.system ?? {};
     context.system._ui = context.system._ui ?? {};
     context.system._ui.addSpecialtyKey = context.system._ui.addSpecialtyKey ?? "";
 
     /**
-     * FIX: Ensure specialtyCatalog exists in the render context so the dropdown can populate.
-     * Preferred source: CONFIG (stable reference list)
-     * Fallback: actor system data if you still store it there
+     * Config-backed catalog used by the "Add Specialty" dropdown.
+     * This should come from config (CONFIG namespace), not actor data.
      *
      * IMPORTANT:
      * Your HBS should iterate `{{#each specialtyCatalog as |s key|}}`
-     * not `system.specialtyCatalog` to avoid coupling to persisted actor data.
+     * (top-level), not `system.specialtyCatalog`.
      */
-    context.specialtyCatalog =
-      cfg.specialtyCatalog ??
-      this.document?.system?.specialtyCatalog ??
-      {};
+    context.specialtyCatalog = cfg.specialtyCatalog ?? {};
 
     return context;
   }
@@ -185,23 +184,15 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
           }
 
           if (action === "add-specialty") {
-            /**
-             * FIX: Read the current select value from the DOM.
-             * Relying on this.document.system._ui.addSpecialtyKey can be stale because the
-             * form submits asynchronously (submitOnChange).
-             */
+            // Read the current select value from the DOM (submitOnChange may be asynchronous)
             const select = root.querySelector('select[name="system._ui.addSpecialtyKey"]');
             const keyFromDom = (select?.value ?? "").trim();
 
             const key = keyFromDom || (this.document?.system?._ui?.addSpecialtyKey ?? "");
             if (!key) return;
 
-            // Prefer CONFIG catalog (stable), fallback to actor system storage.
-            const catalog =
-              CONFIG["hwfwm-system"]?.specialtyCatalog ??
-              this.document?.system?.specialtyCatalog ??
-              {};
-
+            // Catalog comes from CONFIG (authoritative)
+            const catalog = CONFIG["hwfwm-system"]?.specialtyCatalog ?? {};
             const entry = catalog[key];
             if (!entry) return;
 
