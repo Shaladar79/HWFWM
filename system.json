@@ -13,6 +13,10 @@
   "documentTypes": {
     "Actor": {
       "pc": {}
+    },
+    "Item": {
+      "feature": {},
+      "talent": {}
     }
   },
   "manifest": "https://raw.githubusercontent.com/Shaladar79/HWFWM/main/system.json",
