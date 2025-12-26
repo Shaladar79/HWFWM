@@ -1,6 +1,38 @@
 import { HWFWM_CONFIG } from "./config/index.mjs";
 import { HwfwmActorSheet } from "./scripts/sheets/actor-sheet.mjs";
 
+/* --------------------------------------------
+ * Minimal Item Sheets (placeholder)
+ * -------------------------------------------- */
+
+class HwfwmFeatureSheet extends ItemSheet {
+  static get defaultOptions() {
+    return foundry.utils.mergeObject(super.defaultOptions, {
+      classes: ["hwfwm-system", "sheet", "item", "feature"],
+      width: 520,
+      height: 420
+    });
+  }
+
+  get template() {
+    return "systems/hwfwm-system/templates/item/feature-sheet.hbs";
+  }
+}
+
+class HwfwmTalentSheet extends ItemSheet {
+  static get defaultOptions() {
+    return foundry.utils.mergeObject(super.defaultOptions, {
+      classes: ["hwfwm-system", "sheet", "item", "talent"],
+      width: 520,
+      height: 420
+    });
+  }
+
+  get template() {
+    return "systems/hwfwm-system/templates/item/talent-sheet.hbs";
+  }
+}
+
 Hooks.once("init", async () => {
   console.log("HWFWM System | Initialized");
 
@@ -31,7 +63,11 @@ Hooks.once("init", async () => {
 
     // Traits
     "systems/hwfwm-system/templates/actor/tabs/traits/enhancements.hbs",
-    "systems/hwfwm-system/templates/actor/tabs/traits/features.hbs"
+    "systems/hwfwm-system/templates/actor/tabs/traits/features.hbs",
+
+    // Item sheets (placeholders)
+    "systems/hwfwm-system/templates/item/feature-sheet.hbs",
+    "systems/hwfwm-system/templates/item/talent-sheet.hbs"
   ]);
 
   // v13+ namespaced Actors collection (avoids deprecation warning)
@@ -42,5 +78,18 @@ Hooks.once("init", async () => {
     types: ["pc"],
     makeDefault: true,
     label: "HWFWM PC Sheet"
+  });
+
+  // Register basic Item sheets for new item types
+  Items.registerSheet("hwfwm-system", HwfwmFeatureSheet, {
+    types: ["feature"],
+    makeDefault: true,
+    label: "HWFWM Feature Sheet"
+  });
+
+  Items.registerSheet("hwfwm-system", HwfwmTalentSheet, {
+    types: ["talent"],
+    makeDefault: true,
+    label: "HWFWM Talent Sheet"
   });
 });
