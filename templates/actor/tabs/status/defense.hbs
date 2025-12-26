@@ -1,20 +1,10 @@
 <div class="hwfwm-card">
   <div class="hwfwm-card__title">Defense</div>
 
-  <div class="hwfwm-grid">
+  <!-- Inline Defense Row -->
+  <div class="hwfwm-defense-row">
 
-    <!-- Defense Total -->
-    <div class="hwfwm-field">
-      <label class="hwfwm-label">Defense (Total)</label>
-      <input class="hwfwm-input-4d"
-             type="number"
-             name="system.defense.total"
-             value="{{system.defense.total}}"
-             placeholder="0" />
-    </div>
-
-    <!-- Defense Breakdown -->
-    <div class="hwfwm-field">
+    <div class="hwfwm-field hwfwm-defense-field">
       <label class="hwfwm-label">Base</label>
       <input class="hwfwm-input-4d"
              type="number"
@@ -23,12 +13,21 @@
              placeholder="0" />
     </div>
 
-    <div class="hwfwm-field">
-      <label class="hwfwm-label">Modifier</label>
+    <div class="hwfwm-field hwfwm-defense-field">
+      <label class="hwfwm-label">Mod</label>
       <input class="hwfwm-input-4d"
              type="number"
              name="system.defense.mod"
              value="{{system.defense.mod}}"
+             placeholder="0" />
+    </div>
+
+    <div class="hwfwm-field hwfwm-defense-field">
+      <label class="hwfwm-label">Total</label>
+      <input class="hwfwm-input-4d"
+             type="number"
+             name="system.defense.total"
+             value="{{system.defense.total}}"
              placeholder="0" />
     </div>
 
