@@ -1,0 +1,99 @@
+<div class="hwfwm-card">
+
+  <div class="hwfwm-card__title">Specialties</div>
+
+  <!-- Specialties Table -->
+  <div class="hwfwm-attr-table">
+
+    <div class="hwfwm-attr-head">
+      <div>Specialty</div>
+      <div>Attribute</div>
+      <div>Total</div>
+      <div>Description</div>
+      <div></div>
+    </div>
+
+    {{#each system.specialties as |spec key|}}
+    <div class="hwfwm-attr-row">
+      <div class="hwfwm-attr-label">{{spec.name}}</div>
+
+      <input type="text"
+             name="system.specialties.{{key}}.attribute"
+             value="{{spec.attribute}}"
+             placeholder="Attribute" />
+
+      <input type="number"
+             name="system.specialties.{{key}}.total"
+             value="{{spec.total}}"
+             placeholder="0" />
+
+      <input type="text"
+             name="system.specialties.{{key}}.notes"
+             value="{{spec.notes}}"
+             placeholder="Description / notes" />
+
+      <button type="button"
+              class="hwfwm-roll"
+              data-roll="specialty"
+              data-key="{{key}}">
+        Roll
+      </button>
+    </div>
+    {{/each}}
+
+  </div>
+</div>
+
+
+<div class="hwfwm-card">
+
+  <div class="hwfwm-card__title">Affinities</div>
+
+  <div class="hwfwm-res-row4">
+    {{#each system.affinities as |val key|}}
+      <label class="hwfwm-res-cell">
+        <input type="checkbox"
+               name="system.affinities.{{key}}"
+               {{#if val}}checked{{/if}} />
+        {{key}}
+      </label>
+    {{/each}}
+  </div>
+
+</div>
+
+
+<div class="hwfwm-card">
+
+  <div class="hwfwm-card__title">Aptitudes</div>
+
+  <div class="hwfwm-res-row4">
+    {{#each system.aptitudes as |val key|}}
+      <label class="hwfwm-res-cell">
+        <input type="checkbox"
+               name="system.aptitudes.{{key}}"
+               {{#if val}}checked{{/if}} />
+        {{key}}
+      </label>
+    {{/each}}
+  </div>
+
+</div>
+
+
+<div class="hwfwm-card">
+
+  <div class="hwfwm-card__title">Resistances</div>
+
+  <div class="hwfwm-res-row4">
+    {{#each system.resistances as |val key|}}
+      <label class="hwfwm-res-cell">
+        <input type="checkbox"
+               name="system.resistances.{{key}}"
+               {{#if val}}checked{{/if}} />
+        {{key}}
+      </label>
+    {{/each}}
+  </div>
+
+</div>
