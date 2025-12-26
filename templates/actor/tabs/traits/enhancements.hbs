@@ -6,7 +6,8 @@
   <div class="hwfwm-spec-add">
     <select name="system._ui.addSpecialtyKey">
       <option value="">— Add Specialty —</option>
-      {{#each system.specialtyCatalog as |s key|}}
+      {{!-- FIX: iterate the injected top-level catalog (from _prepareContext) --}}
+      {{#each specialtyCatalog as |s key|}}
         <option value="{{key}}">{{s.name}}</option>
       {{/each}}
     </select>
