@@ -23,7 +23,8 @@
         "defense": { "base": 0, "mod": 0, "total": 0 },
 
         "_ui": {
-          "addSpecialtyKey": ""
+          "addSpecialtyKey": "",
+          "addAffinityKey": ""
         },
 
         "specialties": {
@@ -35,15 +36,7 @@
 
         "specialtiesCustom": {},
 
-        "affinities": {
-          "Fire": false,
-          "Ice": false,
-          "Lightning": false,
-          "Earth": false,
-          "Life": false,
-          "Nature": false,
-          "Astral": false
-        },
+        "affinities": {},
 
         "aptitudes": {
           "SpecialAttack": false,
