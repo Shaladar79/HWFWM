@@ -91,6 +91,7 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     context.system._ui.addSpecialtyKey = context.system._ui.addSpecialtyKey ?? "";
     context.system._ui.addAffinityKey = context.system._ui.addAffinityKey ?? "";
     context.system._ui.addResistanceKey = context.system._ui.addResistanceKey ?? "";
+    context.system._ui.addAptitudeKey = context.system._ui.addAptitudeKey ?? "";
 
     /**
      * Config-backed catalogs used by dropdowns.
@@ -98,10 +99,12 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
      * - Specialties HBS should iterate `specialtyCatalog` (top-level)
      * - Affinities HBS should iterate `affinityCatalog` (top-level)
      * - Resistances HBS should iterate `resistanceCatalog` (top-level)
+     * - Aptitudes HBS should iterate `aptitudeCatalog` (top-level)
      */
     context.specialtyCatalog = cfg.specialtyCatalog ?? {};
     context.affinityCatalog = cfg.affinityCatalog ?? {};
     context.resistanceCatalog = cfg.resistanceCatalog ?? {};
+    context.aptitudeCatalog = cfg.aptitudeCatalog ?? {};
 
     return context;
   }
@@ -161,7 +164,9 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
             "add-affinity",
             "remove-affinity",
             "add-resistance",
-            "remove-resistance"
+            "remove-resistance",
+            "add-aptitude",
+            "remove-aptitude"
           ]);
           if (!allowed.has(action)) return;
 
@@ -324,6 +329,50 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
 
             await this.document.update({
               "system.resistances": current
+            });
+
+            return;
+          }
+
+          if (action === "add-aptitude") {
+            // Read the current select value from the DOM (submitOnChange may be asynchronous)
+            const select = root.querySelector('select[name="system._ui.addAptitudeKey"]');
+            const keyFromDom = (select?.value ?? "").trim();
+
+            const key = keyFromDom || (this.document?.system?._ui?.addAptitudeKey ?? "");
+            if (!key) return;
+
+            // Catalog comes from CONFIG (authoritative)
+            const catalog = CONFIG["hwfwm-system"]?.aptitudeCatalog ?? {};
+            const entry = catalog[key];
+            if (!entry) return;
+
+            // Prevent duplicates
+            const has = !!this.document?.system?.aptitudes?.[key];
+            if (has) {
+              await this.document.update({ "system._ui.addAptitudeKey": "" });
+              return;
+            }
+
+            await this.document.update({
+              [`system.aptitudes.${key}`]: { name: entry.name ?? key },
+              "system._ui.addAptitudeKey": ""
+            });
+
+            return;
+          }
+
+          if (action === "remove-aptitude") {
+            const key = actionBtn.dataset.key;
+            if (!key) return;
+
+            const current = foundry.utils.deepClone(this.document?.system?.aptitudes ?? {});
+            if (!(key in current)) return;
+
+            delete current[key];
+
+            await this.document.update({
+              "system.aptitudes": current
             });
 
             return;
