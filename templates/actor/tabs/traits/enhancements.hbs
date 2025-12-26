@@ -6,7 +6,7 @@
   <div class="hwfwm-spec-add">
     <select name="system._ui.addSpecialtyKey">
       <option value="">— Add Specialty —</option>
-      {{!-- FIX: iterate the injected top-level catalog (from _prepareContext) --}}
+      {{!-- iterate the injected top-level catalog (from _prepareContext) --}}
       {{#each specialtyCatalog as |s key|}}
         <option value="{{key}}">{{s.name}}</option>
       {{/each}}
@@ -105,15 +105,44 @@
 <div class="hwfwm-card">
   <div class="hwfwm-card__title">Affinities</div>
 
-  <div class="hwfwm-checkgrid">
-    {{#each system.affinities as |val key|}}
-      <label class="hwfwm-check">
-        <input type="checkbox"
-               name="system.affinities.{{key}}"
-               {{#if val}}checked{{/if}} />
-        <span>{{key}}</span>
-      </label>
+  <!-- Add Affinity Controls -->
+  <div class="hwfwm-spec-add">
+    <select name="system._ui.addAffinityKey">
+      <option value="">— Add Affinity —</option>
+      {{!-- iterate the injected top-level affinity catalog (from _prepareContext) --}}
+      {{#each affinityCatalog as |a key|}}
+        <option value="{{key}}">Affinity: {{a.name}}</option>
+      {{/each}}
+    </select>
+
+    <button type="button" class="hwfwm-itembtn" data-action="add-affinity">
+      Add
+    </button>
+  </div>
+
+  <!-- Selected Affinities List -->
+  <div class="hwfwm-spec-table">
+
+    <div class="hwfwm-spec-head">
+      <div>Affinity</div>
+      <div></div>
+    </div>
+
+    {{#each system.affinities as |a key|}}
+    <div class="hwfwm-spec-row">
+      <div class="hwfwm-spec-name">Affinity: {{a.name}}</div>
+
+      <div class="hwfwm-spec-actions">
+        <button type="button"
+                class="hwfwm-itembtn hwfwm-itembtn--danger"
+                data-action="remove-affinity"
+                data-key="{{key}}">
+          Remove
+        </button>
+      </div>
+    </div>
     {{/each}}
+
   </div>
 </div>
 
