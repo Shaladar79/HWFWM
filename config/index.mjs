@@ -15,7 +15,7 @@ export const HWFWM_CONFIG = {
   raceOrder: RACE_ORDER,
 
   backgrounds: BACKGROUNDS,
-  backgroundOrder: BACKGROUND_ORDER
+  backgroundOrder: BACKGROUND_ORDER,
 
   specialtyCatalog: HWFWM_SPECIALTIES
 };
