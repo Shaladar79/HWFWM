@@ -3,6 +3,7 @@ import { ROLES, ROLE_ORDER } from "./roles.mjs";
 import { RACES, RACE_ORDER } from "./races.mjs";
 import { BACKGROUNDS, BACKGROUND_ORDER } from "./backgrounds.mjs";
 import { HWFWM_SPECIALTIES } from "./specialties.mjs";
+import { HWFWM_AFFINITIES } from "./affinities.mjs";
 
 export const HWFWM_CONFIG = {
   ranks: RANKS,
