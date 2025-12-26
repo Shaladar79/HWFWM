@@ -82,7 +82,7 @@
   overflow: auto;
 }
 
-/* Two-column layout used by Status */
+/* Legacy helper (not currently used by Status, kept for future) */
 .hwfwm-layout {
   display: grid;
   grid-template-columns: 360px 1fr;
@@ -90,11 +90,12 @@
   align-items: start;
 }
 
-/* Simple stack helper (used on right column) */
+/* Simple stack helper */
 .hwfwm-stack {
   display: grid;
   gap: 16px;
 }
+
 /* =========================================================
    Status layout
    ========================================================= */
@@ -105,17 +106,24 @@
 }
 
 .hwfwm-status__top {
-  /* full width by default */
+  /* full width */
 }
 
+/* IMPORTANT: minmax(0,1fr) prevents overflow forcing a wrap */
 .hwfwm-status__bottom {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 16px;
   align-items: start;
 }
 
-/* Optional: stack on smaller widths */
+/* Ensure children respect the grid column */
+.hwfwm-status__bottom > .hwfwm-card {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Stack on smaller widths */
 @media (max-width: 760px) {
   .hwfwm-status__bottom {
     grid-template-columns: 1fr;
@@ -132,6 +140,7 @@
   background: #ffffff;
   border: 1px solid rgba(0, 0, 0, 0.18);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 0;
 }
 
 .hwfwm-card--muted {
@@ -163,6 +172,7 @@
 .hwfwm-field {
   display: grid;
   gap: 6px;
+  min-width: 0;
 }
 
 .hwfwm-label {
@@ -175,7 +185,6 @@
    7) Inputs & selects (general)
    ========================================================= */
 
-/* Inputs can keep padding */
 .hwfwm-sheet__root input {
   width: 100%;
   padding: 10px 12px;
@@ -186,7 +195,6 @@
   box-sizing: border-box;
 }
 
-/* Selects: use height/line-height, not vertical padding (prevents clipping) */
 .hwfwm-sheet__root select {
   width: 100%;
   height: 36px;
@@ -198,13 +206,11 @@
   border: 1px solid rgba(0, 0, 0, 0.25);
   box-sizing: border-box;
 
-  /* Prevent Foundry/theme overrides from breaking native rendering */
   appearance: auto;
   -webkit-appearance: menulist;
   -moz-appearance: menulist;
 }
 
-/* Focus states */
 .hwfwm-sheet__root input:focus,
 .hwfwm-sheet__root select:focus {
   outline: none;
@@ -304,7 +310,6 @@
   text-align: right;
 }
 
-/* Roll button */
 .hwfwm-roll {
   height: 34px;
   border-radius: 8px;
@@ -319,48 +324,7 @@
 }
 
 /* =========================================================
-   11) Status > Resources (tight widths)
-   ========================================================= */
-
-.hwfwm-resource-row {
-  display: grid;
-  grid-template-columns: auto auto auto;
-  gap: 6px;
-  align-items: center;
-  justify-content: start;
-}
-
-.hwfwm-resource-sep {
-  font-weight: 800;
-  color: rgba(0, 0, 0, 0.55);
-  text-align: center;
-  min-width: 8px;
-}
-
-/* Base resource input styling (tight and right-aligned) */
-.hwfwm-resource-row input {
-  padding: 8px 10px;
-  text-align: right;
-  width: 4.5ch;       /* ~4 digits + breathing room */
-  min-width: 4.5ch;
-}
-
-/* Trauma: 3 digits per field */
-.hwfwm-resource-row--trauma input {
-  width: 3.5ch;
-  min-width: 3.5ch;
-}
-
-/* Shielding: single value, 4 digits */
-.hwfwm-shielding-input {
-  padding: 8px 10px;
-  text-align: right;
-  width: 4.5ch;
-  min-width: 4.5ch;
-}
-
-/* =========================================================
-   Status > Resources (organized rows)
+   11) Status > Resources (organized rows)
    ========================================================= */
 
 .hwfwm-resources-grid {
@@ -389,6 +353,7 @@
   justify-self: end;
 }
 
+/* Shared separator */
 .hwfwm-resource-sep {
   font-weight: 800;
   color: rgba(0, 0, 0, 0.55);
@@ -412,7 +377,7 @@
 }
 
 /* =========================================================
-   Status > Defense
+   12) Status > Defense
    ========================================================= */
 
 .hwfwm-defense-row {
@@ -423,4 +388,5 @@
 }
 
 .hwfwm-defense-field {
-  min-width:
+  min-width: 0;
+}
