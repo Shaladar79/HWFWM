@@ -3,7 +3,7 @@
 
   <div class="hwfwm-grid">
 
-    <!-- LifeForce -->
+    <!-- LifeForce (4 digits each) -->
     <div class="hwfwm-field">
       <label class="hwfwm-label">LifeForce</label>
       <div class="hwfwm-resource-row">
@@ -19,10 +19,10 @@
       </div>
     </div>
 
-    <!-- Trauma -->
+    <!-- Trauma (3 digits each) -->
     <div class="hwfwm-field">
       <label class="hwfwm-label">Trauma</label>
-      <div class="hwfwm-resource-row">
+      <div class="hwfwm-resource-row hwfwm-resource-row--trauma">
         <input type="number"
                name="system.resources.trauma.value"
                value="{{system.resources.trauma.value}}"
@@ -35,7 +35,7 @@
       </div>
     </div>
 
-    <!-- Mana -->
+    <!-- Mana (4 digits each) -->
     <div class="hwfwm-field">
       <label class="hwfwm-label">Mana</label>
       <div class="hwfwm-resource-row">
@@ -51,7 +51,7 @@
       </div>
     </div>
 
-    <!-- Stamina -->
+    <!-- Stamina (4 digits each) -->
     <div class="hwfwm-field">
       <label class="hwfwm-label">Stamina</label>
       <div class="hwfwm-resource-row">
@@ -67,7 +67,7 @@
       </div>
     </div>
 
-    <!-- Pace -->
+    <!-- Pace (4 digits each) -->
     <div class="hwfwm-field">
       <label class="hwfwm-label">Pace</label>
       <div class="hwfwm-resource-row">
@@ -83,7 +83,7 @@
       </div>
     </div>
 
-    <!-- Reaction -->
+    <!-- Reaction (4 digits each) -->
     <div class="hwfwm-field">
       <label class="hwfwm-label">Reaction</label>
       <div class="hwfwm-resource-row">
@@ -99,10 +99,11 @@
       </div>
     </div>
 
-    <!-- Shielding (current only) -->
+    <!-- Shielding (single value, 4 digits) -->
     <div class="hwfwm-field">
       <label class="hwfwm-label">Shielding</label>
-      <input type="number"
+      <input class="hwfwm-shielding-input"
+             type="number"
              name="system.resources.shielding.value"
              value="{{system.resources.shielding.value}}"
              placeholder="0" />
