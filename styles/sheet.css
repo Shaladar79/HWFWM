@@ -517,3 +517,78 @@
   }
 }
 
+   /* =========================================================
+   15) Traits > Features (Item lists)
+   ========================================================= */
+
+.hwfwm-itemlist {
+  display: grid;
+  gap: 10px;
+}
+
+.hwfwm-itemlist__head,
+.hwfwm-itemlist__row {
+  display: grid;
+  grid-template-columns: 1fr 140px 160px;
+  gap: 10px;
+  align-items: center;
+}
+
+.hwfwm-itemlist__head {
+  font-size: 11px;
+  font-weight: 800;
+  color: rgba(0, 0, 0, 0.65);
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.hwfwm-itemlist__name {
+  font-weight: 800;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hwfwm-itemlist__meta {
+  color: rgba(0, 0, 0, 0.65);
+  font-weight: 700;
+  font-size: 12px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hwfwm-itemlist__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.hwfwm-itemlist__footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 6px;
+  border-top: 1px solid rgba(0, 0, 0, 0.10);
+}
+
+.hwfwm-itembtn {
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  background: rgba(255, 255, 255, 0.85);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.hwfwm-itembtn:hover {
+  background: #ffffff;
+}
+
+.hwfwm-itembtn--danger {
+  border-color: rgba(140, 0, 0, 0.25);
+}
+
