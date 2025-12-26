@@ -5,7 +5,17 @@
         "details": {
           "roleKey": "",
           "rankKey": "",
-          "raceKey": ""
+          "raceKey": "",
+          "backgroundKey": ""
+        },
+        "resources": {
+          "lifeForce": { "value": 0, "max": 0 },
+          "trauma": { "value": 0, "max": 0 },
+          "mana": { "value": 0, "max": 0 },
+          "stamina": { "value": 0, "max": 0 },
+          "pace": { "value": 0, "max": 0 },
+          "reaction": { "value": 0, "max": 0 },
+          "shielding": { "value": 0 }
         }
       }
     }
