@@ -95,6 +95,32 @@
   display: grid;
   gap: 16px;
 }
+/* =========================================================
+   Status layout
+   ========================================================= */
+
+.hwfwm-status {
+  display: grid;
+  gap: 16px;
+}
+
+.hwfwm-status__top {
+  /* full width by default */
+}
+
+.hwfwm-status__bottom {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+/* Optional: stack on smaller widths */
+@media (max-width: 760px) {
+  .hwfwm-status__bottom {
+    grid-template-columns: 1fr;
+  }
+}
 
 /* =========================================================
    5) Cards / panels
