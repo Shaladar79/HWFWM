@@ -86,19 +86,19 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
 
-    // Ensure UI holder exists so the Add Specialty select has a bound value
+    // Ensure UI holder exists so the Add selects have bound values
     context.system._ui = context.system._ui ?? {};
     context.system._ui.addSpecialtyKey = context.system._ui.addSpecialtyKey ?? "";
+    context.system._ui.addAffinityKey = context.system._ui.addAffinityKey ?? "";
 
     /**
-     * Config-backed catalog used by the "Add Specialty" dropdown.
-     * This should come from config (CONFIG namespace), not actor data.
-     *
+     * Config-backed catalogs used by dropdowns.
      * IMPORTANT:
-     * Your HBS should iterate `{{#each specialtyCatalog as |s key|}}`
-     * (top-level), not `system.specialtyCatalog`.
+     * - Specialties HBS should iterate `specialtyCatalog` (top-level)
+     * - Affinities HBS should iterate `affinityCatalog` (top-level)
      */
     context.specialtyCatalog = cfg.specialtyCatalog ?? {};
+    context.affinityCatalog = cfg.affinityCatalog ?? {};
 
     return context;
   }
@@ -154,7 +154,9 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
             "delete-item",
             "create-talent",
             "add-specialty",
-            "remove-specialty"
+            "remove-specialty",
+            "add-affinity",
+            "remove-affinity"
           ]);
           if (!allowed.has(action)) return;
 
@@ -229,6 +231,50 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
 
             await this.document.update({
               "system.specialtiesCustom": current
+            });
+
+            return;
+          }
+
+          if (action === "add-affinity") {
+            // Read the current select value from the DOM (submitOnChange may be asynchronous)
+            const select = root.querySelector('select[name="system._ui.addAffinityKey"]');
+            const keyFromDom = (select?.value ?? "").trim();
+
+            const key = keyFromDom || (this.document?.system?._ui?.addAffinityKey ?? "");
+            if (!key) return;
+
+            // Catalog comes from CONFIG (authoritative)
+            const catalog = CONFIG["hwfwm-system"]?.affinityCatalog ?? {};
+            const entry = catalog[key];
+            if (!entry) return;
+
+            // Prevent duplicates
+            const has = !!this.document?.system?.affinities?.[key];
+            if (has) {
+              await this.document.update({ "system._ui.addAffinityKey": "" });
+              return;
+            }
+
+            await this.document.update({
+              [`system.affinities.${key}`]: { name: entry.name ?? key },
+              "system._ui.addAffinityKey": ""
+            });
+
+            return;
+          }
+
+          if (action === "remove-affinity") {
+            const key = actionBtn.dataset.key;
+            if (!key) return;
+
+            const current = foundry.utils.deepClone(this.document?.system?.affinities ?? {});
+            if (!(key in current)) return;
+
+            delete current[key];
+
+            await this.document.update({
+              "system.affinities": current
             });
 
             return;
