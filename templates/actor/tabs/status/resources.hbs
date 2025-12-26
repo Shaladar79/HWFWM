@@ -1,104 +1,132 @@
 <div class="hwfwm-card">
   <div class="hwfwm-card__title">Resources</div>
 
-  <div class="hwfwm-resources-grid">
+  <div class="hwfwm-res-full">
 
-    <!-- Row 1: LifeForce (val/max) + Trauma (val/max) -->
-    <div class="hwfwm-field hwfwm-res-row hwfwm-res-row--2col">
-      <label class="hwfwm-label">LifeForce</label>
-      <div class="hwfwm-resource-pair">
-        <input class="hwfwm-input-4d" type="number"
-               name="system.resources.lifeForce.value"
-               value="{{system.resources.lifeForce.value}}"
-               placeholder="0" />
-        <span class="hwfwm-resource-sep">/</span>
-        <input class="hwfwm-input-4d" type="number"
-               name="system.resources.lifeForce.max"
-               value="{{system.resources.lifeForce.max}}"
-               placeholder="0" />
+    <!-- Row 1: LifeForce | Trauma | Shielding | Armor -->
+    <div class="hwfwm-res-row4">
+
+      <div class="hwfwm-res-cell">
+        <div class="hwfwm-res-label">LifeForce</div>
+        <div class="hwfwm-res-pair">
+          <input class="hwfwm-input-4d hwfwm-input-tight" type="number"
+                 name="system.resources.lifeForce.value"
+                 value="{{system.resources.lifeForce.value}}" placeholder="0" />
+          <span class="hwfwm-resource-sep">/</span>
+          <input class="hwfwm-input-4d hwfwm-input-tight" type="number"
+                 name="system.resources.lifeForce.max"
+                 value="{{system.resources.lifeForce.max}}" placeholder="0" />
+        </div>
       </div>
 
-      <label class="hwfwm-label hwfwm-label--inline">Trauma</label>
-      <div class="hwfwm-resource-pair">
-        <input class="hwfwm-input-3d" type="number"
-               name="system.resources.trauma.value"
-               value="{{system.resources.trauma.value}}"
-               placeholder="0" />
-        <span class="hwfwm-resource-sep">/</span>
-        <input class="hwfwm-input-3d" type="number"
-               name="system.resources.trauma.max"
-               value="{{system.resources.trauma.max}}"
-               placeholder="0" />
+      <div class="hwfwm-res-cell">
+        <div class="hwfwm-res-label">Trauma</div>
+        <div class="hwfwm-res-pair">
+          <input class="hwfwm-input-3d hwfwm-input-tight" type="number"
+                 name="system.resources.trauma.value"
+                 value="{{system.resources.trauma.value}}" placeholder="0" />
+          <span class="hwfwm-resource-sep">/</span>
+          <input class="hwfwm-input-3d hwfwm-input-tight" type="number"
+                 name="system.resources.trauma.max"
+                 value="{{system.resources.trauma.max}}" placeholder="0" />
+        </div>
       </div>
+
+      <div class="hwfwm-res-cell">
+        <div class="hwfwm-res-label">Shielding</div>
+        <input class="hwfwm-input-4d hwfwm-input-tight" type="number"
+               name="system.resources.shielding.value"
+               value="{{system.resources.shielding.value}}" placeholder="0" />
+      </div>
+
+      <div class="hwfwm-res-cell">
+        <div class="hwfwm-res-label">Armor</div>
+        <div class="hwfwm-res-pair">
+          <input class="hwfwm-input-4d hwfwm-input-tight" type="number"
+                 name="system.resources.armor.value"
+                 value="{{system.resources.armor.value}}" placeholder="0" />
+          <span class="hwfwm-resource-sep">/</span>
+          <input class="hwfwm-input-4d hwfwm-input-tight" type="number"
+                 name="system.resources.armor.max"
+                 value="{{system.resources.armor.max}}" placeholder="0" />
+        </div>
+      </div>
+
     </div>
 
-    <!-- Row 2: Shielding (single) + Armor (val/max) -->
-    <div class="hwfwm-field hwfwm-res-row hwfwm-res-row--2col">
-      <label class="hwfwm-label">Shielding</label>
-      <input class="hwfwm-input-4d" type="number"
-             name="system.resources.shielding.value"
-             value="{{system.resources.shielding.value}}"
-             placeholder="0" />
+    <!-- Row 2: Mana | Stamina | Pace | Reaction -->
+    <div class="hwfwm-res-row4">
 
-      <label class="hwfwm-label hwfwm-label--inline">Armor</label>
-      <div class="hwfwm-resource-pair">
-        <input class="hwfwm-input-4d" type="number"
-               name="system.resources.armor.value"
-               value="{{system.resources.armor.value}}"
-               placeholder="0" />
-        <span class="hwfwm-resource-sep">/</span>
-        <input class="hwfwm-input-4d" type="number"
-               name="system.resources.armor.max"
-               value="{{system.resources.armor.max}}"
-               placeholder="0" />
+      <div class="hwfwm-res-cell">
+        <div class="hwfwm-res-label">Mana</div>
+        <div class="hwfwm-res-pair">
+          <input class="hwfwm-input-4d hwfwm-input-tight" type="number"
+                 name="system.resources.mana.value"
+                 value="{{system.resources.mana.value}}" placeholder="0" />
+          <span class="hwfwm-resource-sep">/</span>
+          <input class="hwfwm-input-4d hwfwm-input-tight" type="number"
+                 name="system.resources.mana.max"
+                 value="{{system.resources.mana.max}}" placeholder="0" />
+        </div>
       </div>
+
+      <div class="hwfwm-res-cell">
+        <div class="hwfwm-res-label">Stamina</div>
+        <div class="hwfwm-res-pair">
+          <input class="hwfwm-input-4d hwfwm-input-tight" type="number"
+                 name="system.resources.stamina.value"
+                 value="{{system.resources.stamina.value}}" placeholder="0" />
+          <span class="hwfwm-resource-sep">/</span>
+          <input class="hwfwm-input-4d hwfwm-input-tight" type="number"
+                 name="system.resources.stamina.max"
+                 value="{{system.resources.stamina.max}}" placeholder="0" />
+        </div>
+      </div>
+
+      <div class="hwfwm-res-cell">
+        <div class="hwfwm-res-label">Pace</div>
+        <input class="hwfwm-input-4d hwfwm-input-tight" type="number"
+               name="system.resources.pace.value"
+               value="{{system.resources.pace.value}}" placeholder="0" />
+      </div>
+
+      <div class="hwfwm-res-cell">
+        <div class="hwfwm-res-label">Reaction</div>
+        <input class="hwfwm-input-4d hwfwm-input-tight" type="number"
+               name="system.resources.reaction.value"
+               value="{{system.resources.reaction.value}}" placeholder="0" />
+      </div>
+
     </div>
 
-    <!-- Row 3: Mana (val/max) + Stamina (val/max) -->
-    <div class="hwfwm-field hwfwm-res-row hwfwm-res-row--2col">
-      <label class="hwfwm-label">Mana</label>
-      <div class="hwfwm-resource-pair">
-        <input class="hwfwm-input-4d" type="number"
-               name="system.resources.mana.value"
-               value="{{system.resources.mana.value}}"
-               placeholder="0" />
-        <span class="hwfwm-resource-sep">/</span>
-        <input class="hwfwm-input-4d" type="number"
-               name="system.resources.mana.max"
-               value="{{system.resources.mana.max}}"
-               placeholder="0" />
+    <!-- Separator: Defense -->
+    <div class="hwfwm-res-separator">Defense</div>
+
+    <!-- Row 3: Defense Base | Mod | Total -->
+    <div class="hwfwm-res-row3">
+
+      <div class="hwfwm-res-cell">
+        <div class="hwfwm-res-label">Base</div>
+        <input class="hwfwm-input-4d hwfwm-input-tight" type="number"
+               name="system.defense.base"
+               value="{{system.defense.base}}" placeholder="0" />
       </div>
 
-      <label class="hwfwm-label hwfwm-label--inline">Stamina</label>
-      <div class="hwfwm-resource-pair">
-        <input class="hwfwm-input-4d" type="number"
-               name="system.resources.stamina.value"
-               value="{{system.resources.stamina.value}}"
-               placeholder="0" />
-        <span class="hwfwm-resource-sep">/</span>
-        <input class="hwfwm-input-4d" type="number"
-               name="system.resources.stamina.max"
-               value="{{system.resources.stamina.max}}"
-               placeholder="0" />
+      <div class="hwfwm-res-cell">
+        <div class="hwfwm-res-label">Mod</div>
+        <input class="hwfwm-input-4d hwfwm-input-tight" type="number"
+               name="system.defense.mod"
+               value="{{system.defense.mod}}" placeholder="0" />
       </div>
-    </div>
 
-    <!-- Row 4: Pace (single) + Reaction (single) -->
-    <div class="hwfwm-field hwfwm-res-row hwfwm-res-row--2col">
-      <label class="hwfwm-label">Pace</label>
-      <input class="hwfwm-input-4d" type="number"
-             name="system.resources.pace.value"
-             value="{{system.resources.pace.value}}"
-             placeholder="0" />
+      <div class="hwfwm-res-cell">
+        <div class="hwfwm-res-label">Total</div>
+        <input class="hwfwm-input-4d hwfwm-input-tight" type="number"
+               name="system.defense.total"
+               value="{{system.defense.total}}" placeholder="0" />
+      </div>
 
-      <label class="hwfwm-label hwfwm-label--inline">Reaction</label>
-      <input class="hwfwm-input-4d" type="number"
-             name="system.resources.reaction.value"
-             value="{{system.resources.reaction.value}}"
-             placeholder="0" />
     </div>
 
   </div>
-</div>
-
 </div>
