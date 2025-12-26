@@ -22,11 +22,16 @@ Hooks.once("init", async () => {
     "systems/hwfwm-system/templates/actor/tabs/overview.hbs",
     "systems/hwfwm-system/templates/actor/tabs/attributes.hbs",
     "systems/hwfwm-system/templates/actor/tabs/status.hbs",
+    "systems/hwfwm-system/templates/actor/tabs/traits.hbs",
 
     // Tab Sections
     // Status
     "systems/hwfwm-system/templates/actor/tabs/status/attributes.hbs",
-    "systems/hwfwm-system/templates/actor/tabs/status/resources.hbs"
+    "systems/hwfwm-system/templates/actor/tabs/status/resources.hbs",
+
+    // Traits
+    "systems/hwfwm-system/templates/actor/tabs/traits/enhancements.hbs",
+    "systems/hwfwm-system/templates/actor/tabs/traits/features.hbs"
   ]);
 
   // v13+ namespaced Actors collection (avoids deprecation warning)
