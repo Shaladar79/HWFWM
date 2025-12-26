@@ -10,7 +10,7 @@ Hooks.once("init", async () => {
   // Helper used by the sheet templates
   Handlebars.registerHelper("eq", (a, b) => a === b);
 
-  // Preload actor sheet templates + partials (required when using {{> partial}})
+  // Preload actor sheet templates + partials (required when using {{> partial }})
   await loadTemplates([
     "systems/hwfwm-system/templates/actor/actor-sheet.hbs",
 
@@ -23,10 +23,10 @@ Hooks.once("init", async () => {
     "systems/hwfwm-system/templates/actor/tabs/attributes.hbs",
     "systems/hwfwm-system/templates/actor/tabs/status.hbs",
 
-    //Tab Sections
+    // Tab Sections
     // Status
     "systems/hwfwm-system/templates/actor/tabs/status/attributes.hbs",
-
+    "systems/hwfwm-system/templates/actor/tabs/status/resources.hbs"
   ]);
 
   // v13+ namespaced Actors collection (avoids deprecation warning)
