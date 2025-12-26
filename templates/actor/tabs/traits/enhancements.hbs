@@ -3,9 +3,9 @@
   <div class="hwfwm-card__title">Specialties</div>
 
   <!-- Specialties Table -->
-  <div class="hwfwm-attr-table">
+  <div class="hwfwm-spec-table">
 
-    <div class="hwfwm-attr-head">
+    <div class="hwfwm-spec-head">
       <div>Specialty</div>
       <div>Attribute</div>
       <div>Total</div>
@@ -14,8 +14,8 @@
     </div>
 
     {{#each system.specialties as |spec key|}}
-    <div class="hwfwm-attr-row">
-      <div class="hwfwm-attr-label">{{spec.name}}</div>
+    <div class="hwfwm-spec-row">
+      <div class="hwfwm-spec-name">{{spec.name}}</div>
 
       <input type="text"
              name="system.specialties.{{key}}.attribute"
@@ -30,7 +30,7 @@
       <input type="text"
              name="system.specialties.{{key}}.notes"
              value="{{spec.notes}}"
-             placeholder="Description / notes" />
+             placeholder="Description" />
 
       <button type="button"
               class="hwfwm-roll"
@@ -49,13 +49,13 @@
 
   <div class="hwfwm-card__title">Affinities</div>
 
-  <div class="hwfwm-res-row4">
+  <div class="hwfwm-checkgrid">
     {{#each system.affinities as |val key|}}
-      <label class="hwfwm-res-cell">
+      <label class="hwfwm-check">
         <input type="checkbox"
                name="system.affinities.{{key}}"
                {{#if val}}checked{{/if}} />
-        {{key}}
+        <span>{{key}}</span>
       </label>
     {{/each}}
   </div>
@@ -67,15 +67,38 @@
 
   <div class="hwfwm-card__title">Aptitudes</div>
 
-  <div class="hwfwm-res-row4">
-    {{#each system.aptitudes as |val key|}}
-      <label class="hwfwm-res-cell">
-        <input type="checkbox"
-               name="system.aptitudes.{{key}}"
-               {{#if val}}checked{{/if}} />
-        {{key}}
-      </label>
-    {{/each}}
+  <div class="hwfwm-checkgrid">
+
+    <label class="hwfwm-check">
+      <input type="checkbox" name="system.aptitudes.SpecialAttack"
+             {{#if system.aptitudes.SpecialAttack}}checked{{/if}} />
+      <span>Special Attack</span>
+    </label>
+
+    <label class="hwfwm-check">
+      <input type="checkbox" name="system.aptitudes.Spell"
+             {{#if system.aptitudes.Spell}}checked{{/if}} />
+      <span>Spell</span>
+    </label>
+
+    <label class="hwfwm-check">
+      <input type="checkbox" name="system.aptitudes.Boon"
+             {{#if system.aptitudes.Boon}}checked{{/if}} />
+      <span>Boon</span>
+    </label>
+
+    <label class="hwfwm-check">
+      <input type="checkbox" name="system.aptitudes.Curse"
+             {{#if system.aptitudes.Curse}}checked{{/if}} />
+      <span>Curse</span>
+    </label>
+
+    <label class="hwfwm-check">
+      <input type="checkbox" name="system.aptitudes.SpecialAbility"
+             {{#if system.aptitudes.SpecialAbility}}checked{{/if}} />
+      <span>Special Ability</span>
+    </label>
+
   </div>
 
 </div>
@@ -85,13 +108,13 @@
 
   <div class="hwfwm-card__title">Resistances</div>
 
-  <div class="hwfwm-res-row4">
+  <div class="hwfwm-checkgrid">
     {{#each system.resistances as |val key|}}
-      <label class="hwfwm-res-cell">
+      <label class="hwfwm-check">
         <input type="checkbox"
                name="system.resistances.{{key}}"
                {{#if val}}checked{{/if}} />
-        {{key}}
+        <span>{{key}}</span>
       </label>
     {{/each}}
   </div>
