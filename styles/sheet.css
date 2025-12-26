@@ -396,4 +396,124 @@
   .hwfwm-res-row4 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+   /* =========================================================
+   12) Traits (Subtabs)
+   ========================================================= */
+
+/* Keep subtabs visually consistent but slightly tighter */
+.hwfwm-tabs.hwfwm-tabs--sub {
+  padding-top: 0;
 }
+
+/* Subtab visibility is NOT covered by the primary tab rules */
+.hwfwm-sheet .tab[data-group="traits"] {
+  display: none;
+}
+
+.hwfwm-sheet .tab[data-group="traits"].is-active {
+  display: block;
+}
+
+/* =========================================================
+   13) Traits > Enhancements > Specialties table
+   ========================================================= */
+
+.hwfwm-spec-table {
+  display: grid;
+  gap: 8px;
+}
+
+/* 5 columns: Name | Attribute | Total | Description | Roll */
+.hwfwm-spec-head,
+.hwfwm-spec-row {
+  display: grid;
+  grid-template-columns:
+    180px   /* Specialty */
+    140px   /* Attribute */
+    72px    /* Total */
+    1fr     /* Description */
+    74px;   /* Roll */
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+}
+
+.hwfwm-spec-head {
+  font-size: 11px;
+  font-weight: 800;
+  color: rgba(0, 0, 0, 0.65);
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.hwfwm-spec-name {
+  font-weight: 800;
+}
+
+/* Total input right-aligned */
+.hwfwm-spec-row input[type="number"] {
+  text-align: right;
+}
+
+/* Slightly tighter row inputs so the grid feels compact */
+.hwfwm-spec-row input {
+  padding: 8px 10px;
+}
+
+/* Responsive: let the Specialty column shrink and keep Description usable */
+@media (max-width: 900px) {
+  .hwfwm-spec-head,
+  .hwfwm-spec-row {
+    grid-template-columns:
+      1fr
+      120px
+      64px
+      1fr
+      74px;
+  }
+}
+
+/* =========================================================
+   14) Traits > Enhancements > Checkbox grids
+   ========================================================= */
+
+.hwfwm-checkgrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px 12px;
+  align-items: start;
+}
+
+.hwfwm-check {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.hwfwm-check input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+.hwfwm-check span {
+  font-weight: 800;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.78);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Responsive: stack checkboxes to 2 columns on smaller sheets */
+@media (max-width: 900px) {
+  .hwfwm-checkgrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
