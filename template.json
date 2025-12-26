@@ -32,31 +32,31 @@
         },
 
         "affinities": {
-          "Fire": false,
-          "Ice": false,
-          "Lightning": false,
-          "Earth": false,
-          "Life": false,
-          "Nature": false,
-          "Astral": false
+          "fire": false,
+          "ice": false,
+          "lightning": false,
+          "earth": false,
+          "life": false,
+          "nature": false,
+          "astral": false
         },
 
         "aptitudes": {
-          "SpecialAttack": false,
-          "Spell": false,
-          "Boon": false,
-          "Curse": false,
-          "SpecialAbility": false
+          "specialAttack": false,
+          "spell": false,
+          "boon": false,
+          "curse": false,
+          "specialAbility": false
         },
 
         "resistances": {
-          "Fire": false,
-          "Ice": false,
-          "Lightning": false,
-          "Earth": false,
-          "Life": false,
-          "Nature": false,
-          "Astral": false
+          "fire": false,
+          "ice": false,
+          "lightning": false,
+          "earth": false,
+          "life": false,
+          "nature": false,
+          "astral": false
         }
       }
     }
