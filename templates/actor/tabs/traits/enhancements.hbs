@@ -2,6 +2,20 @@
 
   <div class="hwfwm-card__title">Specialties</div>
 
+  <!-- Add Specialty Controls -->
+  <div class="hwfwm-spec-add">
+    <select name="system._ui.addSpecialtyKey">
+      <option value="">— Add Specialty —</option>
+      {{#each system.specialtyCatalog as |s key|}}
+        <option value="{{key}}">{{s.name}}</option>
+      {{/each}}
+    </select>
+
+    <button type="button" class="hwfwm-itembtn" data-action="add-specialty">
+      Add
+    </button>
+  </div>
+
   <!-- Specialties Table -->
   <div class="hwfwm-spec-table">
 
@@ -13,6 +27,7 @@
       <div></div>
     </div>
 
+    {{!-- Base list (fixed) --}}
     {{#each system.specialties as |spec key|}}
     <div class="hwfwm-spec-row">
       <div class="hwfwm-spec-name">{{spec.name}}</div>
@@ -35,9 +50,49 @@
       <button type="button"
               class="hwfwm-roll"
               data-roll="specialty"
-              data-key="{{key}}">
+              data-key="{{key}}"
+              {{#unless spec.total}}disabled{{/unless}}>
         Roll
       </button>
+    </div>
+    {{/each}}
+
+    {{!-- Custom-added list (removable) --}}
+    {{#each system.specialtiesCustom as |spec key|}}
+    <div class="hwfwm-spec-row">
+      <div class="hwfwm-spec-name">{{spec.name}}</div>
+
+      <input type="text"
+             name="system.specialtiesCustom.{{key}}.attribute"
+             value="{{spec.attribute}}"
+             placeholder="Attribute" />
+
+      <input type="number"
+             name="system.specialtiesCustom.{{key}}.total"
+             value="{{spec.total}}"
+             placeholder="0" />
+
+      <input type="text"
+             name="system.specialtiesCustom.{{key}}.notes"
+             value="{{spec.notes}}"
+             placeholder="Description" />
+
+      <div class="hwfwm-spec-actions">
+        <button type="button"
+                class="hwfwm-roll"
+                data-roll="specialty-custom"
+                data-key="{{key}}"
+                {{#unless spec.total}}disabled{{/unless}}>
+          Roll
+        </button>
+
+        <button type="button"
+                class="hwfwm-itembtn hwfwm-itembtn--danger"
+                data-action="remove-specialty"
+                data-key="{{key}}">
+          Remove
+        </button>
+      </div>
     </div>
     {{/each}}
 
