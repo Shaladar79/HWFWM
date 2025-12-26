@@ -410,3 +410,17 @@
   padding: 8px 8px;
   text-align: right;
 }
+
+/* =========================================================
+   Status > Defense
+   ========================================================= */
+
+.hwfwm-defense-row {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  gap: 16px;
+  align-items: end;
+}
+
+.hwfwm-defense-field {
+  min-width:
