@@ -18,7 +18,6 @@ export const HWFWM_CONFIG = {
   backgrounds: BACKGROUNDS,
   backgroundOrder: BACKGROUND_ORDER,
 
-  specialtyCatalog: HWFWM_SPECIALTIES
+  specialtyCatalog: HWFWM_SPECIALTIES,
   affinityCatalog: HWFWM_AFFINITIES
-
 };
