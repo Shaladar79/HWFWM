@@ -56,6 +56,9 @@ Hooks.once("init", async () => {
     "systems/hwfwm-system/templates/actor/tabs/status.hbs",
     "systems/hwfwm-system/templates/actor/tabs/traits.hbs",
 
+    // NEW: Essence tab
+    "systems/hwfwm-system/templates/actor/tabs/essence.hbs",
+
     // Tab Sections
     // Status
     "systems/hwfwm-system/templates/actor/tabs/status/attributes.hbs",
