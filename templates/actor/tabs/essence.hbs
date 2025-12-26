@@ -1,0 +1,141 @@
+<div class="hwfwm-card">
+  <div class="hwfwm-card__title">Essences</div>
+
+  <nav class="hwfwm-tabs" data-group="essence">
+    <a class="hwfwm-tab {{#if (eq system._ui.essenceSubTab "power")}}is-active{{/if}}" data-tab="power">Power</a>
+    <a class="hwfwm-tab {{#if (eq system._ui.essenceSubTab "speed")}}is-active{{/if}}" data-tab="speed">Speed</a>
+    <a class="hwfwm-tab {{#if (eq system._ui.essenceSubTab "spirit")}}is-active{{/if}}" data-tab="spirit">Spirit</a>
+    <a class="hwfwm-tab {{#if (eq system._ui.essenceSubTab "recovery")}}is-active{{/if}}" data-tab="recovery">Recovery</a>
+  </nav>
+
+  <!-- POWER -->
+  <section class="tab" data-group="essence" data-tab="power">
+    <div class="hwfwm-spec-add">
+      <label>Essence</label>
+      <select name="system.essences.powerKey">
+        <option value="">— Select Essence —</option>
+        {{#each essenceCatalog as |e key|}}
+          <option value="{{key}}" {{#if (eq key ../system.essences.powerKey)}}selected{{/if}}>{{e.name}}</option>
+        {{/each}}
+      </select>
+
+      <label>Confluence</label>
+      <select name="system.confluenceEssences.powerKey">
+        <option value="">— Select Confluence —</option>
+        {{#each confluenceEssenceCatalog as |c key|}}
+          <option value="{{key}}" {{#if (eq key ../system.confluenceEssences.powerKey)}}selected{{/if}}>{{c.name}}</option>
+        {{/each}}
+      </select>
+    </div>
+
+    {{#if system.essences.powerKey}}
+      <div class="hwfwm-spec-table">
+        <div class="hwfwm-spec-head">
+          <div>Essence Ability Slots (Power)</div>
+        </div>
+
+        <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 1</div></div>
+        <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 2</div></div>
+        <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 3</div></div>
+        <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 4</div></div>
+        <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 5</div></div>
+      </div>
+    {{/if}}
+  </section>
+
+  <!-- SPEED -->
+  <section class="tab" data-group="essence" data-tab="speed">
+    <div class="hwfwm-spec-add">
+      <label>Essence</label>
+      <select name="system.essences.speedKey">
+        <option value="">— Select Essence —</option>
+        {{#each essenceCatalog as |e key|}}
+          <option value="{{key}}" {{#if (eq key ../system.essences.speedKey)}}selected{{/if}}>{{e.name}}</option>
+        {{/each}}
+      </select>
+
+      <label>Confluence</label>
+      <select name="system.confluenceEssences.speedKey">
+        <option value="">— Select Confluence —</option>
+        {{#each confluenceEssenceCatalog as |c key|}}
+          <option value="{{key}}" {{#if (eq key ../system.confluenceEssences.speedKey)}}selected{{/if}}>{{c.name}}</option>
+        {{/each}}
+      </select>
+    </div>
+
+    {{#if system.essences.speedKey}}
+      <div class="hwfwm-spec-table">
+        <div class="hwfwm-spec-head"><div>Essence Ability Slots (Speed)</div></div>
+        <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 1</div></div>
+        <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 2</div></div>
+        <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 3</div></div>
+        <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 4</div></div>
+        <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 5</div></div>
+      </div>
+    {{/if}}
+  </section>
+
+  <!-- SPIRIT -->
+  <section class="tab" data-group="essence" data-tab="spirit">
+    <div class="hwfwm-spec-add">
+      <label>Essence</label>
+      <select name="system.essences.spiritKey">
+        <option value="">— Select Essence —</option>
+        {{#each essenceCatalog as |e key|}}
+          <option value="{{key}}" {{#if (eq key ../system.essences.spiritKey)}}selected{{/if}}>{{e.name}}</option>
+        {{/each}}
+      </select>
+
+      <label>Confluence</label>
+      <select name="system.confluenceEssences.spiritKey">
+        <option value="">— Select Confluence —</option>
+        {{#each confluenceEssenceCatalog as |c key|}}
+          <option value="{{key}}" {{#if (eq key ../system.confluenceEssences.spiritKey)}}selected{{/if}}>{{c.name}}</option>
+        {{/each}}
+      </select>
+    </div>
+
+    {{#if system.essences.spiritKey}}
+      <div class="hwfwm-spec-table">
+        <div class="hwfwm-spec-head"><div>Essence Ability Slots (Spirit)</div></div>
+        <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 1</div></div>
+        <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 2</div></div>
+        <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 3</div></div>
+        <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 4</div></div>
+        <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 5</div></div>
+      </div>
+    {{/if}}
+  </section>
+
+  <!-- RECOVERY -->
+  <section class="tab" data-group="essence" data-tab="recovery">
+    <div class="hwfwm-spec-add">
+      <label>Essence</label>
+      <select name="system.essences.recoveryKey">
+        <option value="">— Select Essence —</option>
+        {{#each essenceCatalog as |e key|}}
+          <option value="{{key}}" {{#if (eq key ../system.essences.recoveryKey)}}selected{{/if}}>{{e.name}}</option>
+        {{/each}}
+      </select>
+
+      <label>Confluence</label>
+      <select name="system.confluenceEssences.recoveryKey">
+        <option value="">— Select Confluence —</option>
+        {{#each confluenceEssenceCatalog as |c key|}}
+          <option value="{{key}}" {{#if (eq key ../system.confluenceEssences.recoveryKey)}}selected{{/if}}>{{c.name}}</option>
+        {{/each}}
+      </select>
+    </div>
+
+    {{#if system.essences.recoveryKey}}
+      <div class="hwfwm-spec-table">
+        <div class="hwfwm-spec-head"><div>Essence Ability Slots (Recovery)</div></div>
+        <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 1</div></div>
+        <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 2</div></div>
+        <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 3</div></div>
+        <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 4</div></div>
+        <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 5</div></div>
+      </div>
+    {{/if}}
+  </section>
+</div>
