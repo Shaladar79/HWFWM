@@ -164,14 +164,43 @@
 <div class="hwfwm-card">
   <div class="hwfwm-card__title">Resistances</div>
 
-  <div class="hwfwm-checkgrid">
-    {{#each system.resistances as |val key|}}
-      <label class="hwfwm-check">
-        <input type="checkbox"
-               name="system.resistances.{{key}}"
-               {{#if val}}checked{{/if}} />
-        <span>{{key}}</span>
-      </label>
+  <!-- Add Resistance Controls -->
+  <div class="hwfwm-spec-add">
+    <select name="system._ui.addResistanceKey">
+      <option value="">— Add Resistance —</option>
+      {{!-- iterate the injected top-level resistance catalog (from _prepareContext) --}}
+      {{#each resistanceCatalog as |r key|}}
+        <option value="{{key}}">Resistance: {{r.name}}</option>
+      {{/each}}
+    </select>
+
+    <button type="button" class="hwfwm-itembtn" data-action="add-resistance">
+      Add
+    </button>
+  </div>
+
+  <!-- Selected Resistances List -->
+  <div class="hwfwm-spec-table">
+
+    <div class="hwfwm-spec-head">
+      <div>Resistance</div>
+      <div></div>
+    </div>
+
+    {{#each system.resistances as |r key|}}
+    <div class="hwfwm-spec-row">
+      <div class="hwfwm-spec-name">Resistance: {{r.name}}</div>
+
+      <div class="hwfwm-spec-actions">
+        <button type="button"
+                class="hwfwm-itembtn hwfwm-itembtn--danger"
+                data-action="remove-resistance"
+                data-key="{{key}}">
+          Remove
+        </button>
+      </div>
+    </div>
     {{/each}}
+
   </div>
 </div>
