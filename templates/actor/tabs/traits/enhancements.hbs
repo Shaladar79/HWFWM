@@ -35,8 +35,7 @@
       <button type="button"
               class="hwfwm-roll"
               data-roll="specialty"
-              data-key="{{key}}"
-              {{#unless spec.total}}disabled{{/unless}}>
+              data-key="{{key}}">
         Roll
       </button>
     </div>
@@ -69,37 +68,14 @@
   <div class="hwfwm-card__title">Aptitudes</div>
 
   <div class="hwfwm-checkgrid">
-
-    <label class="hwfwm-check">
-      <input type="checkbox" name="system.aptitudes.SpecialAttack"
-             {{#if system.aptitudes.SpecialAttack}}checked{{/if}} />
-      <span>Special Attack</span>
-    </label>
-
-    <label class="hwfwm-check">
-      <input type="checkbox" name="system.aptitudes.Spell"
-             {{#if system.aptitudes.Spell}}checked{{/if}} />
-      <span>Spell</span>
-    </label>
-
-    <label class="hwfwm-check">
-      <input type="checkbox" name="system.aptitudes.Boon"
-             {{#if system.aptitudes.Boon}}checked{{/if}} />
-      <span>Boon</span>
-    </label>
-
-    <label class="hwfwm-check">
-      <input type="checkbox" name="system.aptitudes.Curse"
-             {{#if system.aptitudes.Curse}}checked{{/if}} />
-      <span>Curse</span>
-    </label>
-
-    <label class="hwfwm-check">
-      <input type="checkbox" name="system.aptitudes.SpecialAbility"
-             {{#if system.aptitudes.SpecialAbility}}checked{{/if}} />
-      <span>Special Ability</span>
-    </label>
-
+    {{#each system.aptitudes as |val key|}}
+      <label class="hwfwm-check">
+        <input type="checkbox"
+               name="system.aptitudes.{{key}}"
+               {{#if val}}checked{{/if}} />
+        <span>{{key}}</span>
+      </label>
+    {{/each}}
   </div>
 
 </div>
