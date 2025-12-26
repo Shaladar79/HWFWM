@@ -226,12 +226,12 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
 }
 
-/* Safety: tab panels should not all vanish due to external CSS */
-.tab[data-group="primary"] {
+/* Sheet-scoped tab visibility (DO NOT affect Foundry globally) */
+.hwfwm-sheet .hwfwm-sheet__body > .tab[data-group="primary"] {
   display: none;
 }
 
-.tab[data-group="primary"].is-active {
+.hwfwm-sheet .hwfwm-sheet__body > .tab[data-group="primary"].is-active {
   display: block;
 }
 
