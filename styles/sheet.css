@@ -273,7 +273,14 @@
 .hwfwm-attr-head,
 .hwfwm-attr-row {
   display: grid;
-  grid-template-columns: 1.2fr 1fr 70px 90px 90px 90px 74px;
+  grid-template-columns:
+    1fr         /* Attribute */
+    160px       /* Rank (wider) */
+    56px        /* Num (3 digits) */
+    72px        /* Base (4 digits) */
+    72px        /* Mod (4 digits) */
+    72px        /* Total (4 digits) */
+    74px;       /* Roll */
   gap: 10px;
   align-items: center;
 }
