@@ -6,9 +6,10 @@
   <div class="hwfwm-spec-add">
     <select name="system._ui.addSpecialtyKey">
       <option value="">— Add Specialty —</option>
-      {{!-- iterate the injected top-level catalog (from _prepareContext) --}}
       {{#each specialtyCatalog as |s key|}}
-        <option value="{{key}}">{{s.name}}</option>
+        <option value="{{key}}" {{#if (eq key ../system._ui.addSpecialtyKey)}}selected{{/if}}>
+          {{s.name}}
+        </option>
       {{/each}}
     </select>
 
@@ -109,9 +110,10 @@
   <div class="hwfwm-spec-add">
     <select name="system._ui.addAffinityKey">
       <option value="">— Add Affinity —</option>
-      {{!-- iterate the injected top-level affinity catalog (from _prepareContext) --}}
       {{#each affinityCatalog as |a key|}}
-        <option value="{{key}}">Affinity: {{a.name}}</option>
+        <option value="{{key}}" {{#if (eq key ../system._ui.addAffinityKey)}}selected{{/if}}>
+          Affinity: {{a.name}}
+        </option>
       {{/each}}
     </select>
 
@@ -153,9 +155,10 @@
   <div class="hwfwm-spec-add">
     <select name="system._ui.addAptitudeKey">
       <option value="">— Add Aptitude —</option>
-      {{!-- iterate the injected top-level aptitude catalog (from _prepareContext) --}}
       {{#each aptitudeCatalog as |a key|}}
-        <option value="{{key}}">Aptitude: {{a.name}}</option>
+        <option value="{{key}}" {{#if (eq key ../system._ui.addAptitudeKey)}}selected{{/if}}>
+          Aptitude: {{a.name}}
+        </option>
       {{/each}}
     </select>
 
@@ -197,9 +200,10 @@
   <div class="hwfwm-spec-add">
     <select name="system._ui.addResistanceKey">
       <option value="">— Add Resistance —</option>
-      {{!-- iterate the injected top-level resistance catalog (from _prepareContext) --}}
       {{#each resistanceCatalog as |r key|}}
-        <option value="{{key}}">Resistance: {{r.name}}</option>
+        <option value="{{key}}" {{#if (eq key ../system._ui.addResistanceKey)}}selected{{/if}}>
+          Resistance: {{r.name}}
+        </option>
       {{/each}}
     </select>
 
