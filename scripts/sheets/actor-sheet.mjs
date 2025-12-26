@@ -4,11 +4,11 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
   foundry.applications.sheets.ActorSheetV2
 ) {
   static DEFAULT_OPTIONS = foundry.utils.mergeObject(super.DEFAULT_OPTIONS, {
-    tag: "form", // make the application root a <form> so V2 form handling works
+    tag: "form",
     classes: ["hwfwm-system", "sheet", "actor", "pc", "hwfwm-sheet"],
     position: { width: 875, height: 500 },
     form: {
-      submitOnChange: true, // autosave on dropdown change
+      submitOnChange: true,
       closeOnSubmit: false
     }
   });
@@ -20,11 +20,19 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
   };
 
   /**
-   * Track the currently active tab so autosave re-renders
-   * do not reset the sheet back to Overview.
+   * Persist primary tab across autosave rerenders.
    * @private
    */
   _activeTab = "overview";
+
+  /**
+   * Persist sub-tabs per group across autosave rerenders.
+   * Keys are data-group values (e.g. "traits").
+   * @private
+   */
+  _activeSubTabs = {
+    traits: "enhancements"
+  };
 
   async _prepareContext(options) {
     const context = await super._prepareContext(options);
@@ -56,57 +64,158 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
       backgroundKey: details.backgroundKey ?? ""
     };
 
+    // -------------------------------------------------------
+    // Items context for Traits > Features
+    // -------------------------------------------------------
+    const items = Array.from(this.document?.items ?? []);
+
+    const grantedSources = new Set(["race", "role", "background", "rank"]);
+
+    // Feature items granted by the build pipeline
+    const grantedFeatures = items
+      .filter((it) => it?.type === "feature")
+      .filter((it) => grantedSources.has(it?.system?.source))
+      .map((it) => ({
+        id: it.id,
+        name: it.name,
+        source: it.system?.source ?? ""
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    // Talent items (chosen/earned)
+    const talents = items
+      .filter((it) => it?.type === "talent")
+      .map((it) => ({
+        id: it.id,
+        name: it.name,
+        talentType: it.system?.talentType ?? ""
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    context.grantedFeatures = grantedFeatures;
+    context.talents = talents;
+
     return context;
   }
 
   /**
-   * Minimal V2-safe tabs.
-   * Requires:
-   * - nav:    .hwfwm-tabs[data-group="primary"] with links .hwfwm-tab[data-tab]
-   * - panels: .tab[data-group="primary"][data-tab="..."]
+   * Tabs + Item button actions (V2-safe)
    */
   _onRender(...args) {
     super._onRender(...args);
 
-    // In ApplicationV2 + PARTS, `this.element` may be an HTMLElement OR a collection.
-    // Normalize to a single root HTMLElement.
+    // Normalize root element
     let root = this.element;
     if (Array.isArray(root)) root = root[0];
-    // Some mixins/compat layers expose a jQuery-like collection with [0]
     if (root && !(root instanceof HTMLElement) && root[0] instanceof HTMLElement) root = root[0];
-
     if (!(root instanceof HTMLElement)) return;
 
-    const nav = root.querySelector('.hwfwm-tabs[data-group="primary"]');
+    // -----------------------------
+    // Primary Tabs (overview/status/traits)
+    // -----------------------------
+    this._activateTabGroup(root, {
+      group: "primary",
+      navSelector: '.hwfwm-tabs[data-group="primary"]',
+      defaultTab: "overview",
+      getPersisted: () => this._activeTab,
+      setPersisted: (t) => (this._activeTab = t)
+    });
+
+    // -----------------------------
+    // Sub Tabs (Traits: enhancements/features)
+    // -----------------------------
+    this._activateTabGroup(root, {
+      group: "traits",
+      navSelector: '.hwfwm-tabs[data-group="traits"]',
+      defaultTab: "enhancements",
+      getPersisted: () => this._activeSubTabs.traits,
+      setPersisted: (t) => (this._activeSubTabs.traits = t)
+    });
+
+    // -----------------------------
+    // Item action buttons (event delegation)
+    // -----------------------------
+    root.addEventListener("click", async (ev) => {
+      const btn = ev.target.closest("[data-action]");
+      if (!btn) return;
+
+      const action = btn.dataset.action;
+
+      // Only handle actions used in Traits > Features
+      if (!["open-item", "delete-item", "create-talent"].includes(action)) return;
+
+      ev.preventDefault();
+
+      // Open existing item
+      if (action === "open-item") {
+        const id = btn.dataset.itemId;
+        const item = this.document?.items?.get(id);
+        if (!item) return;
+        item.sheet?.render(true);
+        return;
+      }
+
+      // Delete item (Talents section)
+      if (action === "delete-item") {
+        const id = btn.dataset.itemId;
+        const item = this.document?.items?.get(id);
+        if (!item) return;
+        await item.delete();
+        return;
+      }
+
+      // Create a new Talent item
+      if (action === "create-talent") {
+        await this.document.createEmbeddedDocuments("Item", [
+          {
+            name: "New Talent",
+            type: "talent",
+            system: {
+              talentType: ""
+            }
+          }
+        ]);
+        return;
+      }
+    });
+  }
+
+  /**
+   * Generic tab activator for any data-group.
+   * - nav:  .hwfwm-tabs[data-group="X"] with .hwfwm-tab[data-tab]
+   * - panels: .tab[data-group="X"][data-tab]
+   */
+  _activateTabGroup(root, { group, navSelector, defaultTab, getPersisted, setPersisted }) {
+    const nav = root.querySelector(navSelector);
     if (!nav) return;
 
-    const panels = Array.from(root.querySelectorAll('.tab[data-group="primary"][data-tab]'));
-    const links = Array.from(nav.querySelectorAll('.hwfwm-tab[data-tab]'));
-
+    const panels = Array.from(root.querySelectorAll(`.tab[data-group="${group}"][data-tab]`));
+    const links = Array.from(nav.querySelectorAll(`.hwfwm-tab[data-tab]`));
     if (!panels.length || !links.length) return;
 
     const activate = (tabName) => {
-      // Persist active tab across autosave re-renders
-      this._activeTab = tabName;
+      setPersisted(tabName);
 
       for (const p of panels) {
         const isActive = p.dataset.tab === tabName;
         p.classList.toggle("is-active", isActive);
-        // Force visibility regardless of theme CSS defaults
         p.style.display = isActive ? "" : "none";
       }
-
       for (const a of links) {
         a.classList.toggle("is-active", a.dataset.tab === tabName);
       }
     };
 
-    // Use persisted tab, defaulting to overview
-    const initial = this._activeTab || "overview";
+    // Prefer persisted; fall back to any pre-marked active; then default
+    const initial =
+      getPersisted?.() ||
+      links.find((a) => a.classList.contains("is-active"))?.dataset.tab ||
+      defaultTab;
+
     activate(initial);
 
     nav.addEventListener("click", (ev) => {
-      const a = ev.target.closest(".hwfwm-tab[data-tab]");
+      const a = ev.target.closest(`.hwfwm-tab[data-tab]`);
       if (!a) return;
       ev.preventDefault();
       activate(a.dataset.tab);
