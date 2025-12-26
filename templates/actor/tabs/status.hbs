@@ -1,12 +1,12 @@
-<div class="hwfwm-layout">
+<div class="hwfwm-status">
 
-  <!-- LEFT: Attributes -->
-  <div>
+  <!-- TOP: Attributes (full width) -->
+  <div class="hwfwm-status__top">
     {{> "systems/hwfwm-system/templates/actor/tabs/status/attributes.hbs" }}
   </div>
 
-  <!-- RIGHT: Placeholder for Resources / Reaction -->
-  <div class="hwfwm-stack">
+  <!-- BOTTOM: Resources (left) + Defense (right) -->
+  <div class="hwfwm-status__bottom">
     <div class="hwfwm-card hwfwm-card--muted">
       <div class="hwfwm-card__title">Resources</div>
       <div class="hwfwm-muted">
@@ -15,9 +15,9 @@
     </div>
 
     <div class="hwfwm-card hwfwm-card--muted">
-      <div class="hwfwm-card__title">Reaction</div>
+      <div class="hwfwm-card__title">Defense</div>
       <div class="hwfwm-muted">
-        Reaction and initiative will be added next.
+        Defense will be added after Resources.
       </div>
     </div>
   </div>
