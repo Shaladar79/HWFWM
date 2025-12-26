@@ -19,6 +19,13 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     }
   };
 
+  /**
+   * Track the currently active tab so autosave re-renders
+   * do not reset the sheet back to Overview.
+   * @private
+   */
+  _activeTab = "overview";
+
   async _prepareContext(options) {
     const context = await super._prepareContext(options);
 
@@ -39,7 +46,7 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     context.roleOptions = roleOrder.map((k) => ({ value: k, label: roles[k] ?? k }));
     context.rankOptions = rankOrder.map((k) => ({ value: k, label: ranks[k] ?? k }));
     context.raceOptions = raceOrder.map((k) => ({ value: k, label: races[k] ?? k }));
-    context.backgroundOptions = backgroundOrder.map(k => ({ value: k, label: backgrounds[k] ?? k }));
+    context.backgroundOptions = backgroundOrder.map((k) => ({ value: k, label: backgrounds[k] ?? k }));
 
     const details = this.document?.system?.details ?? {};
     context.details = {
@@ -52,7 +59,7 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     return context;
   }
 
-    /**
+  /**
    * Minimal V2-safe tabs.
    * Requires:
    * - nav:    .hwfwm-tabs[data-group="primary"] with links .hwfwm-tab[data-tab]
@@ -79,25 +86,25 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     if (!panels.length || !links.length) return;
 
     const activate = (tabName) => {
+      // Persist active tab across autosave re-renders
+      this._activeTab = tabName;
+
       for (const p of panels) {
         const isActive = p.dataset.tab === tabName;
         p.classList.toggle("is-active", isActive);
         // Force visibility regardless of theme CSS defaults
         p.style.display = isActive ? "" : "none";
       }
+
       for (const a of links) {
         a.classList.toggle("is-active", a.dataset.tab === tabName);
       }
     };
 
-    // Default to overview unless a link is already marked active
-    const initial =
-      links.find((a) => a.classList.contains("is-active"))?.dataset.tab ||
-      "overview";
-
+    // Use persisted tab, defaulting to overview
+    const initial = this._activeTab || "overview";
     activate(initial);
 
-    // Avoid stacking listeners across rerenders
     nav.addEventListener("click", (ev) => {
       const a = ev.target.closest(".hwfwm-tab[data-tab]");
       if (!a) return;
@@ -105,5 +112,4 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
       activate(a.dataset.tab);
     });
   }
-
 }
