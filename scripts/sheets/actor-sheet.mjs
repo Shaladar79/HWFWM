@@ -22,8 +22,12 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
   _activeTab = "overview";
   _activeSubTabs = { traits: "enhancements" };
 
-  _actionsBound = false;
-  _rollsBound = false;
+  /**
+   * AbortController used to ensure we never stack handlers,
+   * and that handlers are always rebound to the latest root after rerender.
+   * @private
+   */
+  _domController = null;
 
   async _prepareContext(options) {
     const context = await super._prepareContext(options);
@@ -59,7 +63,7 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     const items = Array.from(this.document?.items ?? []);
     const grantedSources = new Set(["race", "role", "background", "rank"]);
 
-    const grantedFeatures = items
+    context.grantedFeatures = items
       .filter((it) => it?.type === "feature")
       .filter((it) => grantedSources.has(it?.system?.source))
       .map((it) => ({
@@ -69,7 +73,7 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
 
-    const talents = items
+    context.talents = items
       .filter((it) => it?.type === "talent")
       .map((it) => ({
         id: it.id,
@@ -78,11 +82,7 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
 
-    context.grantedFeatures = grantedFeatures;
-    context.talents = talents;
-
     // Ensure UI holder exists so the Add Specialty select has a bound value
-    // (keeps it from being undefined in some templates)
     context.system = context.system ?? {};
     context.system._ui = context.system._ui ?? {};
     context.system._ui.addSpecialtyKey = context.system._ui.addSpecialtyKey ?? "";
@@ -93,10 +93,16 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
   _onRender(...args) {
     super._onRender(...args);
 
+    // Normalize root element
     let root = this.element;
     if (Array.isArray(root)) root = root[0];
     if (root && !(root instanceof HTMLElement) && root[0] instanceof HTMLElement) root = root[0];
     if (!(root instanceof HTMLElement)) return;
+
+    // Kill old DOM listeners and rebind to the new root
+    if (this._domController) this._domController.abort();
+    this._domController = new AbortController();
+    const { signal } = this._domController;
 
     // Primary tabs
     this._activateTabGroup(root, {
@@ -104,7 +110,8 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
       navSelector: '.hwfwm-tabs[data-group="primary"]',
       defaultTab: "overview",
       getPersisted: () => this._activeTab,
-      setPersisted: (t) => (this._activeTab = t)
+      setPersisted: (t) => (this._activeTab = t),
+      signal
     });
 
     // Traits subtabs
@@ -113,116 +120,115 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
       navSelector: '.hwfwm-tabs[data-group="traits"]',
       defaultTab: "enhancements",
       getPersisted: () => this._activeSubTabs.traits,
-      setPersisted: (t) => (this._activeSubTabs.traits = t)
+      setPersisted: (t) => (this._activeSubTabs.traits = t),
+      signal
     });
 
-    // Actions (bind once)
-    if (!this._actionsBound) {
-      this._actionsBound = true;
-
-      root.addEventListener("click", async (ev) => {
-        const btn = ev.target.closest("[data-action]");
-        if (!btn) return;
-
-        const action = btn.dataset.action;
-        const allowed = new Set([
-          "open-item",
-          "delete-item",
-          "create-talent",
-          "add-specialty",
-          "remove-specialty"
-        ]);
-
-        if (!allowed.has(action)) return;
-        ev.preventDefault();
-
+    // One delegated click handler for ALL actions + rolls
+    root.addEventListener(
+      "click",
+      async (ev) => {
         // -----------------------------
-        // Existing item actions
+        // Actions
         // -----------------------------
-        if (action === "open-item") {
-          const id = btn.dataset.itemId;
-          const item = this.document?.items?.get(id);
-          if (!item) return;
-          item.sheet?.render(true);
-          return;
-        }
+        const actionBtn = ev.target.closest("[data-action]");
+        if (actionBtn) {
+          const action = actionBtn.dataset.action;
 
-        if (action === "delete-item") {
-          const id = btn.dataset.itemId;
-          const item = this.document?.items?.get(id);
-          if (!item) return;
-          await item.delete();
-          return;
-        }
-
-        if (action === "create-talent") {
-          await this.document.createEmbeddedDocuments("Item", [
-            { name: "New Talent", type: "talent", system: { talentType: "" } }
+          // Only handle our known actions
+          const allowed = new Set([
+            "open-item",
+            "delete-item",
+            "create-talent",
+            "add-specialty",
+            "remove-specialty"
           ]);
-          return;
-        }
+          if (!allowed.has(action)) return;
 
-        // -----------------------------
-        // NEW: Specialties add/remove
-        // -----------------------------
-        if (action === "add-specialty") {
-          const key = this.document?.system?._ui?.addSpecialtyKey;
-          if (!key) return;
+          ev.preventDefault();
 
-          const catalog = this.document?.system?.specialtyCatalog ?? {};
-          const entry = catalog[key];
-          if (!entry) return;
-
-          // Prevent duplicates across base + custom
-          const baseHas = !!this.document?.system?.specialties?.[key];
-          const customHas = !!this.document?.system?.specialtiesCustom?.[key];
-          if (baseHas || customHas) {
-            // Reset selector anyway for nicer UX
-            await this.document.update({ "system._ui.addSpecialtyKey": "" });
+          if (action === "open-item") {
+            const id = actionBtn.dataset.itemId;
+            const item = this.document?.items?.get(id);
+            if (!item) return;
+            item.sheet?.render(true);
             return;
           }
 
-          await this.document.update({
-            [`system.specialtiesCustom.${key}`]: {
-              name: entry.name ?? key,
-              attribute: entry.attribute ?? "",
-              total: 0,
-              notes: ""
-            },
-            "system._ui.addSpecialtyKey": ""
-          });
+          if (action === "delete-item") {
+            const id = actionBtn.dataset.itemId;
+            const item = this.document?.items?.get(id);
+            if (!item) return;
+            await item.delete();
+            return;
+          }
 
-          return;
+          if (action === "create-talent") {
+            await this.document.createEmbeddedDocuments("Item", [
+              { name: "New Talent", type: "talent", system: { talentType: "" } }
+            ]);
+            return;
+          }
+
+          if (action === "add-specialty") {
+            const key = this.document?.system?._ui?.addSpecialtyKey;
+            if (!key) return;
+
+            const catalog = this.document?.system?.specialtyCatalog ?? {};
+            const entry = catalog[key];
+            if (!entry) return;
+
+            // Prevent duplicates across base + custom
+            const baseHas = !!this.document?.system?.specialties?.[key];
+            const customHas = !!this.document?.system?.specialtiesCustom?.[key];
+            if (baseHas || customHas) {
+              await this.document.update({ "system._ui.addSpecialtyKey": "" });
+              return;
+            }
+
+            await this.document.update({
+              [`system.specialtiesCustom.${key}`]: {
+                name: entry.name ?? key,
+                attribute: entry.attribute ?? "",
+                total: 0,
+                notes: ""
+              },
+              "system._ui.addSpecialtyKey": ""
+            });
+
+            return;
+          }
+
+          if (action === "remove-specialty") {
+            const key = actionBtn.dataset.key;
+            if (!key) return;
+
+            // Robust delete: clone object, delete key, write back
+            const current = foundry.utils.deepClone(this.document?.system?.specialtiesCustom ?? {});
+            if (!(key in current)) return;
+
+            delete current[key];
+
+            await this.document.update({
+              "system.specialtiesCustom": current
+            });
+
+            return;
+          }
         }
 
-        if (action === "remove-specialty") {
-          const key = btn.dataset.key;
-          if (!key) return;
+        // -----------------------------
+        // Rolls
+        // -----------------------------
+        const rollBtn = ev.target.closest("[data-roll]");
+        if (!rollBtn) return;
 
-          // Delete nested property: specialtiesCustom[key]
-          await this.document.update({
-            [`system.specialtiesCustom.-=${key}`]: null
-          });
-
-          return;
-        }
-      });
-    }
-
-    // Rolls (bind once)
-    if (!this._rollsBound) {
-      this._rollsBound = true;
-
-      root.addEventListener("click", async (ev) => {
-        const btn = ev.target.closest("[data-roll]");
-        if (!btn) return;
-
-        const rollType = btn.dataset.roll;
+        const rollType = rollBtn.dataset.roll;
         if (!["specialty", "specialty-custom"].includes(rollType)) return;
 
         ev.preventDefault();
 
-        const key = btn.dataset.key;
+        const key = rollBtn.dataset.key;
         if (!key) return;
 
         const spec =
@@ -237,9 +243,8 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
 
         if (!Number.isFinite(total) || total <= 0) return;
 
-        // Placeholder roll (simple d100 <= total) with your 95–100 hard fail safeguard
+        // Placeholder roll (simple d100 <= total) with 95–100 hard fail safeguard
         const roll = await new Roll("1d100").evaluate();
-
         const hardFail = roll.total >= 95;
         const success = !hardFail && roll.total <= total;
 
@@ -249,11 +254,17 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
           speaker,
           flavor: `Specialty: ${name} (TN ${total}) — ${success ? "Success" : "Failure"}`
         });
-      });
-    }
+      },
+      { signal }
+    );
   }
 
-  _activateTabGroup(root, { group, navSelector, defaultTab, getPersisted, setPersisted }) {
+  /**
+   * Generic tab activator for any data-group.
+   * - nav:  .hwfwm-tabs[data-group="X"] with .hwfwm-tab[data-tab]
+   * - panels: .tab[data-group="X"][data-tab]
+   */
+  _activateTabGroup(root, { group, navSelector, defaultTab, getPersisted, setPersisted, signal }) {
     const nav = root.querySelector(navSelector);
     if (!nav) return;
 
@@ -281,15 +292,15 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
 
     activate(initial);
 
-    const boundKey = `tabBound:${group}`;
-    if (nav.dataset[boundKey] === "1") return;
-    nav.dataset[boundKey] = "1";
-
-    nav.addEventListener("click", (ev) => {
-      const a = ev.target.closest(`.hwfwm-tab[data-tab]`);
-      if (!a) return;
-      ev.preventDefault();
-      activate(a.dataset.tab);
-    });
+    nav.addEventListener(
+      "click",
+      (ev) => {
+        const a = ev.target.closest(`.hwfwm-tab[data-tab]`);
+        if (!a) return;
+        ev.preventDefault();
+        activate(a.dataset.tab);
+      },
+      { signal }
+    );
   }
 }
