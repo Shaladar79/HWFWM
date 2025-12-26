@@ -4,6 +4,7 @@ import { RACES, RACE_ORDER } from "./races.mjs";
 import { BACKGROUNDS, BACKGROUND_ORDER } from "./backgrounds.mjs";
 import { HWFWM_SPECIALTIES } from "./specialties.mjs";
 import { HWFWM_AFFINITIES } from "./affinities.mjs";
+import { HWFWM_RESISTANCES } from "./resistances.mjs";
 
 export const HWFWM_CONFIG = {
   ranks: RANKS,
@@ -19,5 +20,6 @@ export const HWFWM_CONFIG = {
   backgroundOrder: BACKGROUND_ORDER,
 
   specialtyCatalog: HWFWM_SPECIALTIES,
-  affinityCatalog: HWFWM_AFFINITIES
+  affinityCatalog: HWFWM_AFFINITIES,
+  resistanceCatalog: HWFWM_RESISTANCES
 };
