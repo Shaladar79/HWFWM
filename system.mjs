@@ -59,6 +59,7 @@ Hooks.once("init", async () => {
     "systems/hwfwm-system/templates/actor/tabs/status.hbs",
     "systems/hwfwm-system/templates/actor/tabs/traits.hbs",
     "systems/hwfwm-system/templates/actor/tabs/essence.hbs",
+    "systems/hwfwm-system/templates/actor/tabs/treasures.hbs",
 
     // Tab Sections
     "systems/hwfwm-system/templates/actor/tabs/status/attributes.hbs",
