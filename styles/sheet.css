@@ -282,6 +282,15 @@
   display: block;
 }
 
+/* NEW: Sheet-scoped tab visibility (Treasures subtabs) */
+.hwfwm-sheet .tab[data-group="treasures"] {
+  display: none;
+}
+
+.hwfwm-sheet .tab[data-group="treasures"].is-active {
+  display: block;
+}
+
 
 /* =========================================================
    11) Status > Attributes table
@@ -387,13 +396,13 @@
   justify-content: start;
 }
 
-/* separator between resources and defense */
+/* separator between resources and defense (also reused as section separators elsewhere) */
 .hwfwm-res-separator {
   font-weight: 900;
   letter-spacing: 0.6px;
   color: rgba(0, 0, 0, 0.7);
   padding-top: 6px;
-  border-top: 1px solid rgba(0, 0, 0, 0.12);
+  border-top: 1px solid rgba(0,  0,  0,  0.12);
   margin-top: 2px;
 }
 
@@ -405,7 +414,7 @@
   min-width: 8px;
 }
 
-/* Digit-sized inputs */
+/* Digit-sized inputs (used for resource value/max pairs) */
 .hwfwm-input-4d {
   width: 4.3ch;
   min-width: 4.3ch;
@@ -496,6 +505,7 @@
       74px;
   }
 }
+
 /* Specialties: Add control row */
 .hwfwm-spec-add {
   display: flex;
@@ -642,10 +652,11 @@
 
 
 /* =========================================================
-   16) Treasures > Spirit Coins (single-row compact layout)
+   16) Treasures > Spirit Coins (single-row 6-across)
+   Template uses: .hwfwm-coin-row6 / .hwfwm-coin-cell / .hwfwm-coin-input
    ========================================================= */
 
-.hwfwm-coins-row {
+.hwfwm-coin-row6 {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 10px;
@@ -653,22 +664,120 @@
   margin-bottom: 12px; /* spacing before subtabs */
 }
 
-/* Narrow, digit-sized number inputs ONLY for Spirit Coins */
-.hwfwm-coins-row input[type="number"] {
-  width: 12ch;
-  min-width: 12ch;
-  padding: 6px 8px;
+.hwfwm-coin-cell {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* Comfortable number inputs for Spirit Coins */
+.hwfwm-coin-input[type="number"] {
+  width: 100%;
+  padding: 10px 12px; /* matches global input */
   text-align: right;
 }
 
 /* Keep labels readable without forcing wrapping */
-.hwfwm-coins-row .hwfwm-res-label {
+.hwfwm-coin-row6 .hwfwm-res-label {
   white-space: nowrap;
 }
 
 /* Responsive: 3x2 on narrow sheets */
 @media (max-width: 900px) {
-  .hwfwm-coins-row {
+  .hwfwm-coin-row6 {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+
+/* =========================================================
+   17) Treasures > Inventory tables & lists
+   Used by treasures.hbs (equipment/consumables/inventory)
+   ========================================================= */
+
+.hwfwm-treasure-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.hwfwm-treasure-addmisc {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.hwfwm-treasure-addmisc select {
+  max-width: 320px;
+}
+
+.hwfwm-treasure-list {
+  display: grid;
+  gap: 10px;
+}
+
+.hwfwm-treasure-row {
+  display: grid;
+  grid-template-columns: 1fr 180px 220px;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.hwfwm-treasure-name {
+  font-weight: 800;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hwfwm-treasure-meta {
+  color: rgba(0, 0, 0, 0.65);
+  font-weight: 700;
+  font-size: 12px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hwfwm-treasure-table {
+  display: grid;
+  gap: 8px;
+}
+
+.hwfwm-treasure-head,
+.hwfwm-treasure-line {
+  display: grid;
+  grid-template-columns: 1fr 160px 140px 220px;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+}
+
+.hwfwm-treasure-head {
+  font-size: 11px;
+  font-weight: 800;
+  color: rgba(0, 0, 0, 0.65);
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+/* Responsive: allow the action column to wrap below */
+@media (max-width: 900px) {
+  .hwfwm-treasure-row {
+    grid-template-columns: 1fr;
+  }
+
+  .hwfwm-treasure-head,
+  .hwfwm-treasure-line {
+    grid-template-columns: 1fr;
   }
 }
