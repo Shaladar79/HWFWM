@@ -93,9 +93,12 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     context.system._ui.addResistanceKey = context.system._ui.addResistanceKey ?? "";
     context.system._ui.addAptitudeKey = context.system._ui.addAptitudeKey ?? "";
 
-    // NEW: keep a safe value for HBS "is-active" checks (your essence.hbs uses system._ui.essenceSubTab)
+    // Essence subtab UI mirror (used by your essence.hbs for "is-active" checks)
+    // Priority: persisted sheet state -> stored actor value -> fallback
     context.system._ui.essenceSubTab =
-      context.system._ui.essenceSubTab ?? this._activeSubTabs.essence ?? "power";
+      this._activeSubTabs.essence ??
+      context.system._ui.essenceSubTab ??
+      "power";
 
     /**
      * Config-backed catalogs used by dropdowns.
@@ -104,6 +107,10 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     context.affinityCatalog = cfg.affinityCatalog ?? {};
     context.resistanceCatalog = cfg.resistanceCatalog ?? {};
     context.aptitudeCatalog = cfg.aptitudeCatalog ?? {};
+
+    // NEW: Essence dropdown catalogs (required by essence.hbs)
+    context.essenceCatalog = cfg.essenceCatalog ?? {};
+    context.confluenceEssenceCatalog = cfg.confluenceEssenceCatalog ?? {};
 
     return context;
   }
@@ -142,7 +149,7 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
       signal
     });
 
-    // NEW: Essence subtabs
+    // Essence subtabs
     this._activateTabGroup(root, {
       group: "essence",
       navSelector: '.hwfwm-tabs[data-group="essence"]',
@@ -150,9 +157,7 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
       getPersisted: () => this._activeSubTabs.essence,
       setPersisted: (t) => {
         this._activeSubTabs.essence = t;
-        // keep the UI mirror in sync so your HBS active class checks match what is displayed
-        // (do not await; we don't want to block tab switching)
-        this.document?.update?.({ "system._ui.essenceSubTab": t }).catch(() => {});
+        // No document update here—avoid DB writes on every tab click
       },
       signal
     });
@@ -355,6 +360,7 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
               return;
             }
 
+            // NOTE: aptitudes is a map of { key: {name} } in your current "add" UI approach
             await this.document.update({
               [`system.aptitudes.${key}`]: { name: entry.name ?? key },
               "system._ui.addAptitudeKey": ""
