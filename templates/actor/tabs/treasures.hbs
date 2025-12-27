@@ -1,74 +1,209 @@
 <div class="hwfwm-card">
   <div class="hwfwm-card__title">Spirit Coins</div>
 
-  <div class="hwfwm-coins-row">
-
-    <div class="hwfwm-res-cell">
+  {{!-- One-row, 6-across coins --}}
+  <div class="hwfwm-coin-row6">
+    <div class="hwfwm-coin-cell">
       <div class="hwfwm-res-label">Lesser</div>
-      <input type="number"
-             name="system.treasures.coins.lesser"
-             value="{{system.treasures.coins.lesser}}"
-             min="0" step="1" />
+      <input class="hwfwm-coin-input" type="number" name="system.treasures.coins.lesser" value="{{system.treasures.coins.lesser}}" min="0" step="1" />
     </div>
 
-    <div class="hwfwm-res-cell">
+    <div class="hwfwm-coin-cell">
       <div class="hwfwm-res-label">Iron</div>
-      <input type="number"
-             name="system.treasures.coins.iron"
-             value="{{system.treasures.coins.iron}}"
-             min="0" step="1" />
+      <input class="hwfwm-coin-input" type="number" name="system.treasures.coins.iron" value="{{system.treasures.coins.iron}}" min="0" step="1" />
     </div>
 
-    <div class="hwfwm-res-cell">
+    <div class="hwfwm-coin-cell">
       <div class="hwfwm-res-label">Bronze</div>
-      <input type="number"
-             name="system.treasures.coins.bronze"
-             value="{{system.treasures.coins.bronze}}"
-             min="0" step="1" />
+      <input class="hwfwm-coin-input" type="number" name="system.treasures.coins.bronze" value="{{system.treasures.coins.bronze}}" min="0" step="1" />
     </div>
 
-    <div class="hwfwm-res-cell">
+    <div class="hwfwm-coin-cell">
       <div class="hwfwm-res-label">Silver</div>
-      <input type="number"
-             name="system.treasures.coins.silver"
-             value="{{system.treasures.coins.silver}}"
-             min="0" step="1" />
+      <input class="hwfwm-coin-input" type="number" name="system.treasures.coins.silver" value="{{system.treasures.coins.silver}}" min="0" step="1" />
     </div>
 
-    <div class="hwfwm-res-cell">
+    <div class="hwfwm-coin-cell">
       <div class="hwfwm-res-label">Gold</div>
-      <input type="number"
-             name="system.treasures.coins.gold"
-             value="{{system.treasures.coins.gold}}"
-             min="0" step="1" />
+      <input class="hwfwm-coin-input" type="number" name="system.treasures.coins.gold" value="{{system.treasures.coins.gold}}" min="0" step="1" />
     </div>
 
-    <div class="hwfwm-res-cell">
+    <div class="hwfwm-coin-cell">
       <div class="hwfwm-res-label">Diamond</div>
-      <input type="number"
-             name="system.treasures.coins.diamond"
-             value="{{system.treasures.coins.diamond}}"
-             min="0" step="1" />
+      <input class="hwfwm-coin-input" type="number" name="system.treasures.coins.diamond" value="{{system.treasures.coins.diamond}}" min="0" step="1" />
     </div>
-
   </div>
 
-  {{!-- Default to "equipment" if no UI state yet --}}
+  {{!-- Subtabs always below coins --}}
   <nav class="hwfwm-tabs hwfwm-tabs--sub" data-group="treasures">
     <a class="hwfwm-tab {{#if (or (eq system._ui.treasuresSubTab "equipment") (not system._ui.treasuresSubTab))}}is-active{{/if}}" data-tab="equipment">Equipment</a>
     <a class="hwfwm-tab {{#if (eq system._ui.treasuresSubTab "consumables")}}is-active{{/if}}" data-tab="consumables">Consumables</a>
     <a class="hwfwm-tab {{#if (eq system._ui.treasuresSubTab "inventory")}}is-active{{/if}}" data-tab="inventory">Inventory</a>
   </nav>
 
+  {{!-- EQUIPMENT SUBTAB: shows only Equipped=yes equipment --}}
   <section class="tab" data-group="treasures" data-tab="equipment">
-    <div class="hwfwm-muted">Equipment subtab (placeholder)</div>
+    {{#if equippedEquipment.length}}
+      <div class="hwfwm-treasure-list">
+        {{#each equippedEquipment as |it|}}
+          <div class="hwfwm-treasure-row">
+            <div class="hwfwm-treasure-name">{{it.name}}</div>
+            <div class="hwfwm-treasure-meta">Type: {{it.category}}</div>
+            <div class="hwfwm-itemlist__actions">
+              <button type="button" class="hwfwm-itembtn" data-action="open-item" data-item-id="{{it.id}}">Edit</button>
+              <button type="button" class="hwfwm-itembtn hwfwm-itembtn--danger" data-action="delete-item" data-item-id="{{it.id}}">Delete</button>
+            </div>
+          </div>
+        {{/each}}
+      </div>
+    {{else}}
+      <div class="hwfwm-muted">No equipped items yet.</div>
+    {{/if}}
   </section>
 
+  {{!-- CONSUMABLES SUBTAB: shows only Readied=yes consumables --}}
   <section class="tab" data-group="treasures" data-tab="consumables">
-    <div class="hwfwm-muted">Consumables subtab (placeholder)</div>
+    {{#if readiedConsumables.length}}
+      <div class="hwfwm-treasure-list">
+        {{#each readiedConsumables as |it|}}
+          <div class="hwfwm-treasure-row">
+            <div class="hwfwm-treasure-name">{{it.name}}</div>
+            <div class="hwfwm-treasure-meta">Qty: {{it.quantity}}</div>
+            <div class="hwfwm-itemlist__actions">
+              <button type="button" class="hwfwm-itembtn" data-action="open-item" data-item-id="{{it.id}}">Edit</button>
+              <button type="button" class="hwfwm-itembtn hwfwm-itembtn--danger" data-action="delete-item" data-item-id="{{it.id}}">Delete</button>
+            </div>
+          </div>
+        {{/each}}
+      </div>
+    {{else}}
+      <div class="hwfwm-muted">No readied consumables yet.</div>
+    {{/if}}
   </section>
 
+  {{!-- INVENTORY SUBTAB: add + manage ALL equipment/consumables + future misc --}}
   <section class="tab" data-group="treasures" data-tab="inventory">
-    <div class="hwfwm-muted">Inventory subtab (placeholder)</div>
+
+    <div class="hwfwm-treasure-actions">
+      <button type="button" class="hwfwm-itembtn" data-action="create-equipment">Add Equipment</button>
+      <button type="button" class="hwfwm-itembtn" data-action="create-consumable">Add Consumable</button>
+
+      <div class="hwfwm-treasure-addmisc">
+        <select name="system._ui.addMiscItemKey">
+          <option value="">— Add Misc Item (placeholder) —</option>
+          {{#each miscItemCatalog as |m key|}}
+            <option value="{{key}}" {{#if (eq key ../system._ui.addMiscItemKey)}}selected{{/if}}>{{m.name}}</option>
+          {{/each}}
+        </select>
+        <button type="button" class="hwfwm-itembtn" data-action="add-misc-item">Add</button>
+      </div>
+    </div>
+
+    <div class="hwfwm-res-separator">Equipment</div>
+
+    {{#if allEquipment.length}}
+      <div class="hwfwm-treasure-table">
+        <div class="hwfwm-treasure-head">
+          <div>Name</div>
+          <div>Category</div>
+          <div>Equipped</div>
+          <div></div>
+        </div>
+
+        {{#each allEquipment as |it|}}
+          <div class="hwfwm-treasure-line">
+            <input
+              type="text"
+              value="{{it.name}}"
+              data-item-id="{{it.id}}"
+              data-item-field="name"
+            />
+
+            <select data-item-id="{{it.id}}" data-item-field="system.category">
+              <option value="weapon" {{#if (eq it.category "weapon")}}selected{{/if}}>Weapon</option>
+              <option value="armor" {{#if (eq it.category "armor")}}selected{{/if}}>Armor</option>
+              <option value="misc" {{#if (eq it.category "misc")}}selected{{/if}}>Misc</option>
+            </select>
+
+            <select data-item-id="{{it.id}}" data-item-field="system.equipped">
+              <option value="no" {{#if (eq it.equipped "no")}}selected{{/if}}>No</option>
+              <option value="yes" {{#if (eq it.equipped "yes")}}selected{{/if}}>Yes</option>
+            </select>
+
+            <div class="hwfwm-itemlist__actions">
+              <button type="button" class="hwfwm-itembtn" data-action="open-item" data-item-id="{{it.id}}">Edit</button>
+              <button type="button" class="hwfwm-itembtn hwfwm-itembtn--danger" data-action="delete-item" data-item-id="{{it.id}}">Delete</button>
+            </div>
+          </div>
+        {{/each}}
+      </div>
+    {{else}}
+      <div class="hwfwm-muted">No equipment in inventory yet.</div>
+    {{/if}}
+
+    <div class="hwfwm-res-separator">Consumables</div>
+
+    {{#if allConsumables.length}}
+      <div class="hwfwm-treasure-table">
+        <div class="hwfwm-treasure-head">
+          <div>Name</div>
+          <div>Qty</div>
+          <div>Readied</div>
+          <div></div>
+        </div>
+
+        {{#each allConsumables as |it|}}
+          <div class="hwfwm-treasure-line">
+            <input
+              type="text"
+              value="{{it.name}}"
+              data-item-id="{{it.id}}"
+              data-item-field="name"
+            />
+
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value="{{it.quantity}}"
+              data-item-id="{{it.id}}"
+              data-item-field="system.quantity"
+            />
+
+            <select data-item-id="{{it.id}}" data-item-field="system.readied">
+              <option value="no" {{#if (eq it.readied "no")}}selected{{/if}}>No</option>
+              <option value="yes" {{#if (eq it.readied "yes")}}selected{{/if}}>Yes</option>
+            </select>
+
+            <div class="hwfwm-itemlist__actions">
+              <button type="button" class="hwfwm-itembtn" data-action="open-item" data-item-id="{{it.id}}">Edit</button>
+              <button type="button" class="hwfwm-itembtn hwfwm-itembtn--danger" data-action="delete-item" data-item-id="{{it.id}}">Delete</button>
+            </div>
+          </div>
+        {{/each}}
+      </div>
+    {{else}}
+      <div class="hwfwm-muted">No consumables in inventory yet.</div>
+    {{/if}}
+
+    <div class="hwfwm-res-separator">Misc Items</div>
+
+    {{#if allMiscItems.length}}
+      <div class="hwfwm-treasure-list">
+        {{#each allMiscItems as |it|}}
+          <div class="hwfwm-treasure-row">
+            <div class="hwfwm-treasure-name">{{it.name}}</div>
+            <div class="hwfwm-itemlist__actions">
+              <button type="button" class="hwfwm-itembtn" data-action="open-item" data-item-id="{{it.id}}">Edit</button>
+              <button type="button" class="hwfwm-itembtn hwfwm-itembtn--danger" data-action="delete-item" data-item-id="{{it.id}}">Delete</button>
+            </div>
+          </div>
+        {{/each}}
+      </div>
+    {{else}}
+      <div class="hwfwm-muted">No misc items yet (catalog will be wired later).</div>
+    {{/if}}
+
   </section>
 </div>
+
