@@ -24,7 +24,7 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
   // IMPORTANT:
   // - traits can safely default
   // - essence MUST NOT default to "power" here, or it will override persisted actor state every time
-  _activeSubTabs = { traits: "enhancements", essence: null, treasures: "equipment" };
+  _activeSubTabs = { traits: "enhancements", essence: null, treasures: null };
 
   /**
    * AbortController used to ensure we never stack handlers,
@@ -131,20 +131,19 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     context.system._ui.addResistanceKey = context.system._ui.addResistanceKey ?? "";
     context.system._ui.addAptitudeKey = context.system._ui.addAptitudeKey ?? "";
 
-    // Ensure Treasures UI state exists (used by treasures.hbs is-active checks)
-    context.system._ui.treasuresSubTab = context.system._ui.treasuresSubTab ?? "equipment";
-
     // ----------------------------
     // Essence subtab persistence
     // ----------------------------
-    // Preferred source of truth on open: actor stored value
     const storedEssenceTab = context.system._ui.essenceSubTab ?? "power";
-
-    // If we haven't set a local essence tab yet, adopt the stored value.
     if (!this._activeSubTabs.essence) this._activeSubTabs.essence = storedEssenceTab;
-
-    // HBS uses system._ui.essenceSubTab for "is-active" checks
     context.system._ui.essenceSubTab = this._activeSubTabs.essence ?? storedEssenceTab ?? "power";
+
+    // ----------------------------
+    // Treasures subtab persistence
+    // ----------------------------
+    const storedTreasuresTab = context.system._ui.treasuresSubTab ?? "equipment";
+    if (!this._activeSubTabs.treasures) this._activeSubTabs.treasures = storedTreasuresTab;
+    context.system._ui.treasuresSubTab = this._activeSubTabs.treasures ?? storedTreasuresTab ?? "equipment";
 
     /**
      * Config-backed catalogs used by dropdowns.
@@ -158,9 +157,7 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     context.essenceCatalog = cfg.essenceCatalog ?? {};
     context.confluenceEssenceCatalog = cfg.confluenceEssenceCatalog ?? {};
 
-    // ----------------------------
     // Essence UI state (3 essences + 1 confluence slot)
-    // ----------------------------
     context.essenceUI = this._computeEssenceUI(context.system);
 
     return context;
@@ -209,7 +206,6 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
       setPersisted: (t) => {
         this._activeSubTabs.essence = t;
 
-        // Persist ONLY if it actually changed (one write per change)
         const current = this.document?.system?._ui?.essenceSubTab ?? "power";
         if (current !== t) {
           this.document?.update?.({ "system._ui.essenceSubTab": t }).catch(() => {});
@@ -246,7 +242,6 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
 
         const name = target.getAttribute("name") ?? "";
 
-        // Only intercept essence/confluence selects
         const isEssence = name.startsWith("system.essences.") && name.endsWith("Key");
         const isConfluence = name.startsWith("system.confluenceEssences.") && name.endsWith("Key");
         if (!isEssence && !isConfluence) return;
@@ -265,40 +260,34 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
         const systemNow = this.document?.system ?? {};
         const uiNow = this._computeEssenceUI(systemNow);
 
-        // Helpers for revert
         const revertSelect = () => {
           if (isEssence) target.value = systemNow?.essences?.[`${attr}Key`] ?? "";
           if (isConfluence) target.value = systemNow?.confluenceEssences?.[`${attr}Key`] ?? "";
         };
 
-        // ----------------------------
-        // Essence selection enforcement
-        // ----------------------------
         if (isEssence) {
           const newKey = (target.value ?? "").trim();
 
-          // Build prospective state
           const ess = foundry.utils.deepClone(systemNow?.essences ?? {});
           ess[`${attr}Key`] = newKey;
 
           const picked = attrs.map((a) => (ess?.[`${a}Key`] ?? "").trim()).filter(Boolean);
           const unique = new Set(picked);
 
-          // Rule: no duplicates
           if (picked.length !== unique.size) {
             ui.notifications?.warn("You cannot select the same Essence more than once.");
             revertSelect();
             return;
           }
 
-          // Rule: max 3 essences
           if (unique.size > 3) {
-            ui.notifications?.warn("Only three Essences may be selected. The remaining slot is reserved for a Confluence Essence.");
+            ui.notifications?.warn(
+              "Only three Essences may be selected. The remaining slot is reserved for a Confluence Essence."
+            );
             revertSelect();
             return;
           }
 
-          // If dropping below 3, clear all confluence keys to keep data clean
           const shouldClearConfluence = unique.size < 3;
 
           const updateData = { [`system.essences.${attr}Key`]: newKey };
@@ -314,11 +303,7 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
           return;
         }
 
-        // ----------------------------
-        // Confluence selection enforcement
-        // ----------------------------
         if (isConfluence) {
-          // Recompute unlock state from current actor state (not prospective)
           const ui = uiNow;
 
           if (!ui.confluenceUnlocked) {
@@ -345,9 +330,6 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     root.addEventListener(
       "click",
       async (ev) => {
-        // -----------------------------
-        // Actions
-        // -----------------------------
         const actionBtn = ev.target.closest("[data-action]");
         if (actionBtn) {
           const action = actionBtn.dataset.action;
@@ -547,9 +529,6 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
           }
         }
 
-        // -----------------------------
-        // Rolls
-        // -----------------------------
         const rollBtn = ev.target.closest("[data-roll]");
         if (!rollBtn) return;
 
@@ -633,4 +612,3 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     );
   }
 }
-
