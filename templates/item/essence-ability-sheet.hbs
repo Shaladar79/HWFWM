@@ -26,6 +26,27 @@
           <option value="recovery" {{#if (eq system.boundAttribute "recovery")}}selected{{/if}}>Recovery</option>
         </select>
       </div>
+
+      <div class="hwfwm-spec-add">
+        <label>Essence</label>
+        <select name="system.essenceKey">
+          <option value="">— Select Essence —</option>
+          {{#each essenceCatalog as |e key|}}
+            <option value="{{key}}" {{#if (eq key ../system.essenceKey)}}selected{{/if}}>{{e.name}}</option>
+          {{/each}}
+        </select>
+      </div>
+
+      <div class="hwfwm-spec-add">
+        <label>Confluence</label>
+        <select name="system.confluenceKey">
+          <option value="">— Select Confluence —</option>
+          {{#each confluenceEssenceCatalog as |c key|}}
+            <option value="{{key}}" {{#if (eq key ../system.confluenceKey)}}selected{{/if}}>{{c.name}}</option>
+          {{/each}}
+        </select>
+      </div>
+
     </div>
 
     <div class="hwfwm-card">
