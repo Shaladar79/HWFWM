@@ -27,7 +27,11 @@
           "addAffinityKey": "",
           "addResistanceKey": "",
           "addAptitudeKey": "",
-          "essenceSubTab": "power"
+
+          "essenceSubTab": "power",
+
+          "treasuresSubTab": "equipment",
+          "addMiscItemKey": ""
         },
 
         "specialties": {
@@ -55,6 +59,17 @@
           "speedKey": "",
           "spiritKey": "",
           "recoveryKey": ""
+        },
+
+        "treasures": {
+          "coins": {
+            "lesser": 0,
+            "iron": 0,
+            "bronze": 0,
+            "silver": 0,
+            "gold": 0,
+            "diamond": 0
+          }
         }
       }
     }
@@ -65,6 +80,30 @@
       "system": {
         "boundAttribute": "",
         "boundEssenceKey": "",
+        "notes": ""
+      }
+    },
+
+    "equipment": {
+      "system": {
+        "category": "weapon",
+        "equipped": "no",
+        "notes": ""
+      }
+    },
+
+    "consumable": {
+      "system": {
+        "quantity": 1,
+        "readied": "no",
+        "notes": ""
+      }
+    },
+
+    "miscItem": {
+      "system": {
+        "catalogKey": "",
+        "quantity": 1,
         "notes": ""
       }
     }
