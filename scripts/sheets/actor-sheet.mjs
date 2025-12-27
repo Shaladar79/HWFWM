@@ -33,6 +33,42 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
    */
   _domController = null;
 
+  /**
+   * Essence slot rules:
+   * - Exactly 3 unique essences may be selected across power/speed/spirit/recovery
+   * - The remaining unselected attribute becomes the Confluence slot (only after 3 are selected)
+   */
+  static ESSENCE_ATTRS = ["power", "speed", "spirit", "recovery"];
+
+  _computeEssenceUI(systemData) {
+    const attrs = HwfwmActorSheet.ESSENCE_ATTRS;
+
+    const ess = systemData?.essences ?? {};
+    const picked = attrs
+      .map((a) => (ess?.[`${a}Key`] ?? "").trim())
+      .filter(Boolean);
+
+    const unique = Array.from(new Set(picked));
+    const uniqueCount = unique.length;
+
+    const confluenceUnlocked = uniqueCount === 3;
+
+    // Confluence slot is the ONE attribute that has no essence selected once unlocked.
+    // (If player somehow has 4 selected, unlocked becomes false until corrected.)
+    const confluenceSlot =
+      confluenceUnlocked
+        ? attrs.find((a) => !(ess?.[`${a}Key`] ?? "").trim()) ?? null
+        : null;
+
+    return {
+      attrs,
+      selectedEssenceKeys: unique,
+      uniqueCount,
+      confluenceUnlocked,
+      confluenceSlot
+    };
+  }
+
   async _prepareContext(options) {
     const context = await super._prepareContext(options);
     const cfg = CONFIG["hwfwm-system"] ?? {};
@@ -119,6 +155,11 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     context.essenceCatalog = cfg.essenceCatalog ?? {};
     context.confluenceEssenceCatalog = cfg.confluenceEssenceCatalog ?? {};
 
+    // ----------------------------
+    // Essence UI state (3 essences + 1 confluence slot)
+    // ----------------------------
+    context.essenceUI = this._computeEssenceUI(context.system);
+
     return context;
   }
 
@@ -173,6 +214,112 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
       },
       signal
     });
+
+    // ---------------------------------------------------
+    // Essence enforcement (capture phase, before form submit)
+    // ---------------------------------------------------
+    root.addEventListener(
+      "change",
+      async (ev) => {
+        const target = ev.target;
+        if (!(target instanceof HTMLSelectElement)) return;
+
+        const name = target.getAttribute("name") ?? "";
+
+        // Only intercept essence/confluence selects
+        const isEssence = name.startsWith("system.essences.") && name.endsWith("Key");
+        const isConfluence = name.startsWith("system.confluenceEssences.") && name.endsWith("Key");
+        if (!isEssence && !isConfluence) return;
+
+        // Stop Foundry's automatic submit-on-change from racing with our enforcement
+        ev.preventDefault?.();
+        ev.stopPropagation();
+        ev.stopImmediatePropagation?.();
+
+        const attrs = HwfwmActorSheet.ESSENCE_ATTRS;
+
+        // Determine which attribute is being modified (power/speed/spirit/recovery)
+        const attr = attrs.find((a) => name.includes(`.${a}Key`));
+        if (!attr) return;
+
+        const systemNow = this.document?.system ?? {};
+        const uiNow = this._computeEssenceUI(systemNow);
+
+        // Helpers for revert
+        const revertSelect = () => {
+          if (isEssence) target.value = systemNow?.essences?.[`${attr}Key`] ?? "";
+          if (isConfluence) target.value = systemNow?.confluenceEssences?.[`${attr}Key`] ?? "";
+        };
+
+        // ----------------------------
+        // Essence selection enforcement
+        // ----------------------------
+        if (isEssence) {
+          const newKey = (target.value ?? "").trim();
+
+          // Build prospective state
+          const ess = foundry.utils.deepClone(systemNow?.essences ?? {});
+          ess[`${attr}Key`] = newKey;
+
+          const picked = attrs.map((a) => (ess?.[`${a}Key`] ?? "").trim()).filter(Boolean);
+          const unique = new Set(picked);
+
+          // Rule: no duplicates
+          if (picked.length !== unique.size) {
+            ui.notifications?.warn("You cannot select the same Essence more than once.");
+            revertSelect();
+            return;
+          }
+
+          // Rule: max 3 essences
+          if (unique.size > 3) {
+            ui.notifications?.warn("Only three Essences may be selected. The remaining slot is reserved for a Confluence Essence.");
+            revertSelect();
+            return;
+          }
+
+          // If dropping below 3, clear all confluence keys to keep data clean
+          const shouldClearConfluence = unique.size < 3;
+
+          const updateData = { [`system.essences.${attr}Key`]: newKey };
+
+          if (shouldClearConfluence) {
+            updateData["system.confluenceEssences.powerKey"] = "";
+            updateData["system.confluenceEssences.speedKey"] = "";
+            updateData["system.confluenceEssences.spiritKey"] = "";
+            updateData["system.confluenceEssences.recoveryKey"] = "";
+          }
+
+          await this.document.update(updateData);
+          return;
+        }
+
+        // ----------------------------
+        // Confluence selection enforcement
+        // ----------------------------
+        if (isConfluence) {
+          // Recompute unlock state from current actor state (not prospective)
+          const ui = uiNow;
+
+          if (!ui.confluenceUnlocked) {
+            ui.notifications?.warn("Select three unique Essences before choosing a Confluence Essence.");
+            revertSelect();
+            return;
+          }
+
+          if (ui.confluenceSlot !== attr) {
+            ui.notifications?.warn("Confluence Essence can only be selected in the remaining unassigned slot.");
+            revertSelect();
+            return;
+          }
+
+          const newKey = (target.value ?? "").trim();
+          await this.document.update({ [`system.confluenceEssences.${attr}Key`]: newKey });
+          return;
+        }
+      },
+      { signal, capture: true }
+    );
 
     // One delegated click handler for ALL actions + rolls
     root.addEventListener(
