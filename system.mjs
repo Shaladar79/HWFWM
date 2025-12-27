@@ -33,6 +33,21 @@ class HwfwmTalentSheet extends ItemSheet {
   }
 }
 
+// NEW: Essence Ability sheet (minimal placeholder)
+class HwfwmEssenceAbilitySheet extends ItemSheet {
+  static get defaultOptions() {
+    return foundry.utils.mergeObject(super.defaultOptions, {
+      classes: ["hwfwm-system", "sheet", "item", "essence-ability"],
+      width: 520,
+      height: 420
+    });
+  }
+
+  get template() {
+    return "systems/hwfwm-system/templates/item/essence-ability-sheet.hbs";
+  }
+}
+
 Hooks.once("init", async () => {
   console.log("HWFWM System | Initialized");
 
@@ -56,7 +71,7 @@ Hooks.once("init", async () => {
     "systems/hwfwm-system/templates/actor/tabs/status.hbs",
     "systems/hwfwm-system/templates/actor/tabs/traits.hbs",
 
-    // NEW: Essence tab
+    // Essence tab
     "systems/hwfwm-system/templates/actor/tabs/essence.hbs",
 
     // Tab Sections
@@ -70,7 +85,10 @@ Hooks.once("init", async () => {
 
     // Item sheets (placeholders)
     "systems/hwfwm-system/templates/item/feature-sheet.hbs",
-    "systems/hwfwm-system/templates/item/talent-sheet.hbs"
+    "systems/hwfwm-system/templates/item/talent-sheet.hbs",
+
+    // NEW: Essence Ability item sheet
+    "systems/hwfwm-system/templates/item/essence-ability-sheet.hbs"
   ]);
 
   // v13+ namespaced Actors collection (avoids deprecation warning)
@@ -83,7 +101,7 @@ Hooks.once("init", async () => {
     label: "HWFWM PC Sheet"
   });
 
-  // Register basic Item sheets for new item types
+  // Register basic Item sheets for item types
   Items.registerSheet("hwfwm-system", HwfwmFeatureSheet, {
     types: ["feature"],
     makeDefault: true,
@@ -94,5 +112,12 @@ Hooks.once("init", async () => {
     types: ["talent"],
     makeDefault: true,
     label: "HWFWM Talent Sheet"
+  });
+
+  // NEW: Register Essence Ability sheet
+  Items.registerSheet("hwfwm-system", HwfwmEssenceAbilitySheet, {
+    types: ["essenceAbility"],
+    makeDefault: true,
+    label: "HWFWM Essence Ability Sheet"
   });
 });
