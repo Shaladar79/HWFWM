@@ -1,7 +1,7 @@
 import { HWFWM_CONFIG } from "./config/index.mjs";
 import { HwfwmActorSheet } from "./scripts/sheets/actor-sheet.mjs";
 
-// NEW: import the Essence Ability sheet class (instead of inline class)
+// Essence Ability sheet class (imported)
 import { HwfwmEssenceAbilitySheet } from "./scripts/sheets/essence-ability-sheet.mjs";
 
 /* --------------------------------------------
@@ -49,7 +49,7 @@ Hooks.once("init", async () => {
   await loadTemplates([
     "systems/hwfwm-system/templates/actor/actor-sheet.hbs",
 
-    // Parts-main sheet
+    // Parts
     "systems/hwfwm-system/templates/actor/parts/header.hbs",
     "systems/hwfwm-system/templates/actor/parts/tabs-nav.hbs",
 
@@ -58,55 +58,48 @@ Hooks.once("init", async () => {
     "systems/hwfwm-system/templates/actor/tabs/attributes.hbs",
     "systems/hwfwm-system/templates/actor/tabs/status.hbs",
     "systems/hwfwm-system/templates/actor/tabs/traits.hbs",
-
-    // Essence tab
     "systems/hwfwm-system/templates/actor/tabs/essence.hbs",
 
     // Tab Sections
-    // Status
     "systems/hwfwm-system/templates/actor/tabs/status/attributes.hbs",
     "systems/hwfwm-system/templates/actor/tabs/status/resources.hbs",
-
-    // Traits
     "systems/hwfwm-system/templates/actor/tabs/traits/enhancements.hbs",
     "systems/hwfwm-system/templates/actor/tabs/traits/features.hbs",
 
     // Item sheets (placeholders)
     "systems/hwfwm-system/templates/item/feature-sheet.hbs",
     "systems/hwfwm-system/templates/item/talent-sheet.hbs",
-
-    // Essence Ability item sheet
     "systems/hwfwm-system/templates/item/essence-ability-sheet.hbs"
   ]);
 
   // v13+ namespaced Actors collection (avoids deprecation warning)
   const ActorsCollection = foundry.documents.collections.Actors;
 
-  // Register our sheet for PC actors only (prevents "type may not be undefined")
+  // Register our sheet for PC actors only
   ActorsCollection.registerSheet("hwfwm-system", HwfwmActorSheet, {
     types: ["pc"],
     makeDefault: true,
     label: "HWFWM PC Sheet"
   });
 
-  // Register basic Item sheets for item types
-  Items.registerSheet("hwfwm-system", HwfwmFeatureSheet, {
-    types: ["feature"],
-    makeDefault: true,
-    label: "HWFWM Feature Sheet"
-  });
+  // Register Item sheets
+  if (typeof Items !== "undefined") {
+    Items.registerSheet("hwfwm-system", HwfwmFeatureSheet, {
+      types: ["feature"],
+      makeDefault: true,
+      label: "HWFWM Feature Sheet"
+    });
 
-  Items.registerSheet("hwfwm-system", HwfwmTalentSheet, {
-    types: ["talent"],
-    makeDefault: true,
-    label: "HWFWM Talent Sheet"
-  });
+    Items.registerSheet("hwfwm-system", HwfwmTalentSheet, {
+      types: ["talent"],
+      makeDefault: true,
+      label: "HWFWM Talent Sheet"
+    });
 
-  // Register Essence Ability sheet
-  Items.registerSheet("hwfwm-system", HwfwmEssenceAbilitySheet, {
-    types: ["essenceAbility"],
-    makeDefault: true,
-    label: "HWFWM Essence Ability Sheet"
-  });
+    Items.registerSheet("hwfwm-system", HwfwmEssenceAbilitySheet, {
+      types: ["essenceAbility"],
+      makeDefault: true,
+      label: "HWFWM Essence Ability Sheet"
+    });
+  }
 });
-
