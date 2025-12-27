@@ -1,0 +1,41 @@
+<form class="hwfwm-system sheet item essence-ability" autocomplete="off">
+
+  <!-- HEADER -->
+  <header class="sheet-header hwfwm-card">
+    <div class="hwfwm-card__title">
+      <input type="text"
+             name="name"
+             value="{{item.name}}"
+             placeholder="Essence Ability Name" />
+    </div>
+  </header>
+
+  <!-- MAIN BODY -->
+  <section class="sheet-body">
+
+    <div class="hwfwm-card">
+      <div class="hwfwm-card__title">Essence Binding</div>
+
+      <div class="hwfwm-spec-add">
+        <label>Bound Attribute</label>
+        <select name="system.boundAttribute">
+          <option value="">— Select Attribute —</option>
+          <option value="power" {{#if (eq system.boundAttribute "power")}}selected{{/if}}>Power</option>
+          <option value="speed" {{#if (eq system.boundAttribute "speed")}}selected{{/if}}>Speed</option>
+          <option value="spirit" {{#if (eq system.boundAttribute "spirit")}}selected{{/if}}>Spirit</option>
+          <option value="recovery" {{#if (eq system.boundAttribute "recovery")}}selected{{/if}}>Recovery</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="hwfwm-card">
+      <div class="hwfwm-card__title">Description</div>
+
+      <textarea name="system.description"
+                rows="6"
+                placeholder="Describe the essence ability...">{{system.description}}</textarea>
+    </div>
+
+  </section>
+
+</form>
