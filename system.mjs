@@ -1,6 +1,9 @@
 import { HWFWM_CONFIG } from "./config/index.mjs";
 import { HwfwmActorSheet } from "./scripts/sheets/actor-sheet.mjs";
 
+// NEW: import the Essence Ability sheet class (instead of inline class)
+import { HwfwmEssenceAbilitySheet } from "./scripts/sheets/essence-ability-sheet.mjs";
+
 /* --------------------------------------------
  * Minimal Item Sheets (placeholder)
  * -------------------------------------------- */
@@ -30,21 +33,6 @@ class HwfwmTalentSheet extends ItemSheet {
 
   get template() {
     return "systems/hwfwm-system/templates/item/talent-sheet.hbs";
-  }
-}
-
-// NEW: Essence Ability sheet (minimal placeholder)
-class HwfwmEssenceAbilitySheet extends ItemSheet {
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      classes: ["hwfwm-system", "sheet", "item", "essence-ability"],
-      width: 520,
-      height: 420
-    });
-  }
-
-  get template() {
-    return "systems/hwfwm-system/templates/item/essence-ability-sheet.hbs";
   }
 }
 
@@ -87,7 +75,7 @@ Hooks.once("init", async () => {
     "systems/hwfwm-system/templates/item/feature-sheet.hbs",
     "systems/hwfwm-system/templates/item/talent-sheet.hbs",
 
-    // NEW: Essence Ability item sheet
+    // Essence Ability item sheet
     "systems/hwfwm-system/templates/item/essence-ability-sheet.hbs"
   ]);
 
@@ -114,10 +102,11 @@ Hooks.once("init", async () => {
     label: "HWFWM Talent Sheet"
   });
 
-  // NEW: Register Essence Ability sheet
+  // Register Essence Ability sheet
   Items.registerSheet("hwfwm-system", HwfwmEssenceAbilitySheet, {
     types: ["essenceAbility"],
     makeDefault: true,
     label: "HWFWM Essence Ability Sheet"
   });
 });
+
