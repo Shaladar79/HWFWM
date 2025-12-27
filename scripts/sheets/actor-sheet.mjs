@@ -20,7 +20,11 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
   };
 
   _activeTab = "overview";
-  _activeSubTabs = { traits: "enhancements", essence: "power" };
+
+  // IMPORTANT:
+  // - traits can safely default
+  // - essence MUST NOT default to "power" here, or it will override persisted actor state every time
+  _activeSubTabs = { traits: "enhancements", essence: null };
 
   /**
    * AbortController used to ensure we never stack handlers,
@@ -31,11 +35,9 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
 
   async _prepareContext(options) {
     const context = await super._prepareContext(options);
-
     const cfg = CONFIG["hwfwm-system"] ?? {};
 
-    // IMPORTANT: bind system context to the actual actor system data
-    // so templates using `system.*` have the real document values.
+    // Bind system context to the actual actor system data
     context.system = this.document?.system ?? context.system ?? {};
 
     const roles = cfg.roles ?? {};
@@ -93,12 +95,17 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     context.system._ui.addResistanceKey = context.system._ui.addResistanceKey ?? "";
     context.system._ui.addAptitudeKey = context.system._ui.addAptitudeKey ?? "";
 
-    // Essence subtab UI mirror (used by your essence.hbs for "is-active" checks)
-    // Priority: persisted sheet state -> stored actor value -> fallback
-    context.system._ui.essenceSubTab =
-      this._activeSubTabs.essence ??
-      context.system._ui.essenceSubTab ??
-      "power";
+    // ----------------------------
+    // Essence subtab persistence
+    // ----------------------------
+    // Preferred source of truth on open: actor stored value
+    const storedEssenceTab = context.system._ui.essenceSubTab ?? "power";
+
+    // If we haven't set a local essence tab yet, adopt the stored value.
+    if (!this._activeSubTabs.essence) this._activeSubTabs.essence = storedEssenceTab;
+
+    // HBS uses system._ui.essenceSubTab for "is-active" checks
+    context.system._ui.essenceSubTab = this._activeSubTabs.essence ?? storedEssenceTab ?? "power";
 
     /**
      * Config-backed catalogs used by dropdowns.
@@ -108,7 +115,7 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     context.resistanceCatalog = cfg.resistanceCatalog ?? {};
     context.aptitudeCatalog = cfg.aptitudeCatalog ?? {};
 
-    // NEW: Essence dropdown catalogs (required by essence.hbs)
+    // Essence dropdown catalogs (required by essence.hbs)
     context.essenceCatalog = cfg.essenceCatalog ?? {};
     context.confluenceEssenceCatalog = cfg.confluenceEssenceCatalog ?? {};
 
@@ -157,7 +164,12 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
       getPersisted: () => this._activeSubTabs.essence,
       setPersisted: (t) => {
         this._activeSubTabs.essence = t;
-        // No document update here—avoid DB writes on every tab click
+
+        // Persist ONLY if it actually changed (one write per change)
+        const current = this.document?.system?._ui?.essenceSubTab ?? "power";
+        if (current !== t) {
+          this.document?.update?.({ "system._ui.essenceSubTab": t }).catch(() => {});
+        }
       },
       signal
     });
@@ -173,7 +185,6 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
         if (actionBtn) {
           const action = actionBtn.dataset.action;
 
-          // Only handle our known actions
           const allowed = new Set([
             "open-item",
             "delete-item",
@@ -217,7 +228,6 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
           if (action === "add-specialty") {
             const select = root.querySelector('select[name="system._ui.addSpecialtyKey"]');
             const keyFromDom = (select?.value ?? "").trim();
-
             const key = keyFromDom || (this.document?.system?._ui?.addSpecialtyKey ?? "");
             if (!key) return;
 
@@ -254,17 +264,13 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
 
             delete current[key];
 
-            await this.document.update({
-              "system.specialtiesCustom": current
-            });
-
+            await this.document.update({ "system.specialtiesCustom": current });
             return;
           }
 
           if (action === "add-affinity") {
             const select = root.querySelector('select[name="system._ui.addAffinityKey"]');
             const keyFromDom = (select?.value ?? "").trim();
-
             const key = keyFromDom || (this.document?.system?._ui?.addAffinityKey ?? "");
             if (!key) return;
 
@@ -295,17 +301,13 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
 
             delete current[key];
 
-            await this.document.update({
-              "system.affinities": current
-            });
-
+            await this.document.update({ "system.affinities": current });
             return;
           }
 
           if (action === "add-resistance") {
             const select = root.querySelector('select[name="system._ui.addResistanceKey"]');
             const keyFromDom = (select?.value ?? "").trim();
-
             const key = keyFromDom || (this.document?.system?._ui?.addResistanceKey ?? "");
             if (!key) return;
 
@@ -336,17 +338,13 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
 
             delete current[key];
 
-            await this.document.update({
-              "system.resistances": current
-            });
-
+            await this.document.update({ "system.resistances": current });
             return;
           }
 
           if (action === "add-aptitude") {
             const select = root.querySelector('select[name="system._ui.addAptitudeKey"]');
             const keyFromDom = (select?.value ?? "").trim();
-
             const key = keyFromDom || (this.document?.system?._ui?.addAptitudeKey ?? "");
             if (!key) return;
 
@@ -360,7 +358,6 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
               return;
             }
 
-            // NOTE: aptitudes is a map of { key: {name} } in your current "add" UI approach
             await this.document.update({
               [`system.aptitudes.${key}`]: { name: entry.name ?? key },
               "system._ui.addAptitudeKey": ""
@@ -378,10 +375,7 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
 
             delete current[key];
 
-            await this.document.update({
-              "system.aptitudes": current
-            });
-
+            await this.document.update({ "system.aptitudes": current });
             return;
           }
         }
