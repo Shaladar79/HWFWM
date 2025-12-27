@@ -131,6 +131,9 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     context.system._ui.addResistanceKey = context.system._ui.addResistanceKey ?? "";
     context.system._ui.addAptitudeKey = context.system._ui.addAptitudeKey ?? "";
 
+    // NEW: misc item add selector holder (inventory tab)
+    context.system._ui.addMiscItemKey = context.system._ui.addMiscItemKey ?? "";
+
     // ----------------------------
     // Essence subtab persistence
     // ----------------------------
@@ -159,6 +162,51 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
 
     // Essence UI state (3 essences + 1 confluence slot)
     context.essenceUI = this._computeEssenceUI(context.system);
+
+    // =========================================================
+    // NEW: Treasures / Inventory context (equipment/consumables/misc)
+    // =========================================================
+    const equipmentItems = items.filter((it) => it?.type === "equipment");
+    const consumableItems = items.filter((it) => it?.type === "consumable");
+    const miscItems = items.filter((it) => it?.type === "miscItem");
+
+    const normalizeYesNo = (v) => (String(v ?? "no").toLowerCase() === "yes" ? "yes" : "no");
+    const normalizeCategory = (v) => {
+      const s = String(v ?? "weapon").toLowerCase();
+      return ["weapon", "armor", "misc"].includes(s) ? s : "weapon";
+    };
+
+    context.allEquipment = equipmentItems
+      .map((it) => ({
+        id: it.id,
+        name: it.name,
+        category: normalizeCategory(it.system?.category),
+        equipped: normalizeYesNo(it.system?.equipped)
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    context.equippedEquipment = context.allEquipment.filter((it) => it.equipped === "yes");
+
+    context.allConsumables = consumableItems
+      .map((it) => ({
+        id: it.id,
+        name: it.name,
+        quantity: Number(it.system?.quantity ?? 0),
+        readied: normalizeYesNo(it.system?.readied)
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    context.readiedConsumables = context.allConsumables.filter((it) => it.readied === "yes");
+
+    context.allMiscItems = miscItems
+      .map((it) => ({
+        id: it.id,
+        name: it.name
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    // Placeholder catalog (empty until you populate config later)
+    context.miscItemCatalog = cfg.miscItemCatalog ?? {};
 
     return context;
   }
@@ -232,12 +280,58 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     });
 
     // ---------------------------------------------------
-    // Essence enforcement (capture phase, before form submit)
+    // CHANGE HANDLING
+    // 1) Embedded item inline edits (inventory)  [NEW]
+    // 2) Essence enforcement (capture phase)      [EXISTING]
     // ---------------------------------------------------
     root.addEventListener(
       "change",
       async (ev) => {
         const target = ev.target;
+
+        // ============================
+        // 1) Embedded item edits (NEW)
+        // ============================
+        if (
+          target instanceof HTMLInputElement ||
+          target instanceof HTMLSelectElement ||
+          target instanceof HTMLTextAreaElement
+        ) {
+          const itemId = target.dataset?.itemId;
+          const field = target.dataset?.itemField;
+
+          // If this change is an inline inventory control, update the embedded Item directly
+          if (itemId && field) {
+            // prevent submit-on-change racing
+            ev.preventDefault?.();
+            ev.stopPropagation();
+            ev.stopImmediatePropagation?.();
+
+            const item = this.document?.items?.get(itemId);
+            if (!item) return;
+
+            let value;
+            if (target instanceof HTMLInputElement && target.type === "number") {
+              value = Number(target.value ?? 0);
+              if (!Number.isFinite(value)) value = 0;
+            } else {
+              value = (target.value ?? "").toString();
+            }
+
+            // Special case: editing name uses top-level update
+            if (field === "name") {
+              await item.update({ name: value });
+              return;
+            }
+
+            await item.update({ [field]: value });
+            return;
+          }
+        }
+
+        // ============================
+        // 2) Essence enforcement (EXISTING)
+        // ============================
         if (!(target instanceof HTMLSelectElement)) return;
 
         const name = target.getAttribute("name") ?? "";
@@ -345,7 +439,12 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
             "add-resistance",
             "remove-resistance",
             "add-aptitude",
-            "remove-aptitude"
+            "remove-aptitude",
+
+            // NEW: Treasures / Inventory
+            "create-equipment",
+            "create-consumable",
+            "add-misc-item"
           ]);
           if (!allowed.has(action)) return;
 
@@ -374,6 +473,60 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
             return;
           }
 
+          // ============================
+          // Treasures / Inventory actions (NEW)
+          // ============================
+          if (action === "create-equipment") {
+            await this.document.createEmbeddedDocuments("Item", [
+              {
+                name: "New Equipment",
+                type: "equipment",
+                system: { category: "weapon", equipped: "no" }
+              }
+            ]);
+            return;
+          }
+
+          if (action === "create-consumable") {
+            await this.document.createEmbeddedDocuments("Item", [
+              {
+                name: "New Consumable",
+                type: "consumable",
+                system: { quantity: 1, readied: "no" }
+              }
+            ]);
+            return;
+          }
+
+          if (action === "add-misc-item") {
+            const select = root.querySelector('select[name="system._ui.addMiscItemKey"]');
+            const keyFromDom = (select?.value ?? "").trim();
+            const key = keyFromDom || (this.document?.system?._ui?.addMiscItemKey ?? "");
+            if (!key) return;
+
+            const catalog = CONFIG["hwfwm-system"]?.miscItemCatalog ?? {};
+            const entry = catalog[key];
+            if (!entry) {
+              ui.notifications?.warn("That misc item list is not populated yet.");
+              await this.document.update({ "system._ui.addMiscItemKey": "" });
+              return;
+            }
+
+            await this.document.createEmbeddedDocuments("Item", [
+              {
+                name: entry.name ?? key,
+                type: "miscItem",
+                system: { key }
+              }
+            ]);
+
+            await this.document.update({ "system._ui.addMiscItemKey": "" });
+            return;
+          }
+
+          // ============================
+          // Existing actions (unchanged below)
+          // ============================
           if (action === "add-specialty") {
             const select = root.querySelector('select[name="system._ui.addSpecialtyKey"]');
             const keyFromDom = (select?.value ?? "").trim();
