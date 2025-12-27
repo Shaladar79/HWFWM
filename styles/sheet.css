@@ -273,6 +273,15 @@
   display: block;
 }
 
+/* Sheet-scoped tab visibility (Essence subtabs) */
+.hwfwm-sheet .tab[data-group="essence"] {
+  display: none;
+}
+
+.hwfwm-sheet .tab[data-group="essence"].is-active {
+  display: block;
+}
+
 
 /* =========================================================
    11) Status > Attributes table
