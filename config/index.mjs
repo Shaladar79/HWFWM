@@ -7,6 +7,10 @@ import { HWFWM_AFFINITIES } from "./affinities.mjs";
 import { HWFWM_RESISTANCES } from "./resistances.mjs";
 import { HWFWM_APTITUDES } from "./aptitudes.mjs";
 
+// NEW
+import { HWFWM_ESSENCES } from "./essences.mjs";
+import { HWFWM_CONFLUENCE_ESSENCES } from "./confluence-essences.mjs";
+
 export const HWFWM_CONFIG = {
   ranks: RANKS,
   rankOrder: RANK_ORDER,
@@ -23,5 +27,9 @@ export const HWFWM_CONFIG = {
   specialtyCatalog: HWFWM_SPECIALTIES,
   affinityCatalog: HWFWM_AFFINITIES,
   resistanceCatalog: HWFWM_RESISTANCES,
-  aptitudeCatalog: HWFWM_APTITUDES
+  aptitudeCatalog: HWFWM_APTITUDES,
+
+  // NEW: Essence support
+  essenceCatalog: HWFWM_ESSENCES,
+  confluenceEssenceCatalog: HWFWM_CONFLUENCE_ESSENCES
 };
