@@ -1,0 +1,34 @@
+<form class="hwfwm-item-sheet hwfwm-item-sheet--consumable" autocomplete="off">
+  <header class="hwfwm-item-header">
+    <div class="hwfwm-item-title">
+      <label>Name</label>
+      <input type="text" name="name" value="{{item.name}}" />
+    </div>
+  </header>
+
+  <section class="hwfwm-item-body">
+    <div class="hwfwm-card">
+      <div class="hwfwm-card__title">Consumable</div>
+
+      <div class="hwfwm-grid">
+        <div class="hwfwm-field">
+          <div class="hwfwm-label">Quantity</div>
+          <input type="number" name="system.quantity" value="{{system.quantity}}" min="0" step="1" />
+        </div>
+
+        <div class="hwfwm-field">
+          <div class="hwfwm-label">Readied</div>
+          <select name="system.readied">
+            <option value="no" {{#if (eq system.readied "no")}}selected{{/if}}>No</option>
+            <option value="yes" {{#if (eq system.readied "yes")}}selected{{/if}}>Yes</option>
+          </select>
+        </div>
+
+        <div class="hwfwm-field">
+          <div class="hwfwm-label">Notes</div>
+          <textarea name="system.notes" rows="6">{{system.notes}}</textarea>
+        </div>
+      </div>
+    </div>
+  </section>
+</form>
