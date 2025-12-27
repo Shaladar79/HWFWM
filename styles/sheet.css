@@ -655,8 +655,8 @@
 
 /* Narrow, digit-sized number inputs ONLY for Spirit Coins */
 .hwfwm-coins-row input[type="number"] {
-  width: 6ch;
-  min-width: 6ch;
+  width: 12ch;
+  min-width: 12ch;
   padding: 6px 8px;
   text-align: right;
 }
