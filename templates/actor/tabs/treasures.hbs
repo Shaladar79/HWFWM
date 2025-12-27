@@ -39,8 +39,9 @@
 
   </div>
 
+  {{!-- Default to "equipment" if no UI state yet --}}
   <nav class="hwfwm-tabs hwfwm-tabs--sub" data-group="treasures">
-    <a class="hwfwm-tab {{#if (eq system._ui.treasuresSubTab "equipment")}}is-active{{/if}}" data-tab="equipment">Equipment</a>
+    <a class="hwfwm-tab {{#if (or (eq system._ui.treasuresSubTab "equipment") (not system._ui.treasuresSubTab))}}is-active{{/if}}" data-tab="equipment">Equipment</a>
     <a class="hwfwm-tab {{#if (eq system._ui.treasuresSubTab "consumables")}}is-active{{/if}}" data-tab="consumables">Consumables</a>
     <a class="hwfwm-tab {{#if (eq system._ui.treasuresSubTab "inventory")}}is-active{{/if}}" data-tab="inventory">Inventory</a>
   </nav>
