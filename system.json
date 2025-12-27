@@ -17,7 +17,11 @@
     "Item": {
       "feature": {},
       "talent": {},
-      "essenceAbility": {}
+      "essenceAbility": {},
+
+      "equipment": {},
+      "consumable": {},
+      "miscItem": {}
     }
   },
   "manifest": "https://raw.githubusercontent.com/Shaladar79/HWFWM/main/system.json",
