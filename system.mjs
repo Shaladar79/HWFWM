@@ -42,8 +42,12 @@ Hooks.once("init", async () => {
   // Register system-wide config namespace
   CONFIG["hwfwm-system"] = HWFWM_CONFIG;
 
-  // Helper used by the sheet templates
+  // ---------------------------------------------------------
+  // Handlebars helpers used by templates
+  // ---------------------------------------------------------
   Handlebars.registerHelper("eq", (a, b) => a === b);
+  Handlebars.registerHelper("or", (...args) => args.slice(0, -1).some(Boolean));
+  Handlebars.registerHelper("not", (v) => !v);
 
   // Preload actor sheet templates + partials (required when using {{> partial }})
   await loadTemplates([
