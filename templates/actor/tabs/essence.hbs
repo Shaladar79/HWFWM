@@ -8,14 +8,16 @@
     <a class="hwfwm-tab {{#if (eq system._ui.essenceSubTab "recovery")}}is-active{{/if}}" data-tab="recovery">Recovery</a>
   </nav>
 
-  <!-- POWER -->
+  {{!-- =========================================================
+       POWER
+       ========================================================= --}}
   <section class="tab" data-group="essence" data-tab="power">
     <div class="hwfwm-spec-add">
 
-      {{!-- If Confluence is unlocked and this is the Confluence slot, hide Essence dropdown --}}
+      {{!-- Essence dropdown: show unless this is the confluence slot (after unlock) --}}
       {{#if essenceUI.confluenceUnlocked}}
         {{#if (eq essenceUI.confluenceSlot "power")}}
-          {{!-- (Essence dropdown hidden) --}}
+          {{!-- hidden --}}
         {{else}}
           <label>Essence</label>
           <select name="system.essences.powerKey">
@@ -35,7 +37,7 @@
         </select>
       {{/if}}
 
-      {{!-- Confluence dropdown only appears when unlocked AND this is the Confluence slot --}}
+      {{!-- Confluence dropdown: only on the remaining slot after unlock --}}
       {{#if essenceUI.confluenceUnlocked}}
         {{#if (eq essenceUI.confluenceSlot "power")}}
           <label>Confluence</label>
@@ -50,185 +52,10 @@
 
     </div>
 
-    {{!-- Show slots if Essence chosen --}}
+    {{!-- Slots render if essence chosen OR (confluence slot and confluence chosen) --}}
     {{#if system.essences.powerKey}}
       <div class="hwfwm-spec-table">
-        <div class="hwfwm-spec-head">
-          <div>Essence Ability Slots (Power)</div>
-        </div>
-
+        <div class="hwfwm-spec-head"><div>Essence Ability Slots (Power)</div></div>
         <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 1</div></div>
         <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 2</div></div>
-        <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 3</div></div>
-        <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 4</div></div>
-        <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 5</div></div>
-      </div>
-    {{else}}
-      {{!-- Or show slots if this is the Confluence slot and a Confluence is chosen --}}
-      {{#if essenceUI.confluenceUnlocked}}
-        {{#if (eq essenceUI.confluenceSlot "power")}}
-          {{#if system.confluenceEssences.powerKey}}
-            <div class="hwfwm-spec-table">
-              <div class="hwfwm-spec-head">
-                <div>Essence Ability Slots (Power)</div>
-              </div>
-
-              <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 1</div></div>
-              <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 2</div></div>
-              <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 3</div></div>
-              <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 4</div></div>
-              <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 5</div></div>
-            </div>
-          {{/if}}
-        {{/if}}
-      {{/if}}
-    {{/if}}
-  </section>
-
-  <!-- SPEED -->
-  <section class="tab" data-group="essence" data-tab="speed">
-    <div class="hwfwm-spec-add">
-
-      {{#if essenceUI.confluenceUnlocked}}
-        {{#if (eq essenceUI.confluenceSlot "speed")}}
-        {{else}}
-          <label>Essence</label>
-          <select name="system.essences.speedKey">
-            <option value="">— Select Essence —</option>
-            {{#each essenceCatalog as |e key|}}
-              <option value="{{key}}" {{#if (eq key ../system.essences.speedKey)}}selected{{/if}}>{{e.name}}</option>
-            {{/each}}
-          </select>
-        {{/if}}
-      {{else}}
-        <label>Essence</label>
-        <select name="system.essences.speedKey">
-          <option value="">— Select Essence —</option>
-          {{#each essenceCatalog as |e key|}}
-            <option value="{{key}}" {{#if (eq key ../system.essences.speedKey)}}selected{{/if}}>{{e.name}}</option>
-          {{/each}}
-        </select>
-      {{/if}}
-
-      {{#if essenceUI.confluenceUnlocked}}
-        {{#if (eq essenceUI.confluenceSlot "speed")}}
-          <label>Confluence</label>
-          <select name="system.confluenceEssences.speedKey">
-            <option value="">— Select Confluence —</option>
-            {{#each confluenceEssenceCatalog as |c key|}}
-              <option value="{{key}}" {{#if (eq key ../system.confluenceEssences.speedKey)}}selected{{/if}}>{{c.name}}</option>
-            {{/each}}
-          </select>
-        {{/if}}
-      {{/if}}
-
-    </div>
-
-    {{#if system.essences.speedKey}}
-      <div class="hwfwm-spec-table">
-        <div class="hwfwm-spec-head"><div>Essence Ability Slots (Speed)</div></div>
-        <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 1</div></div>
-        <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 2</div></div>
-        <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 3</div></div>
-        <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 4</div></div>
-        <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 5</div></div>
-      </div>
-    {{else}}
-      {{#if essenceUI.confluenceUnlocked}}
-        {{#if (eq essenceUI.confluenceSlot "speed")}}
-          {{#if system.confluenceEssences.speedKey}}
-            <div class="hwfwm-spec-table">
-              <div class="hwfwm-spec-head"><div>Essence Ability Slots (Speed)</div></div>
-              <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 1</div></div>
-              <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 2</div></div>
-              <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 3</div></div>
-              <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 4</div></div>
-              <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 5</div></div>
-            </div>
-          {{/if}}
-        {{/if}}
-      {{/if}}
-    {{/if}}
-  </section>
-
-  <!-- SPIRIT -->
-  <section class="tab" data-group="essence" data-tab="spirit">
-    <div class="hwfwm-spec-add">
-
-      {{#if essenceUI.confluenceUnlocked}}
-        {{#if (eq essenceUI.confluenceSlot "spirit")}}
-        {{else}}
-          <label>Essence</label>
-          <select name="system.essences.spiritKey">
-            <option value="">— Select Essence —</option>
-            {{#each essenceCatalog as |e key|}}
-              <option value="{{key}}" {{#if (eq key ../system.essences.spiritKey)}}selected{{/if}}>{{e.name}}</option>
-            {{/each}}
-          </select>
-        {{/if}}
-      {{else}}
-        <label>Essence</label>
-        <select name="system.essences.spiritKey">
-          <option value="">— Select Essence —</option>
-          {{#each essenceCatalog as |e key|}}
-            <option value="{{key}}" {{#if (eq key ../system.essences.spiritKey)}}selected{{/if}}>{{e.name}}</option>
-          {{/each}}
-        </select>
-      {{/if}}
-
-      {{#if essenceUI.confluenceUnlocked}}
-        {{#if (eq essenceUI.confluenceSlot "spirit")}}
-          <label>Confluence</label>
-          <select name="system.confluenceEssences.spiritKey">
-            <option value="">— Select Confluence —</option>
-            {{#each confluenceEssenceCatalog as |c key|}}
-              <option value="{{key}}" {{#if (eq key ../system.confluenceEssences.spiritKey)}}selected{{/if}}>{{c.name}}</option>
-            {{/each}}
-          </select>
-        {{/if}}
-      {{/if}}
-
-    </div>
-
-    {{#if system.essences.spiritKey}}
-      <div class="hwfwm-spec-table">
-        <div class="hwfwm-spec-head"><div>Essence Ability Slots (Spirit)</div></div>
-        <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 1</div></div>
-        <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 2</div></div>
-        <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 3</div></div>
-        <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 4</div></div>
-        <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 5</div></div>
-      </div>
-    {{else}}
-      {{#if essenceUI.confluenceUnlocked}}
-        {{#if (eq essenceUI.confluenceSlot "spirit")}}
-          {{#if system.confluenceEssences.spiritKey}}
-            <div class="hwfwm-spec-table">
-              <div class="hwfwm-spec-head"><div>Essence Ability Slots (Spirit)</div></div>
-              <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 1</div></div>
-              <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 2</div></div>
-              <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 3</div></div>
-              <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 4</div></div>
-              <div class="hwfwm-spec-row"><div class="hwfwm-spec-name">Slot 5</div></div>
-            </div>
-          {{/if}}
-        {{/if}}
-      {{/if}}
-    {{/if}}
-  </section>
-
-  <!-- RECOVERY -->
-  <section class="tab" data-group="essence" data-tab="recovery">
-    <div class="hwfwm-spec-add">
-
-      {{#if essenceUI.confluenceUnlocked}}
-        {{#if (eq essenceUI.confluenceSlot "recovery")}}
-        {{else}}
-          <label>Essence</label>
-          <select name="system.essences.recoveryKey">
-            <option value="">— Select Essence —</option>
-            {{#each essenceCatalog as |e key|}}
-              <option value="{{key}}" {{#if (eq key ../system.essences.recoveryKey)}}selected{{/if}}>{{e.name}}</option>
-            {{/each}}
-          </select>
-        {{/if}}
+        <div class="hwfwm-spec-row">
