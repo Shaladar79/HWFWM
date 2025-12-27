@@ -24,7 +24,7 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
   // IMPORTANT:
   // - traits can safely default
   // - essence MUST NOT default to "power" here, or it will override persisted actor state every time
-  _activeSubTabs = { traits: "enhancements", essence: null };
+  _activeSubTabs = { traits: "enhancements", essence: null, treasures: "equipment" };
 
   /**
    * AbortController used to ensure we never stack handlers,
@@ -131,6 +131,9 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     context.system._ui.addResistanceKey = context.system._ui.addResistanceKey ?? "";
     context.system._ui.addAptitudeKey = context.system._ui.addAptitudeKey ?? "";
 
+    // Ensure Treasures UI state exists (used by treasures.hbs is-active checks)
+    context.system._ui.treasuresSubTab = context.system._ui.treasuresSubTab ?? "equipment";
+
     // ----------------------------
     // Essence subtab persistence
     // ----------------------------
@@ -210,6 +213,23 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
         const current = this.document?.system?._ui?.essenceSubTab ?? "power";
         if (current !== t) {
           this.document?.update?.({ "system._ui.essenceSubTab": t }).catch(() => {});
+        }
+      },
+      signal
+    });
+
+    // Treasures subtabs
+    this._activateTabGroup(root, {
+      group: "treasures",
+      navSelector: '.hwfwm-tabs[data-group="treasures"]',
+      defaultTab: "equipment",
+      getPersisted: () => this._activeSubTabs.treasures,
+      setPersisted: (t) => {
+        this._activeSubTabs.treasures = t;
+
+        const current = this.document?.system?._ui?.treasuresSubTab ?? "equipment";
+        if (current !== t) {
+          this.document?.update?.({ "system._ui.treasuresSubTab": t }).catch(() => {});
         }
       },
       signal
@@ -613,3 +633,4 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     );
   }
 }
+
