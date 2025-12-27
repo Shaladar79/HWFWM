@@ -53,8 +53,6 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
 
     const confluenceUnlocked = uniqueCount === 3;
 
-    // Confluence slot is the ONE attribute that has no essence selected once unlocked.
-    // (If player somehow has 4 selected, unlocked becomes false until corrected.)
     const confluenceSlot =
       confluenceUnlocked
         ? attrs.find((a) => !(ess?.[`${a}Key`] ?? "").trim()) ?? null
@@ -101,7 +99,7 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
       backgroundKey: details.backgroundKey ?? ""
     };
 
-    // Items context for Traits > Features
+    // Items context
     const items = Array.from(this.document?.items ?? []);
     const grantedSources = new Set(["race", "role", "background", "rank"]);
 
@@ -131,7 +129,7 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     context.system._ui.addResistanceKey = context.system._ui.addResistanceKey ?? "";
     context.system._ui.addAptitudeKey = context.system._ui.addAptitudeKey ?? "";
 
-    // NEW: misc item add selector holder (inventory tab)
+    // NEW: misc item add selector for Treasures > Inventory
     context.system._ui.addMiscItemKey = context.system._ui.addMiscItemKey ?? "";
 
     // ----------------------------
@@ -146,7 +144,8 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     // ----------------------------
     const storedTreasuresTab = context.system._ui.treasuresSubTab ?? "equipment";
     if (!this._activeSubTabs.treasures) this._activeSubTabs.treasures = storedTreasuresTab;
-    context.system._ui.treasuresSubTab = this._activeSubTabs.treasures ?? storedTreasuresTab ?? "equipment";
+    context.system._ui.treasuresSubTab =
+      this._activeSubTabs.treasures ?? storedTreasuresTab ?? "equipment";
 
     /**
      * Config-backed catalogs used by dropdowns.
@@ -156,32 +155,33 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     context.resistanceCatalog = cfg.resistanceCatalog ?? {};
     context.aptitudeCatalog = cfg.aptitudeCatalog ?? {};
 
-    // Essence dropdown catalogs (required by essence.hbs)
+    // Essence dropdown catalogs
     context.essenceCatalog = cfg.essenceCatalog ?? {};
     context.confluenceEssenceCatalog = cfg.confluenceEssenceCatalog ?? {};
+
+    // NEW: misc item catalog (placeholder list you’ll populate later)
+    context.miscItemCatalog = cfg.miscItemCatalog ?? {};
 
     // Essence UI state (3 essences + 1 confluence slot)
     context.essenceUI = this._computeEssenceUI(context.system);
 
-    // =========================================================
-    // NEW: Treasures / Inventory context (equipment/consumables/misc)
-    // =========================================================
+    // ---------------------------------------------------
+    // Treasures context lists (requires Item types)
+    // Types assumed:
+    // - equipment
+    // - consumable
+    // - miscItem
+    // ---------------------------------------------------
     const equipmentItems = items.filter((it) => it?.type === "equipment");
     const consumableItems = items.filter((it) => it?.type === "consumable");
     const miscItems = items.filter((it) => it?.type === "miscItem");
-
-    const normalizeYesNo = (v) => (String(v ?? "no").toLowerCase() === "yes" ? "yes" : "no");
-    const normalizeCategory = (v) => {
-      const s = String(v ?? "weapon").toLowerCase();
-      return ["weapon", "armor", "misc"].includes(s) ? s : "weapon";
-    };
 
     context.allEquipment = equipmentItems
       .map((it) => ({
         id: it.id,
         name: it.name,
-        category: normalizeCategory(it.system?.category),
-        equipped: normalizeYesNo(it.system?.equipped)
+        category: it.system?.category ?? "misc",
+        equipped: it.system?.equipped ?? "no"
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
 
@@ -191,8 +191,8 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
       .map((it) => ({
         id: it.id,
         name: it.name,
-        quantity: Number(it.system?.quantity ?? 0),
-        readied: normalizeYesNo(it.system?.readied)
+        quantity: Number.isFinite(Number(it.system?.quantity)) ? Number(it.system?.quantity) : 0,
+        readied: it.system?.readied ?? "no"
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
 
@@ -204,9 +204,6 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
         name: it.name
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
-
-    // Placeholder catalog (empty until you populate config later)
-    context.miscItemCatalog = cfg.miscItemCatalog ?? {};
 
     return context;
   }
@@ -280,58 +277,56 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     });
 
     // ---------------------------------------------------
-    // CHANGE HANDLING
-    // 1) Embedded item inline edits (inventory)  [NEW]
-    // 2) Essence enforcement (capture phase)      [EXISTING]
+    // Inline embedded Item editing (Inventory subtab)
+    // Looks for: data-item-id + data-item-field
+    // ---------------------------------------------------
+    root.addEventListener(
+      "change",
+      async (ev) => {
+        const el = ev.target;
+        if (!(el instanceof HTMLElement)) return;
+
+        const itemId = el.getAttribute("data-item-id");
+        const field = el.getAttribute("data-item-field");
+        if (!itemId || !field) return;
+
+        const item = this.document?.items?.get(itemId);
+        if (!item) return;
+
+        // Determine value
+        let value;
+        if (el instanceof HTMLInputElement) {
+          if (el.type === "number") {
+            const n = Number(el.value);
+            value = Number.isFinite(n) ? n : 0;
+          } else {
+            value = el.value ?? "";
+          }
+        } else if (el instanceof HTMLSelectElement) {
+          value = el.value ?? "";
+        } else {
+          return;
+        }
+
+        // Special-case: Item name is not in system.*
+        if (field === "name") {
+          await item.update({ name: String(value ?? "") });
+          return;
+        }
+
+        // Otherwise update the provided path
+        await item.update({ [field]: value });
+      },
+      { signal }
+    );
+
+    // ---------------------------------------------------
+    // Essence enforcement (capture phase, before form submit)
     // ---------------------------------------------------
     root.addEventListener(
       "change",
       async (ev) => {
         const target = ev.target;
-
-        // ============================
-        // 1) Embedded item edits (NEW)
-        // ============================
-        if (
-          target instanceof HTMLInputElement ||
-          target instanceof HTMLSelectElement ||
-          target instanceof HTMLTextAreaElement
-        ) {
-          const itemId = target.dataset?.itemId;
-          const field = target.dataset?.itemField;
-
-          // If this change is an inline inventory control, update the embedded Item directly
-          if (itemId && field) {
-            // prevent submit-on-change racing
-            ev.preventDefault?.();
-            ev.stopPropagation();
-            ev.stopImmediatePropagation?.();
-
-            const item = this.document?.items?.get(itemId);
-            if (!item) return;
-
-            let value;
-            if (target instanceof HTMLInputElement && target.type === "number") {
-              value = Number(target.value ?? 0);
-              if (!Number.isFinite(value)) value = 0;
-            } else {
-              value = (target.value ?? "").toString();
-            }
-
-            // Special case: editing name uses top-level update
-            if (field === "name") {
-              await item.update({ name: value });
-              return;
-            }
-
-            await item.update({ [field]: value });
-            return;
-          }
-        }
-
-        // ============================
-        // 2) Essence enforcement (EXISTING)
-        // ============================
         if (!(target instanceof HTMLSelectElement)) return;
 
         const name = target.getAttribute("name") ?? "";
@@ -347,7 +342,6 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
 
         const attrs = HwfwmActorSheet.ESSENCE_ATTRS;
 
-        // Determine which attribute is being modified (power/speed/spirit/recovery)
         const attr = attrs.find((a) => name.includes(`.${a}Key`));
         if (!attr) return;
 
@@ -473,31 +467,43 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
             return;
           }
 
-          // ============================
-          // Treasures / Inventory actions (NEW)
-          // ============================
+          // -----------------------------
+          // Treasures: create equipment
+          // -----------------------------
           if (action === "create-equipment") {
             await this.document.createEmbeddedDocuments("Item", [
               {
                 name: "New Equipment",
                 type: "equipment",
-                system: { category: "weapon", equipped: "no" }
+                system: {
+                  category: "weapon",
+                  equipped: "no"
+                }
               }
             ]);
             return;
           }
 
+          // -----------------------------
+          // Treasures: create consumable
+          // -----------------------------
           if (action === "create-consumable") {
             await this.document.createEmbeddedDocuments("Item", [
               {
                 name: "New Consumable",
                 type: "consumable",
-                system: { quantity: 1, readied: "no" }
+                system: {
+                  quantity: 1,
+                  readied: "no"
+                }
               }
             ]);
             return;
           }
 
+          // -----------------------------
+          // Treasures: add misc item from catalog placeholder
+          // -----------------------------
           if (action === "add-misc-item") {
             const select = root.querySelector('select[name="system._ui.addMiscItemKey"]');
             const keyFromDom = (select?.value ?? "").trim();
@@ -506,17 +512,16 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
 
             const catalog = CONFIG["hwfwm-system"]?.miscItemCatalog ?? {};
             const entry = catalog[key];
-            if (!entry) {
-              ui.notifications?.warn("That misc item list is not populated yet.");
-              await this.document.update({ "system._ui.addMiscItemKey": "" });
-              return;
-            }
+
+            const name = entry?.name ?? key;
 
             await this.document.createEmbeddedDocuments("Item", [
               {
-                name: entry.name ?? key,
+                name,
                 type: "miscItem",
-                system: { key }
+                system: {
+                  key
+                }
               }
             ]);
 
@@ -524,9 +529,9 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
             return;
           }
 
-          // ============================
-          // Existing actions (unchanged below)
-          // ============================
+          // -----------------------------
+          // Existing Traits actions
+          // -----------------------------
           if (action === "add-specialty") {
             const select = root.querySelector('select[name="system._ui.addSpecialtyKey"]');
             const keyFromDom = (select?.value ?? "").trim();
@@ -682,6 +687,7 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
           }
         }
 
+        // Rolls
         const rollBtn = ev.target.closest("[data-roll]");
         if (!rollBtn) return;
 
