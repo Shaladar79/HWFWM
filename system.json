@@ -16,7 +16,8 @@
     },
     "Item": {
       "feature": {},
-      "talent": {}
+      "talent": {},
+      "essenceAbility": {}
     }
   },
   "manifest": "https://raw.githubusercontent.com/Shaladar79/HWFWM/main/system.json",
