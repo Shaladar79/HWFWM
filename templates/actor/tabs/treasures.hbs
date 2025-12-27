@@ -1,1 +1,60 @@
+<div class="hwfwm-card">
+  <div class="hwfwm-card__title">Spirit Coins</div>
+
+  <div class="hwfwm-grid">
+
+    <div class="hwfwm-res-row3">
+      <div class="hwfwm-res-cell">
+        <div class="hwfwm-res-label">Lesser</div>
+        <input type="number" name="system.treasures.coins.lesser" value="{{system.treasures.coins.lesser}}" min="0" step="1" />
+      </div>
+
+      <div class="hwfwm-res-cell">
+        <div class="hwfwm-res-label">Iron</div>
+        <input type="number" name="system.treasures.coins.iron" value="{{system.treasures.coins.iron}}" min="0" step="1" />
+      </div>
+
+      <div class="hwfwm-res-cell">
+        <div class="hwfwm-res-label">Bronze</div>
+        <input type="number" name="system.treasures.coins.bronze" value="{{system.treasures.coins.bronze}}" min="0" step="1" />
+      </div>
+    </div>
+
+    <div class="hwfwm-res-row3">
+      <div class="hwfwm-res-cell">
+        <div class="hwfwm-res-label">Silver</div>
+        <input type="number" name="system.treasures.coins.silver" value="{{system.treasures.coins.silver}}" min="0" step="1" />
+      </div>
+
+      <div class="hwfwm-res-cell">
+        <div class in="hwfwm-res-label">Gold</div>
+        <input type="number" name="system.treasures.coins.gold" value="{{system.treasures.coins.gold}}" min="0" step="1" />
+      </div>
+
+      <div class="hwfwm-res-cell">
+        <div class="hwfwm-res-label">Diamond</div>
+        <input type="number" name="system.treasures.coins.diamond" value="{{system.treasures.coins.diamond}}" min="0" step="1" />
+      </div>
+    </div>
+
+  </div>
+
+  <nav class="hwfwm-tabs hwfwm-tabs--sub" data-group="treasures">
+    <a class="hwfwm-tab {{#if (eq system._ui.treasuresSubTab "equipment")}}is-active{{/if}}" data-tab="equipment">Equipment</a>
+    <a class="hwfwm-tab {{#if (eq system._ui.treasuresSubTab "consumables")}}is-active{{/if}}" data-tab="consumables">Consumables</a>
+    <a class="hwfwm-tab {{#if (eq system._ui.treasuresSubTab "inventory")}}is-active{{/if}}" data-tab="inventory">Inventory</a>
+  </nav>
+
+  <section class="tab" data-group="treasures" data-tab="equipment">
+    <div class="hwfwm-muted">Equipment subtab (placeholder)</div>
+  </section>
+
+  <section class="tab" data-group="treasures" data-tab="consumables">
+    <div class="hwfwm-muted">Consumables subtab (placeholder)</div>
+  </section>
+
+  <section class="tab" data-group="treasures" data-tab="inventory">
+    <div class="hwfwm-muted">Inventory subtab (placeholder)</div>
+  </section>
+</div>
 
