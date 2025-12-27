@@ -1,1 +1,39 @@
+<form class="hwfwm-item-sheet hwfwm-item-sheet--equipment" autocomplete="off">
+  <header class="hwfwm-item-header">
+    <div class="hwfwm-item-title">
+      <label>Name</label>
+      <input type="text" name="name" value="{{item.name}}" />
+    </div>
+  </header>
+
+  <section class="hwfwm-item-body">
+    <div class="hwfwm-card">
+      <div class="hwfwm-card__title">Equipment</div>
+
+      <div class="hwfwm-grid">
+        <div class="hwfwm-field">
+          <div class="hwfwm-label">Category</div>
+          <select name="system.category">
+            <option value="weapon" {{#if (eq system.category "weapon")}}selected{{/if}}>Weapon</option>
+            <option value="armor" {{#if (eq system.category "armor")}}selected{{/if}}>Armor</option>
+            <option value="misc" {{#if (eq system.category "misc")}}selected{{/if}}>Misc</option>
+          </select>
+        </div>
+
+        <div class="hwfwm-field">
+          <div class="hwfwm-label">Equipped</div>
+          <select name="system.equipped">
+            <option value="no" {{#if (eq system.equipped "no")}}selected{{/if}}>No</option>
+            <option value="yes" {{#if (eq system.equipped "yes")}}selected{{/if}}>Yes</option>
+          </select>
+        </div>
+
+        <div class="hwfwm-field">
+          <div class="hwfwm-label">Notes</div>
+          <textarea name="system.notes" rows="6">{{system.notes}}</textarea>
+        </div>
+      </div>
+    </div>
+  </section>
+</form>
 
