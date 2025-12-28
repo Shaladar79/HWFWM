@@ -1,5 +1,5 @@
 import { HWFWM_CONFIG } from "./config/index.mjs";
-import { HwfwmActorSheet } from "./scripts/sheets/actor-sheet.mjs";
+import { HwfwmActorSheet } from "./scripts/sheets/actor/actor-sheet.mjs";
 
 // Essence Ability sheet class (imported)
 import { HwfwmEssenceAbilitySheet } from "./scripts/sheets/essence-ability-sheet.mjs";
