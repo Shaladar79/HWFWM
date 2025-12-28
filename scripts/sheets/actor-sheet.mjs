@@ -592,12 +592,26 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
 
                       const current = foundry.utils.deepClone(this.document?.system?.treasures?.miscItems ?? {});
 
-                      // Do not add duplicates
-                      if (current[key]) return;
+                      // B) If already exists: increment quantity, do NOT overwrite name/notes
+                      const addedQty = Number.isFinite(qty) ? qty : Number(entry.quantity ?? 1);
+                      if (current[key]) {
+                        const existing = current[key] ?? {};
+                        const existingQty = Number(existing.quantity ?? 0);
 
+                        current[key] = {
+                          name: existing.name ?? entry.name ?? key,
+                          notes: existing.notes ?? entry.notes ?? "",
+                          quantity: (Number.isFinite(existingQty) ? existingQty : 0) + addedQty
+                        };
+
+                        await this.document.update({ "system.treasures.miscItems": current });
+                        return;
+                      }
+
+                      // Otherwise create new
                       current[key] = {
                         name: entry.name ?? key,
-                        quantity: Number.isFinite(qty) ? qty : Number(entry.quantity ?? 1),
+                        quantity: addedQty,
                         notes: entry.notes ?? ""
                       };
 
