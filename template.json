@@ -69,7 +69,9 @@
             "silver": 0,
             "gold": 0,
             "diamond": 0
-          }
+          },
+
+          "miscItems": {}
         }
       }
     }
@@ -96,14 +98,6 @@
       "system": {
         "quantity": 1,
         "readied": "no",
-        "notes": ""
-      }
-    },
-
-    "miscItem": {
-      "system": {
-        "catalogKey": "",
-        "quantity": 1,
         "notes": ""
       }
     }
