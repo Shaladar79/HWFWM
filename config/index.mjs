@@ -7,11 +7,15 @@ import { HWFWM_AFFINITIES } from "./affinities.mjs";
 import { HWFWM_RESISTANCES } from "./resistances.mjs";
 import { HWFWM_APTITUDES } from "./aptitudes.mjs";
 
-// NEW
+// Essence
 import { HWFWM_ESSENCES } from "./essences.mjs";
 import { HWFWM_CONFLUENCE_ESSENCES } from "./confluence-essences.mjs";
 
+// NEW: Misc Inventory Items (actor-data, not Item documents)
+import { HWFWM_MISC_ITEMS } from "./misc-items.mjs";
+
 export const HWFWM_CONFIG = {
+  // Core Progression
   ranks: RANKS,
   rankOrder: RANK_ORDER,
 
@@ -24,12 +28,16 @@ export const HWFWM_CONFIG = {
   backgrounds: BACKGROUNDS,
   backgroundOrder: BACKGROUND_ORDER,
 
+  // Traits
   specialtyCatalog: HWFWM_SPECIALTIES,
   affinityCatalog: HWFWM_AFFINITIES,
   resistanceCatalog: HWFWM_RESISTANCES,
   aptitudeCatalog: HWFWM_APTITUDES,
 
-  // NEW: Essence support
+  // Essences
   essenceCatalog: HWFWM_ESSENCES,
-  confluenceEssenceCatalog: HWFWM_CONFLUENCE_ESSENCES
+  confluenceEssenceCatalog: HWFWM_CONFLUENCE_ESSENCES,
+
+  // Treasures
+  miscItemCatalog: HWFWM_MISC_ITEMS
 };
