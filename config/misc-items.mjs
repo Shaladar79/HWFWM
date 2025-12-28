@@ -19,151 +19,89 @@
 // 1) Master Essence List (source of truth)
 // ---------------------------------------------
 const ESSENCE_NAMES = [
-  "Adept",
-  "Ape",
-  "Armour",
-  "Axe",
-  "Balance",
-  "Bat",
-  "Bear",
-  "Bee",
-  "Bird",
-  "Blight",
-  "Blood",
-  "Bone",
-  "Bow",
-  "Cage",
-  "Cat",
-  "Cattle",
-  "Chain",
-  "Claw",
-  "Cloth",
-  "Cloud",
-  "Cold",
-  "Coral",
-  "Corrupt",
-  "Crocodile",
-  "Crystal",
-  "Dance",
-  "Dark",
-  "Death",
-  "Deep",
-  "Deer",
-  "Dimension",
-  "Discord",
-  "Dog",
-  "Duck",
-  "Dust",
+  "Adept","Ape","Armour","Axe","Balance","Bat","Bear","Bee","Bird","Blight","Blood","Bone","Bow",
+  "Cage","Cat","Cattle","Chain","Claw","Cloth","Cloud","Cold","Coral","Corrupt","Crocodile",
+  "Crystal","Dance","Dark","Death","Deep","Deer","Dimension","Discord","Dog","Duck","Dust","Earth",
+  "Echo","Elemental","Eye","Feast","Feeble","Fire","Fish","Flea","Flesh","Foot","Fork","Fox","Frog",
+  "Fungus","Gathering","Glass","Goat","Grazen","Growth","Gun","Hair","Hammer","Hand","Harmonic",
+  "Heidel","Hook","Horse","Hunger","Hunt","Ice","Iron","Knife","Knowledge","Life","Light","Lightning",
+  "Lizard","Locust","Lurker","Magic","Malign","Manatee","Might","Mirror","Monkey","Moon","Mouse",
+  "Myriad","Needle","Net","Octopus","Omen","Pangolin","Paper","Plant","Potent","Pure","Rabbit","Rake",
+  "Rat","Renewal","Resolute","Rune","Sand","Sceptre","Serene","Shark","Shield","Shimmer","Ship",
+  "Shovel","Sickle","Sin","Skunk","Sloth","Smoke","Snake","Song","Spear","Spider","Spike","Staff",
+  "Star","Sun","Swift","Sword","Technology","Tentacle","Thread","Trap","Tree","Trowel","Turtle","Vast",
+  "Vehicle","Venom","Visage","Void","Wall","Wasp","Water","Whale","Wheel","Whip","Wind","Wing","Wolf",
+  "Wood","Zeal"
+];
+
+// ---------------------------------------------
+// 1b) Awakening Stones (source of truth)
+// ---------------------------------------------
+// NOTE: I am treating this as a flat list of stone names.
+// If you later want “combo stones” like "Earth/Acid/Adventure", we can support that,
+// but right now we’ll do one entry per name.
+const AWAKENING_STONE_NAMES = [
   "Earth",
-  "Echo",
-  "Elemental",
-  "Eye",
+  "Acid",
+  "Adventure",
+  "Absolution",
+  "Apocalypse",
+  "Eyes",
+  "Anticipation",
+  "Judgement",
+  "Calling",
+  "Avatar",
   "Feast",
-  "Feeble",
-  "Fire",
-  "Fish",
-  "Flea",
   "Flesh",
-  "Foot",
-  "Fork",
-  "Fox",
-  "Frog",
-  "Fungus",
-  "Gathering",
-  "Glass",
-  "Goat",
-  "Grazen",
-  "Growth",
-  "Gun",
-  "Hair",
-  "Hammer",
-  "Hand",
-  "Harmonic",
-  "Heidel",
-  "Hook",
-  "Horse",
-  "Hunger",
-  "Hunt",
-  "Ice",
-  "Iron",
-  "Knife",
-  "Knowledge",
-  "Life",
-  "Light",
+  "Persistence",
+  "Champion",
+  "Celestials",
+  "Feeble",
+  "Focus",
+  "Ruin",
+  "Inevitability",
+  "Dimension",
+  "Fire",
+  "Preparation",
+  "Moment",
+  "Gate",
   "Lightning",
-  "Lizard",
-  "Locust",
-  "Lurker",
-  "Magic",
-  "Malign",
-  "Manatee",
   "Might",
-  "Mirror",
-  "Monkey",
-  "Moon",
-  "Mouse",
   "Myriad",
-  "Needle",
-  "Net",
-  "Octopus",
-  "Omen",
-  "Pangolin",
-  "Paper",
-  "Plant",
-  "Potent",
-  "Pure",
-  "Rabbit",
-  "Rake",
-  "Rat",
-  "Renewal",
-  "Resolute",
-  "Rune",
+  "Potency",
+  "Puberty",
+  "Radiant",
   "Sand",
-  "Sceptre",
-  "Serene",
-  "Shark",
-  "Shield",
-  "Shimmer",
-  "Ship",
-  "Shovel",
-  "Sickle",
-  "Sin",
-  "Skunk",
-  "Sloth",
-  "Smoke",
-  "Snake",
-  "Song",
-  "Spear",
   "Spider",
-  "Spike",
-  "Staff",
-  "Star",
-  "Sun",
-  "Swift",
+  "Swiftness",
   "Sword",
-  "Technology",
-  "Tentacle",
-  "Thread",
-  "Trap",
-  "Tree",
-  "Trowel",
-  "Turtle",
-  "Vast",
-  "Vehicle",
-  "Venom",
-  "Visage",
-  "Void",
   "Wall",
-  "Wasp",
   "Water",
-  "Whale",
   "Wheel",
-  "Whip",
   "Wind",
-  "Wing",
-  "Wolf",
-  "Wood",
-  "Zeal"
+  "Fish",
+  "Reach",
+  "Omens",
+  "Karma",
+  "Foot",
+  "Song",
+  "Purgation",
+  "Reaper",
+  "Gun",
+  "Surge",
+  "Sky",
+  "Rebirth",
+  "Hand",
+  "Vision",
+  "Stars",
+  "Magus",
+  "Wrath",
+  "Mediocrity",
+  "Plant",
+  "Rain",
+  "Rat",
+  "Shield",
+  "Snake"
 ];
 
 // ---------------------------------------------
@@ -188,7 +126,6 @@ function buildEssenceAndQuintessenceCatalog() {
 
     const slug = slugify(n);
 
-    // Essence (stored as misc actor-data item)
     out[`essence.${slug}`] = {
       name: `Essence: ${n}`,
       group: "Essences",
@@ -196,7 +133,6 @@ function buildEssenceAndQuintessenceCatalog() {
       notes: ""
     };
 
-    // Quintessence linked to that essence (also misc actor-data item)
     out[`quintessence.${slug}`] = {
       name: `${n} Quintessence`,
       group: "Quintessence",
@@ -208,12 +144,30 @@ function buildEssenceAndQuintessenceCatalog() {
   return out;
 }
 
+function buildAwakeningStoneCatalog() {
+  const out = {};
+  for (const raw of AWAKENING_STONE_NAMES) {
+    const n = String(raw).trim();
+    if (!n) continue;
+
+    const slug = slugify(n);
+
+    // Key namespace: awakening.<stone>
+    // Display: Awakening Stone: <Name>
+    out[`awakening.${slug}`] = {
+      name: `Awakening Stone: ${n}`,
+      group: "Awakening Stones",
+      quantity: 0,
+      notes: ""
+    };
+  }
+  return out;
+}
+
 // ---------------------------------------------
-// 3) Non-essence misc items (starter placeholders)
-//    Keep minimal; expand later as you define them.
+// 3) Non-essence misc items (minimal placeholders)
 // ---------------------------------------------
 const BASE_MISC = {
-  // Sundries (placeholder)
   "sundries.placeholder": {
     name: "Sundries (Placeholder)",
     group: "Sundries",
@@ -221,15 +175,6 @@ const BASE_MISC = {
     notes: ""
   },
 
-  // Awakening Stones (placeholder)
-  "awakening-stones.placeholder": {
-    name: "Awakening Stones (Placeholder)",
-    group: "Awakening Stones",
-    quantity: 0,
-    notes: ""
-  },
-
-  // Other (placeholder)
   "other.placeholder": {
     name: "Other (Placeholder)",
     group: "Other",
@@ -243,5 +188,6 @@ const BASE_MISC = {
 // ---------------------------------------------
 export const HWFWM_MISC_ITEMS = {
   ...BASE_MISC,
+  ...buildAwakeningStoneCatalog(),
   ...buildEssenceAndQuintessenceCatalog()
 };
