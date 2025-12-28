@@ -131,7 +131,7 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     context.system._ui.addResistanceKey = context.system._ui.addResistanceKey ?? "";
     context.system._ui.addAptitudeKey = context.system._ui.addAptitudeKey ?? "";
 
-    // Treasures: misc dropdown (inventory subtab) — actor-data list (not Items)
+    // Treasures: misc dropdown (inventory subtab)
     context.system._ui.addMiscItemKey = context.system._ui.addMiscItemKey ?? "";
 
     // ----------------------------
@@ -177,7 +177,8 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
         id: it.id,
         name: it.name,
         category: it.system?.category ?? "misc",
-        equipped: (it.system?.equipped ?? "no").toString()
+        equipped: (it.system?.equipped ?? "no").toString(),
+        notes: it.system?.notes ?? ""
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
 
@@ -187,7 +188,8 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
         id: it.id,
         name: it.name,
         quantity: Number(it.system?.quantity ?? 0),
-        readied: (it.system?.readied ?? "no").toString()
+        readied: (it.system?.readied ?? "no").toString(),
+        notes: it.system?.notes ?? ""
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
 
@@ -509,7 +511,8 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
                 type: "equipment",
                 system: {
                   category: "weapon", // weapon | armor | misc
-                  equipped: "no" // yes | no
+                  equipped: "no", // yes | no
+                  notes: ""
                 }
               }
             ]);
@@ -526,7 +529,8 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
                 type: "consumable",
                 system: {
                   quantity: 1,
-                  readied: "no" // yes | no
+                  readied: "no", // yes | no
+                  notes: ""
                 }
               }
             ]);
