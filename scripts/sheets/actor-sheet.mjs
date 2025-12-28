@@ -196,7 +196,8 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     context.confluenceEssenceCatalog = cfg.confluenceEssenceCatalog ?? {};
 
     // Treasures: misc item catalog (config-backed)
-    context.miscItemCatalog = cfg.miscItemCatalog ?? {};
+    // IMPORTANT: we flatten here so the sheet works even if cfg.miscItemCatalog is bucketed.
+    context.miscItemCatalog = this._flattenMiscCatalog(cfg.miscItemCatalog ?? {});
 
     // Essence UI state (3 essences + 1 confluence slot)
     context.essenceUI = this._computeEssenceUI(context.system);
@@ -497,6 +498,12 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
         if (actionBtn) {
           const action = actionBtn.dataset.action;
 
+          // IMPORTANT: Because the sheet root is a <form> with submitOnChange,
+          // we hard-stop propagation so "Remove" and other buttons cannot be swallowed.
+          ev.preventDefault();
+          ev.stopPropagation();
+          ev.stopImmediatePropagation?.();
+
           const allowed = new Set([
             "open-item",
             "delete-item",
@@ -517,8 +524,6 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
             "remove-misc-item"
           ]);
           if (!allowed.has(action)) return;
-
-          ev.preventDefault();
 
           if (action === "open-item") {
             const id = actionBtn.dataset.itemId;
@@ -546,8 +551,10 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
           // -----------------------------
           // Treasures: add misc actor-data via dialog
           // -----------------------------
-                   if (action === "add-misc-item") {
-            const catalog = CONFIG["hwfwm-system"]?.miscItemCatalog ?? {};
+          if (action === "add-misc-item") {
+            // Read from CONFIG, but flatten so either flat or bucketed config works.
+            const rawCatalog = CONFIG["hwfwm-system"]?.miscItemCatalog ?? {};
+            const catalog = this._flattenMiscCatalog(rawCatalog);
 
             // IMPORTANT: values MUST match catalog entry.group exactly.
             const TYPE_OPTIONS = [
@@ -570,12 +577,11 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
 
               return [
                 `<option value="">— Select —</option>`,
-                ...rows.map(
-                  (r) =>
-                    `<option value="${foundry.utils.escapeHTML(r.key)}">${foundry.utils.escapeHTML(
-                      r.name
-                    )}</option>`
-                )
+                ...rows.map((r) => {
+                  const k = foundry.utils.escapeHTML(r.key);
+                  const n = foundry.utils.escapeHTML(r.name);
+                  return `<option value="${k}">${n}</option>`;
+                })
               ].join("");
             };
 
@@ -586,12 +592,11 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
                 <div class="form-group">
                   <label>Type</label>
                   <select name="miscType">
-                    ${TYPE_OPTIONS.map(
-                      (o) =>
-                        `<option value="${foundry.utils.escapeHTML(o.value)}" ${
-                          o.value === defaultGroup ? "selected" : ""
-                        }>${foundry.utils.escapeHTML(o.label)}</option>`
-                    ).join("")}
+                    ${TYPE_OPTIONS.map((o) => {
+                      const v = foundry.utils.escapeHTML(o.value);
+                      const l = foundry.utils.escapeHTML(o.label);
+                      return `<option value="${v}" ${o.value === defaultGroup ? "selected" : ""}>${l}</option>`;
+                    }).join("")}
                   </select>
                 </div>
 
@@ -639,23 +644,20 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
                       const form = html[0]?.querySelector?.("form.hwfwm-misc-dialog");
                       if (!form) return;
 
-                      const groupName = (form.querySelector('select[name="miscType"]')?.value ?? "").trim();
                       const key = (form.querySelector('select[name="miscKey"]')?.value ?? "").trim();
 
                       const qtyRaw = form.querySelector('input[name="miscQty"]')?.value ?? "1";
                       const qty = Math.max(0, Number(qtyRaw));
 
-                      // If they didn't pick an item, do nothing
-                      if (!groupName || !key) return;
+                      // Must choose an item; qty must be > 0
+                      if (!key) return;
+                      if (!Number.isFinite(qty) || qty <= 0) return;
 
                       const entry = catalog[key];
                       if (!entry) {
                         ui.notifications?.warn(`Misc item not found for key: ${key}`);
                         return;
                       }
-
-                      // Qty 0 should not create anything
-                      if (!Number.isFinite(qty) || qty <= 0) return;
 
                       const current = foundry.utils.deepClone(this.document?.system?.treasures?.miscItems ?? {});
 
@@ -900,7 +902,8 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
           flavor: `Specialty: ${name} (TN ${total}) — ${success ? "Success" : "Failure"}`
         });
       },
-      { signal }
+      // Capture makes action buttons more reliable inside <form> contexts
+      { signal, capture: true }
     );
   }
 
