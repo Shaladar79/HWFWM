@@ -36,6 +36,16 @@ class HwfwmTalentSheet extends ItemSheet {
   }
 }
 
+/**
+ * NOTE:
+ * For now, Equipment and Consumable will be inline-edited in the Actor sheet inventory table.
+ * We are NOT registering dedicated item sheets for them yet.
+ * If you want dedicated item sheets later, we can add:
+ * - HwfwmEquipmentSheet
+ * - HwfwmConsumableSheet
+ * and register them like Feature/Talent.
+ */
+
 Hooks.once("init", async () => {
   console.log("HWFWM System | Initialized");
 
@@ -46,6 +56,8 @@ Hooks.once("init", async () => {
   // Handlebars helpers used by templates
   // ---------------------------------------------------------
   Handlebars.registerHelper("eq", (a, b) => a === b);
+
+  // Needed by treasures.hbs (you are using {{or ...}} and {{not ...}})
   Handlebars.registerHelper("or", (...args) => args.slice(0, -1).some(Boolean));
   Handlebars.registerHelper("not", (v) => !v);
 
@@ -71,7 +83,7 @@ Hooks.once("init", async () => {
     "systems/hwfwm-system/templates/actor/tabs/traits/enhancements.hbs",
     "systems/hwfwm-system/templates/actor/tabs/traits/features.hbs",
 
-    // Item sheets (placeholders)
+    // Item sheets
     "systems/hwfwm-system/templates/item/feature-sheet.hbs",
     "systems/hwfwm-system/templates/item/talent-sheet.hbs",
     "systems/hwfwm-system/templates/item/essence-ability-sheet.hbs"
