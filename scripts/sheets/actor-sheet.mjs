@@ -509,7 +509,7 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
                 type: "equipment",
                 system: {
                   category: "weapon", // weapon | armor | misc
-                  equipped: "no"      // yes | no
+                  equipped: "no" // yes | no
                 }
               }
             ]);
