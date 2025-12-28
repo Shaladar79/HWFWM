@@ -1,10 +1,11 @@
 // scripts/sheets/actor-sheet.mjs
-
-// IMPORTANT: In ES modules, all imports must be first.
-import { buildActorSheetContext } from "./actor/context.mjs";
-import { bindActorSheetListeners } from "./actor/listeners.mjs";
+// Orchestrator for the Actor Sheet. Uses split modules in ./actor/*
 
 const { HandlebarsApplicationMixin } = foundry.applications.api;
+
+// Use NORMAL named imports (no "import * as X")
+import { buildActorSheetContext } from "./actor/context.mjs";
+import { bindActorSheetListeners } from "./actor/listeners.mjs";
 
 export class HwfwmActorSheet extends HandlebarsApplicationMixin(
   foundry.applications.sheets.ActorSheetV2
@@ -28,16 +29,17 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
   _activeTab = "overview";
   _activeSubTabs = { traits: "enhancements", essence: null, treasures: null };
 
-  /**
-   * AbortController used to ensure we never stack handlers,
-   * and that handlers are always rebound to the latest root after rerender.
-   */
+  // AbortController used to ensure we never stack handlers after rerenders
   _domController = null;
 
   async _prepareContext(options) {
-    // Delegate ALL context building to the split module.
-    // Your module already calls the parent _prepareContext internally.
-    return await buildActorSheetContext(this, options);
+    // Delegate to split context builder
+    if (typeof buildActorSheetContext === "function") {
+      return await buildActorSheetContext(this, options);
+    }
+
+    // Fallback (should not happen once split files exist)
+    return await super._prepareContext(options);
   }
 
   _onRender(...args) {
@@ -53,7 +55,9 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     if (this._domController) this._domController.abort();
     this._domController = new AbortController();
 
-    // Delegate event wiring to the split listeners module
-    bindActorSheetListeners(this, root, this._domController);
+    // Bind ALL listeners (tabs + change + click) from the split module
+    if (typeof bindActorSheetListeners === "function") {
+      bindActorSheetListeners(this, root, this._domController);
+    }
   }
 }
