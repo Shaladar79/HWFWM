@@ -546,11 +546,10 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
           // -----------------------------
           // Treasures: add misc actor-data via dialog
           // -----------------------------
-          if (action === "add-misc-item") {
-            const rawCatalog = CONFIG["hwfwm-system"]?.miscItemCatalog ?? {};
-            const catalog = this._flattenMiscCatalog(rawCatalog);
+                   if (action === "add-misc-item") {
+            const catalog = CONFIG["hwfwm-system"]?.miscItemCatalog ?? {};
 
-            // IMPORTANT: values MUST match misc-items.mjs group strings exactly.
+            // IMPORTANT: values MUST match catalog entry.group exactly.
             const TYPE_OPTIONS = [
               { value: "Sundries", label: "Sundries" },
               { value: "Awakening Stones", label: "Awakening Stones" },
@@ -559,29 +558,39 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
               { value: "Other", label: "Other" }
             ];
 
-            const filteredKeys = (groupName) =>
+            const rowsForGroup = (groupName) =>
               Object.entries(catalog)
                 .filter(([, v]) => (v?.group ?? "") === groupName)
                 .map(([k, v]) => ({ key: k, name: v?.name ?? k }))
                 .sort((a, b) => a.name.localeCompare(b.name));
 
-            const buildItemOptionsHtml = (groupName) => {
-              const rows = filteredKeys(groupName);
+            const buildOptions = (groupName) => {
+              const rows = rowsForGroup(groupName);
               if (!rows.length) return `<option value="">— None Available —</option>`;
+
               return [
                 `<option value="">— Select —</option>`,
-                ...rows.map((r) => `<option value="${r.key}">${foundry.utils.escapeHTML(r.name)}</option>`)
+                ...rows.map(
+                  (r) =>
+                    `<option value="${foundry.utils.escapeHTML(r.key)}">${foundry.utils.escapeHTML(
+                      r.name
+                    )}</option>`
+                )
               ].join("");
             };
 
             const defaultGroup = "Sundries";
+
             const content = `
               <form class="hwfwm-misc-dialog">
                 <div class="form-group">
                   <label>Type</label>
                   <select name="miscType">
                     ${TYPE_OPTIONS.map(
-                      (o) => `<option value="${o.value}" ${o.value === defaultGroup ? "selected" : ""}>${o.label}</option>`
+                      (o) =>
+                        `<option value="${foundry.utils.escapeHTML(o.value)}" ${
+                          o.value === defaultGroup ? "selected" : ""
+                        }>${foundry.utils.escapeHTML(o.label)}</option>`
                     ).join("")}
                   </select>
                 </div>
@@ -589,7 +598,7 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
                 <div class="form-group">
                   <label>Item</label>
                   <select name="miscKey">
-                    ${buildItemOptionsHtml(defaultGroup)}
+                    ${buildOptions(defaultGroup)}
                   </select>
                 </div>
 
@@ -606,13 +615,16 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
 
               const typeSel = form.querySelector('select[name="miscType"]');
               const itemSel = form.querySelector('select[name="miscKey"]');
-
               if (!typeSel || !itemSel) return;
 
-              typeSel.addEventListener("change", () => {
+              // Ensure item list always matches the currently selected type
+              const refreshItems = () => {
                 const groupName = (typeSel.value ?? "").trim();
-                itemSel.innerHTML = buildItemOptionsHtml(groupName);
-              });
+                itemSel.innerHTML = buildOptions(groupName);
+              };
+
+              typeSel.addEventListener("change", refreshItems);
+              refreshItems();
             };
 
             const dlg = new Dialog(
@@ -629,33 +641,40 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
 
                       const groupName = (form.querySelector('select[name="miscType"]')?.value ?? "").trim();
                       const key = (form.querySelector('select[name="miscKey"]')?.value ?? "").trim();
+
                       const qtyRaw = form.querySelector('input[name="miscQty"]')?.value ?? "1";
                       const qty = Math.max(0, Number(qtyRaw));
 
+                      // If they didn't pick an item, do nothing
                       if (!groupName || !key) return;
-                      if (!Number.isFinite(qty) || qty <= 0) return;
 
                       const entry = catalog[key];
-                      if (!entry) return;
+                      if (!entry) {
+                        ui.notifications?.warn(`Misc item not found for key: ${key}`);
+                        return;
+                      }
+
+                      // Qty 0 should not create anything
+                      if (!Number.isFinite(qty) || qty <= 0) return;
 
                       const current = foundry.utils.deepClone(this.document?.system?.treasures?.miscItems ?? {});
 
-                      // If already exists: increment quantity, do NOT overwrite name/notes
+                      // If already exists: increment quantity; keep existing name/notes.
                       if (current[key]) {
-                        const existing = current[key] ?? {};
-                        const existingQty = Number(existing.quantity ?? 0);
+                        const existingQty = Number(current[key]?.quantity ?? 0);
+                        const safeExistingQty = Number.isFinite(existingQty) ? existingQty : 0;
 
                         current[key] = {
-                          name: existing.name ?? entry.name ?? key,
-                          notes: existing.notes ?? entry.notes ?? "",
-                          quantity: (Number.isFinite(existingQty) ? existingQty : 0) + qty
+                          name: current[key]?.name ?? entry.name ?? key,
+                          notes: current[key]?.notes ?? entry.notes ?? "",
+                          quantity: safeExistingQty + qty
                         };
 
                         await this.document.update({ "system.treasures.miscItems": current });
                         return;
                       }
 
-                      // Otherwise create new
+                      // Otherwise create new entry
                       current[key] = {
                         name: entry.name ?? key,
                         quantity: qty,
