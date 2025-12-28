@@ -4,10 +4,10 @@
 const { HandlebarsApplicationMixin } = foundry.applications.api;
 
 // Normal imports (no namespace imports)
-import { prepareActorContext } from "./actor/context.mjs";
-import { prepareEssenceContext } from "./actor/essence.mjs";
-import { prepareTreasuresMiscContext } from "./actor/treasures-misc.mjs";
-import { bindActorSheetListeners } from "./actor/listeners.mjs";
+import { prepareActorContext } from "./context.mjs";
+import { prepareEssenceContext } from "./essence.mjs";
+import { prepareTreasuresMiscContext } from "./treasures-misc.mjs";
+import { bindActorSheetListeners } from "./listeners.mjs";
 
 export class HwfwmActorSheet extends HandlebarsApplicationMixin(
   foundry.applications.sheets.ActorSheetV2
