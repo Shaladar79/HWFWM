@@ -6,11 +6,12 @@ import { openAddMiscDialog, removeMiscByKey, updateMiscField } from "./treasures
 
 /**
  * Bind all DOM listeners for the actor sheet.
- * @param {HwfwmActorSheet} sheet
- * @param {HTMLElement} root
- * @param {AbortController} controller
+ *
+ * IMPORTANT:
+ * This function MUST accept a single object argument because actor-sheet.mjs
+ * calls it like: bindActorSheetListeners({ sheet, root, controller })
  */
-export function bindActorSheetListeners(sheet, root, controller) {
+export function bindActorSheetListeners({ sheet, root, controller }) {
   const { signal } = controller;
 
   // -----------------------
@@ -130,6 +131,7 @@ export function bindActorSheetListeners(sheet, root, controller) {
           value = Number.isFinite(n) ? n : 0;
         }
 
+        // updateMiscField is where qty<=0 should remove the row
         await updateMiscField(sheet, { key, field, value });
         return;
       }
@@ -159,6 +161,7 @@ export function bindActorSheetListeners(sheet, root, controller) {
       if (!actionBtn) return;
 
       const action = actionBtn.dataset.action;
+
       ev.preventDefault();
       ev.stopPropagation();
       ev.stopImmediatePropagation?.();
@@ -176,6 +179,13 @@ export function bindActorSheetListeners(sheet, root, controller) {
 
       // NOTE: other actions (open-item, delete-item, etc.) can be migrated next.
     },
-    { signal }
+    { signal, capture: true }
   );
+}
+
+/**
+ * Optional alias so actor-sheet.mjs can call either name safely.
+ */
+export function bindListeners(args) {
+  return bindActorSheetListeners(args);
 }
