@@ -10,6 +10,9 @@
  *  - subgroup: string (optional)
  *  - quantity: number (default suggested)
  *  - notes: string (default suggested)
+ *
+ * IMPORTANT:
+ * - Confluence Essences are NOT part of this file.
  */
 
 // ---------------------------------------------
@@ -167,7 +170,6 @@ const ESSENCE_NAMES = [
 // 2) Helpers
 // ---------------------------------------------
 function slugify(name) {
-  // lower, trim, spaces/punct → hyphen, collapse repeats
   return String(name)
     .trim()
     .toLowerCase()
@@ -179,13 +181,14 @@ function slugify(name) {
 
 function buildEssenceAndQuintessenceCatalog() {
   const out = {};
+
   for (const raw of ESSENCE_NAMES) {
     const n = String(raw).trim();
     if (!n) continue;
 
     const slug = slugify(n);
 
-    // Essence
+    // Essence (stored as misc actor-data item)
     out[`essence.${slug}`] = {
       name: `Essence: ${n}`,
       group: "Essences",
@@ -193,7 +196,7 @@ function buildEssenceAndQuintessenceCatalog() {
       notes: ""
     };
 
-    // Quintessence attached to that Essence
+    // Quintessence linked to that essence (also misc actor-data item)
     out[`quintessence.${slug}`] = {
       name: `${n} Quintessence`,
       group: "Quintessence",
@@ -201,24 +204,38 @@ function buildEssenceAndQuintessenceCatalog() {
       notes: ""
     };
   }
+
   return out;
 }
 
 // ---------------------------------------------
-// 3) Base “non-essence” misc items (optional now)
+// 3) Non-essence misc items (starter placeholders)
+//    Keep minimal; expand later as you define them.
 // ---------------------------------------------
 const BASE_MISC = {
-  // Sundries (examples; expand later)
-  "sundry.rations": { name: "Rations", group: "Sundries", quantity: 1, notes: "" },
-  "sundry.rope-50ft": { name: "Rope (50ft)", group: "Sundries", quantity: 1, notes: "" },
-  "sundry.torch": { name: "Torch", group: "Sundries", quantity: 1, notes: "" },
+  // Sundries (placeholder)
+  "sundries.placeholder": {
+    name: "Sundries (Placeholder)",
+    group: "Sundries",
+    quantity: 1,
+    notes: ""
+  },
 
-  // Awakening Stones (examples; expand later)
-  "awakening.stone.lesser": { name: "Awakening Stone (Lesser)", group: "Awakening Stones", quantity: 0, notes: "" },
-  "awakening.stone.standard": { name: "Awakening Stone", group: "Awakening Stones", quantity: 0, notes: "" },
+  // Awakening Stones (placeholder)
+  "awakening-stones.placeholder": {
+    name: "Awakening Stones (Placeholder)",
+    group: "Awakening Stones",
+    quantity: 0,
+    notes: ""
+  },
 
-  // Other (placeholder bucket)
-  "other.placeholder": { name: "Other (Placeholder)", group: "Other", quantity: 1, notes: "" }
+  // Other (placeholder)
+  "other.placeholder": {
+    name: "Other (Placeholder)",
+    group: "Other",
+    quantity: 1,
+    notes: ""
+  }
 };
 
 // ---------------------------------------------
