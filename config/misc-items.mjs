@@ -37,9 +37,8 @@ const ESSENCE_NAMES = [
 // ---------------------------------------------
 // 1b) Awakening Stones (source of truth)
 // ---------------------------------------------
-// NOTE: I am treating this as a flat list of stone names.
-// If you later want “combo stones” like "Earth/Acid/Adventure", we can support that,
-// but right now we’ll do one entry per name.
+// NOTE: Flat list of stone names.
+// If later you want combo stones like "Earth/Acid/Adventure", we can extend this.
 const AWAKENING_STONE_NAMES = [
   "Earth",
   "Acid",
@@ -126,6 +125,8 @@ function buildEssenceAndQuintessenceCatalog() {
 
     const slug = slugify(n);
 
+    // Keys are stable namespaces: essence.<slug> / quintessence.<slug>
+    // Display naming matches the manifest requirement.
     out[`essence.${slug}`] = {
       name: `Essence: ${n}`,
       group: "Essences",
@@ -152,7 +153,7 @@ function buildAwakeningStoneCatalog() {
 
     const slug = slugify(n);
 
-    // Key namespace: awakening.<stone>
+    // Key namespace: awakening.<slug>
     // Display: Awakening Stone: <Name>
     out[`awakening.${slug}`] = {
       name: `Awakening Stone: ${n}`,
@@ -165,20 +166,82 @@ function buildAwakeningStoneCatalog() {
 }
 
 // ---------------------------------------------
-// 3) Non-essence misc items (minimal placeholders)
+// 3) Non-essence misc items (real entries; no placeholders)
 // ---------------------------------------------
 const BASE_MISC = {
-  "sundries.placeholder": {
-    name: "Sundries (Placeholder)",
+  // Sundries
+  "sundries.rations": {
+    name: "Rations",
     group: "Sundries",
-    quantity: 1,
+    quantity: 0,
+    notes: ""
+  },
+  "sundries.waterskin": {
+    name: "Waterskin",
+    group: "Sundries",
+    quantity: 0,
+    notes: ""
+  },
+  "sundries.torch": {
+    name: "Torch",
+    group: "Sundries",
+    quantity: 0,
+    notes: ""
+  },
+  "sundries.oil-flask": {
+    name: "Oil Flask",
+    group: "Sundries",
+    quantity: 0,
+    notes: ""
+  },
+  "sundries.rope-50ft": {
+    name: "Rope (50 ft)",
+    group: "Sundries",
+    quantity: 0,
+    notes: ""
+  },
+  "sundries.backpack": {
+    name: "Backpack",
+    group: "Sundries",
+    quantity: 0,
+    notes: ""
+  },
+  "sundries.bedroll": {
+    name: "Bedroll",
+    group: "Sundries",
+    quantity: 0,
+    notes: ""
+  },
+  "sundries.tinderbox": {
+    name: "Tinderbox",
+    group: "Sundries",
+    quantity: 0,
     notes: ""
   },
 
-  "other.placeholder": {
-    name: "Other (Placeholder)",
+  // Other (catch-all for campaign-specific objects)
+  "other.empty-vial": {
+    name: "Empty Vial",
     group: "Other",
-    quantity: 1,
+    quantity: 0,
+    notes: ""
+  },
+  "other.small-pouch": {
+    name: "Small Pouch",
+    group: "Other",
+    quantity: 0,
+    notes: ""
+  },
+  "other.gemstone": {
+    name: "Gemstone (Uncut)",
+    group: "Other",
+    quantity: 0,
+    notes: ""
+  },
+  "other.letter-sealed": {
+    name: "Sealed Letter",
+    group: "Other",
+    quantity: 0,
     notes: ""
   }
 };
