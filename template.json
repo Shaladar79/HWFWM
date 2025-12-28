@@ -78,6 +78,20 @@
   },
 
   "Item": {
+    "feature": {
+      "system": {
+        "source": "",
+        "notes": ""
+      }
+    },
+
+    "talent": {
+      "system": {
+        "talentType": "",
+        "notes": ""
+      }
+    },
+
     "essenceAbility": {
       "system": {
         "boundAttribute": "",
@@ -98,6 +112,14 @@
       "system": {
         "quantity": 1,
         "readied": "no",
+        "notes": ""
+      }
+    },
+
+    "miscItem": {
+      "system": {
+        "catalogKey": "",
+        "quantity": 1,
         "notes": ""
       }
     }
