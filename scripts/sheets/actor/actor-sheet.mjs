@@ -1,9 +1,7 @@
-// scripts/sheets/actor-sheet.mjs
-// Orchestrator for the Actor Sheet. Delegates to scripts/sheets/actor/*.mjs modules.
+// scripts/sheets/actor/actor-sheet.mjs
 
 const { HandlebarsApplicationMixin } = foundry.applications.api;
 
-// Normal imports (no namespace imports)
 import { prepareActorContext } from "./context.mjs";
 import { prepareEssenceContext } from "./essence.mjs";
 import { prepareTreasuresMiscContext } from "./treasures-misc.mjs";
@@ -25,25 +23,20 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
 
   _activeTab = "overview";
   _activeSubTabs = { traits: "enhancements", essence: null, treasures: null };
-
   _domController = null;
 
   async _prepareContext(options) {
     const context = await super._prepareContext(options);
 
-    // Bind live system + config
     context.system = this.document?.system ?? context.system ?? {};
     context.config = CONFIG["hwfwm-system"] ?? {};
 
-    // Split context builders (safe if you haven't implemented one yet)
     if (typeof prepareActorContext === "function") {
       await prepareActorContext({ sheet: this, actor: this.document, context, options });
     }
-
     if (typeof prepareTreasuresMiscContext === "function") {
       await prepareTreasuresMiscContext({ sheet: this, actor: this.document, context });
     }
-
     if (typeof prepareEssenceContext === "function") {
       await prepareEssenceContext({ sheet: this, actor: this.document, context });
     }
@@ -54,19 +47,15 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
   _onRender(...args) {
     super._onRender(...args);
 
-    // Normalize root element
     let root = this.element;
     if (Array.isArray(root)) root = root[0];
     if (root && !(root instanceof HTMLElement) && root[0] instanceof HTMLElement) root = root[0];
     if (!(root instanceof HTMLElement)) return;
 
-    // Rebind DOM listeners each render
     if (this._domController) this._domController.abort();
     this._domController = new AbortController();
 
-    // IMPORTANT: pass the controller (not just signal) because your binder expects controller
-    if (typeof bindActorSheetListeners === "function") {
-      bindActorSheetListeners(this, root, this._domController);
-    }
+    // Your listeners file expects (sheet, root, controller)
+    bindActorSheetListeners(this, root, this._domController);
   }
 }
