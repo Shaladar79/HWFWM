@@ -69,6 +69,40 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     };
   }
 
+  /**
+   * Accepts either:
+   *  A) flat catalog: { "essence.fire": {name, group, ...}, ... }
+   *  B) bucketed catalog: { "Essences": { "essence.fire": {...} }, ... }
+   * Returns a flat dictionary with only valid entries.
+   */
+  _flattenMiscCatalog(raw) {
+    const out = {};
+    const seen = new Set();
+
+    const isEntry = (v) =>
+      v &&
+      typeof v === "object" &&
+      typeof v.name === "string" &&
+      typeof v.group === "string";
+
+    const walk = (obj) => {
+      if (!obj || typeof obj !== "object") return;
+      if (seen.has(obj)) return;
+      seen.add(obj);
+
+      for (const [k, v] of Object.entries(obj)) {
+        if (isEntry(v)) {
+          out[k] = v;
+          continue;
+        }
+        if (v && typeof v === "object") walk(v);
+      }
+    };
+
+    walk(raw);
+    return out;
+  }
+
   async _prepareContext(options) {
     const context = await super._prepareContext(options);
     const cfg = CONFIG["hwfwm-system"] ?? {};
@@ -170,7 +204,6 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     // ---------------------------------------------------------
     // Treasures: build lists required by treasures.hbs
     // ---------------------------------------------------------
-    // NOTE: equipment/consumables are Item documents.
     const equipment = items
       .filter((it) => it?.type === "equipment")
       .map((it) => ({
@@ -314,6 +347,12 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
             value = Number.isFinite(n) ? n : 0;
           }
 
+          // Auto-delete consumables if quantity goes to 0
+          if (field === "system.quantity" && typeof value === "number" && value <= 0) {
+            await item.delete();
+            return;
+          }
+
           if (field === "name") {
             await item.update({ name: String(value ?? "") });
             return;
@@ -347,6 +386,13 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
 
           const current = foundry.utils.deepClone(this.document?.system?.treasures?.miscItems ?? {});
           if (!current[key]) current[key] = { name: key, quantity: 1, notes: "" };
+
+          // Auto-remove misc row if quantity hits 0
+          if (field === "quantity" && typeof value === "number" && value <= 0) {
+            delete current[key];
+            await this.document.update({ "system.treasures.miscItems": current });
+            return;
+          }
 
           current[key][field] = value;
 
@@ -499,78 +545,43 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
 
           // -----------------------------
           // Treasures: add misc actor-data via dialog
-          // FIX: supports both FLAT and BUCKETED catalogs, and filters by key prefix.
           // -----------------------------
           if (action === "add-misc-item") {
             const rawCatalog = CONFIG["hwfwm-system"]?.miscItemCatalog ?? {};
+            const catalog = this._flattenMiscCatalog(rawCatalog);
 
-            // 1) Normalize catalog into a flat dictionary
-            const flattenCatalog = (cat) => {
-              const out = {};
-
-              for (const [k, v] of Object.entries(cat ?? {})) {
-                // Flat entry: { "sundries.rations": { name, group, ... } }
-                if (v && typeof v === "object" && typeof v.name === "string") {
-                  out[k] = v;
-                  continue;
-                }
-
-                // Bucketed: { sundries: { rations: {name...}, ... }, ... }
-                if (v && typeof v === "object") {
-                  for (const [k2, v2] of Object.entries(v)) {
-                    if (v2 && typeof v2 === "object" && typeof v2.name === "string") {
-                      const fullKey = k2.includes(".") ? k2 : `${k}.${k2}`;
-                      out[fullKey] = v2;
-                    }
-                  }
-                }
-              }
-
-              return out;
-            };
-
-            const catalog = flattenCatalog(rawCatalog);
-
-            // 2) Type options + prefix mapping (more reliable than group strings)
+            // IMPORTANT: values MUST match misc-items.mjs group strings exactly.
             const TYPE_OPTIONS = [
-              { value: "sundries", label: "Sundries", prefix: "sundries." },
-              { value: "awakening", label: "Awakening Stones", prefix: "awakening." },
-              { value: "essence", label: "Essence Cube", prefix: "essence." },
-              { value: "quintessence", label: "Quintessence", prefix: "quintessence." },
-              { value: "other", label: "Other", prefix: "other." }
+              { value: "Sundries", label: "Sundries" },
+              { value: "Awakening Stones", label: "Awakening Stones" },
+              { value: "Essences", label: "Essence Cube" },
+              { value: "Quintessence", label: "Quintessence" },
+              { value: "Other", label: "Other" }
             ];
 
-            const filteredKeys = (typeValue) => {
-              const t = TYPE_OPTIONS.find((x) => x.value === typeValue);
-              const prefix = t?.prefix ?? "";
-
-              return Object.entries(catalog)
-                .filter(([key]) => (prefix ? key.startsWith(prefix) : false))
-                .map(([key, v]) => ({ key, name: v?.name ?? key }))
+            const filteredKeys = (groupName) =>
+              Object.entries(catalog)
+                .filter(([, v]) => (v?.group ?? "") === groupName)
+                .map(([k, v]) => ({ key: k, name: v?.name ?? k }))
                 .sort((a, b) => a.name.localeCompare(b.name));
-            };
 
-            const buildItemOptionsHtml = (typeValue) => {
-              const rows = filteredKeys(typeValue);
+            const buildItemOptionsHtml = (groupName) => {
+              const rows = filteredKeys(groupName);
               if (!rows.length) return `<option value="">— None Available —</option>`;
-
               return [
                 `<option value="">— Select —</option>`,
-                ...rows.map(
-                  (r) => `<option value="${r.key}">${foundry.utils.escapeHTML(r.name)}</option>`
-                )
+                ...rows.map((r) => `<option value="${r.key}">${foundry.utils.escapeHTML(r.name)}</option>`)
               ].join("");
             };
 
-            const defaultType = "sundries";
-
+            const defaultGroup = "Sundries";
             const content = `
               <form class="hwfwm-misc-dialog">
                 <div class="form-group">
                   <label>Type</label>
                   <select name="miscType">
                     ${TYPE_OPTIONS.map(
-                      (o) => `<option value="${o.value}" ${o.value === defaultType ? "selected" : ""}>${o.label}</option>`
+                      (o) => `<option value="${o.value}" ${o.value === defaultGroup ? "selected" : ""}>${o.label}</option>`
                     ).join("")}
                   </select>
                 </div>
@@ -578,7 +589,7 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
                 <div class="form-group">
                   <label>Item</label>
                   <select name="miscKey">
-                    ${buildItemOptionsHtml(defaultType)}
+                    ${buildItemOptionsHtml(defaultGroup)}
                   </select>
                 </div>
 
@@ -599,8 +610,8 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
               if (!typeSel || !itemSel) return;
 
               typeSel.addEventListener("change", () => {
-                const typeValue = (typeSel.value ?? "").trim();
-                itemSel.innerHTML = buildItemOptionsHtml(typeValue);
+                const groupName = (typeSel.value ?? "").trim();
+                itemSel.innerHTML = buildItemOptionsHtml(groupName);
               });
             };
 
@@ -616,19 +627,20 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
                       const form = html[0]?.querySelector?.("form.hwfwm-misc-dialog");
                       if (!form) return;
 
+                      const groupName = (form.querySelector('select[name="miscType"]')?.value ?? "").trim();
                       const key = (form.querySelector('select[name="miscKey"]')?.value ?? "").trim();
                       const qtyRaw = form.querySelector('input[name="miscQty"]')?.value ?? "1";
                       const qty = Math.max(0, Number(qtyRaw));
 
-                      if (!key) return;
+                      if (!groupName || !key) return;
+                      if (!Number.isFinite(qty) || qty <= 0) return;
 
                       const entry = catalog[key];
                       if (!entry) return;
 
                       const current = foundry.utils.deepClone(this.document?.system?.treasures?.miscItems ?? {});
-                      const addedQty = Number.isFinite(qty) ? qty : Number(entry.quantity ?? 1);
 
-                      // B) If already exists: increment quantity, do NOT overwrite name/notes
+                      // If already exists: increment quantity, do NOT overwrite name/notes
                       if (current[key]) {
                         const existing = current[key] ?? {};
                         const existingQty = Number(existing.quantity ?? 0);
@@ -636,7 +648,7 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
                         current[key] = {
                           name: existing.name ?? entry.name ?? key,
                           notes: existing.notes ?? entry.notes ?? "",
-                          quantity: (Number.isFinite(existingQty) ? existingQty : 0) + addedQty
+                          quantity: (Number.isFinite(existingQty) ? existingQty : 0) + qty
                         };
 
                         await this.document.update({ "system.treasures.miscItems": current });
@@ -646,7 +658,7 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
                       // Otherwise create new
                       current[key] = {
                         name: entry.name ?? key,
-                        quantity: addedQty,
+                        quantity: qty,
                         notes: entry.notes ?? ""
                       };
 
@@ -665,7 +677,7 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
           }
 
           if (action === "remove-misc-item") {
-            const key = actionBtn.dataset.key;
+            const key = actionBtn.dataset.key ?? actionBtn.getAttribute("data-key");
             if (!key) return;
 
             const current = foundry.utils.deepClone(this.document?.system?.treasures?.miscItems ?? {});
