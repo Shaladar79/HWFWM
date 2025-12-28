@@ -131,7 +131,7 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     context.system._ui.addResistanceKey = context.system._ui.addResistanceKey ?? "";
     context.system._ui.addAptitudeKey = context.system._ui.addAptitudeKey ?? "";
 
-    // Treasures: misc dropdown (inventory subtab)
+    // Treasures: legacy (kept harmless; dialog is now used)
     context.system._ui.addMiscItemKey = context.system._ui.addMiscItemKey ?? "";
 
     // ----------------------------
@@ -466,10 +466,6 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
             "add-aptitude",
             "remove-aptitude",
 
-            // Treasures
-            "create-equipment",
-            "create-consumable",
-
             // Treasures: misc actor-data
             "add-misc-item",
             "remove-misc-item"
@@ -502,73 +498,120 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
           }
 
           // -----------------------------
-          // Treasures: create equipment Item
-          // -----------------------------
-          if (action === "create-equipment") {
-            await this.document.createEmbeddedDocuments("Item", [
-              {
-                name: "New Equipment",
-                type: "equipment",
-                system: {
-                  category: "weapon", // weapon | armor | misc
-                  equipped: "no", // yes | no
-                  notes: ""
-                }
-              }
-            ]);
-            return;
-          }
-
-          // -----------------------------
-          // Treasures: create consumable Item
-          // -----------------------------
-          if (action === "create-consumable") {
-            await this.document.createEmbeddedDocuments("Item", [
-              {
-                name: "New Consumable",
-                type: "consumable",
-                system: {
-                  quantity: 1,
-                  readied: "no", // yes | no
-                  notes: ""
-                }
-              }
-            ]);
-            return;
-          }
-
-          // -----------------------------
-          // Treasures: add misc actor-data from config catalog
+          // Treasures: add misc actor-data via dialog
           // -----------------------------
           if (action === "add-misc-item") {
-            const select = root.querySelector('select[name="system._ui.addMiscItemKey"]');
-            const keyFromDom = (select?.value ?? "").trim();
-            const key = keyFromDom || (this.document?.system?._ui?.addMiscItemKey ?? "");
-            if (!key) return;
-
             const catalog = CONFIG["hwfwm-system"]?.miscItemCatalog ?? {};
-            const entry = catalog[key];
-            if (!entry) return;
 
-            const current = foundry.utils.deepClone(this.document?.system?.treasures?.miscItems ?? {});
+            // Group mapping (UI label -> catalog group value)
+            const TYPE_OPTIONS = [
+              { value: "Sundries", label: "Sundries" },
+              { value: "Awakening Stones", label: "Awakening Stones" },
+              { value: "Essences", label: "Essence Cube" },
+              { value: "Quintessence", label: "Quintessence" },
+              { value: "Other", label: "Other" }
+            ];
 
-            // Do not add duplicates
-            if (current[key]) {
-              await this.document.update({ "system._ui.addMiscItemKey": "" });
-              return;
-            }
+            const filteredKeys = (groupName) =>
+              Object.entries(catalog)
+                .filter(([, v]) => (v?.group ?? "") === groupName)
+                .map(([k, v]) => ({ key: k, name: v?.name ?? k }))
+                .sort((a, b) => a.name.localeCompare(b.name));
 
-            current[key] = {
-              name: entry.name ?? key,
-              quantity: Number(entry.quantity ?? 1),
-              notes: entry.notes ?? ""
+            const buildItemOptionsHtml = (groupName) => {
+              const rows = filteredKeys(groupName);
+              if (!rows.length) return `<option value="">— None Available —</option>`;
+              return [
+                `<option value="">— Select —</option>`,
+                ...rows.map((r) => `<option value="${r.key}">${foundry.utils.escapeHTML(r.name)}</option>`)
+              ].join("");
             };
 
-            await this.document.update({
-              "system.treasures.miscItems": current,
-              "system._ui.addMiscItemKey": ""
-            });
+            const defaultGroup = "Sundries";
+            const content = `
+              <form class="hwfwm-misc-dialog">
+                <div class="form-group">
+                  <label>Type</label>
+                  <select name="miscType">
+                    ${TYPE_OPTIONS.map(
+                      (o) => `<option value="${o.value}" ${o.value === defaultGroup ? "selected" : ""}>${o.label}</option>`
+                    ).join("")}
+                  </select>
+                </div>
 
+                <div class="form-group">
+                  <label>Item</label>
+                  <select name="miscKey">
+                    ${buildItemOptionsHtml(defaultGroup)}
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>Quantity</label>
+                  <input type="number" name="miscQty" min="0" step="1" value="1" />
+                </div>
+              </form>
+            `;
+
+            const onRender = (html) => {
+              const form = html[0]?.querySelector?.("form.hwfwm-misc-dialog");
+              if (!form) return;
+
+              const typeSel = form.querySelector('select[name="miscType"]');
+              const itemSel = form.querySelector('select[name="miscKey"]');
+
+              if (!typeSel || !itemSel) return;
+
+              typeSel.addEventListener("change", () => {
+                const groupName = (typeSel.value ?? "").trim();
+                itemSel.innerHTML = buildItemOptionsHtml(groupName);
+              });
+            };
+
+            const dlg = new Dialog(
+              {
+                title: "Add Misc Item",
+                content,
+                render: onRender,
+                buttons: {
+                  add: {
+                    label: "Add",
+                    callback: async (html) => {
+                      const form = html[0]?.querySelector?.("form.hwfwm-misc-dialog");
+                      if (!form) return;
+
+                      const groupName = (form.querySelector('select[name="miscType"]')?.value ?? "").trim();
+                      const key = (form.querySelector('select[name="miscKey"]')?.value ?? "").trim();
+                      const qtyRaw = form.querySelector('input[name="miscQty"]')?.value ?? "1";
+                      const qty = Math.max(0, Number(qtyRaw));
+
+                      if (!groupName || !key) return;
+
+                      const entry = catalog[key];
+                      if (!entry) return;
+
+                      const current = foundry.utils.deepClone(this.document?.system?.treasures?.miscItems ?? {});
+
+                      // Do not add duplicates
+                      if (current[key]) return;
+
+                      current[key] = {
+                        name: entry.name ?? key,
+                        quantity: Number.isFinite(qty) ? qty : Number(entry.quantity ?? 1),
+                        notes: entry.notes ?? ""
+                      };
+
+                      await this.document.update({ "system.treasures.miscItems": current });
+                    }
+                  },
+                  cancel: { label: "Cancel" }
+                },
+                default: "add"
+              },
+              { width: 420 }
+            );
+
+            dlg.render(true);
             return;
           }
 
