@@ -1,11 +1,21 @@
+// scripts/sheets/actor/listeners.mjs
+
 import { activateTabGroup } from "./tabs.mjs";
 import { handleEssenceSelectChange } from "./essence.mjs";
 import { openAddMiscDialog, removeMiscByKey, updateMiscField } from "./treasures-misc.mjs";
 
+/**
+ * Bind all DOM listeners for the actor sheet.
+ * @param {HwfwmActorSheet} sheet
+ * @param {HTMLElement} root
+ * @param {AbortController} controller
+ */
 export function bindActorSheetListeners(sheet, root, controller) {
   const { signal } = controller;
 
+  // -----------------------
   // Tabs
+  // -----------------------
   activateTabGroup(sheet, root, {
     group: "primary",
     navSelector: '.hwfwm-tabs[data-group="primary"]',
@@ -50,13 +60,17 @@ export function bindActorSheetListeners(sheet, root, controller) {
     signal
   });
 
+  // -----------------------
   // Change handler (capture)
+  // -----------------------
   root.addEventListener(
     "change",
     async (ev) => {
       const target = ev.target;
 
-      // Items inline
+      // ------------------------------------------------
+      // Items inline edits (embedded Item documents)
+      // ------------------------------------------------
       if (
         (target instanceof HTMLInputElement || target instanceof HTMLSelectElement) &&
         target.dataset?.itemId &&
@@ -84,16 +98,20 @@ export function bindActorSheetListeners(sheet, root, controller) {
           return;
         }
 
+        // Name is a top-level field
         if (field === "name") {
           await item.update({ name: String(value ?? "") });
           return;
         }
 
+        // All other fields are passed as-is (e.g. "system.category")
         await item.update({ [field]: value });
         return;
       }
 
-      // Misc inline edits
+      // ------------------------------------------------
+      // Misc inline edits (actor system data, not Items)
+      // ------------------------------------------------
       if (
         (target instanceof HTMLInputElement || target instanceof HTMLSelectElement) &&
         target.dataset?.miscKey &&
@@ -116,7 +134,9 @@ export function bindActorSheetListeners(sheet, root, controller) {
         return;
       }
 
+      // ------------------------------------------------
       // Essence enforcement
+      // ------------------------------------------------
       if (target instanceof HTMLSelectElement) {
         const handled = await handleEssenceSelectChange(sheet, target);
         if (handled) {
@@ -129,7 +149,9 @@ export function bindActorSheetListeners(sheet, root, controller) {
     { signal, capture: true }
   );
 
+  // -----------------------
   // Click handler (delegated)
+  // -----------------------
   root.addEventListener(
     "click",
     async (ev) => {
@@ -138,6 +160,8 @@ export function bindActorSheetListeners(sheet, root, controller) {
 
       const action = actionBtn.dataset.action;
       ev.preventDefault();
+      ev.stopPropagation();
+      ev.stopImmediatePropagation?.();
 
       if (action === "add-misc-item") {
         openAddMiscDialog(sheet);
@@ -150,8 +174,7 @@ export function bindActorSheetListeners(sheet, root, controller) {
         return;
       }
 
-      // leave your other actions in your original file for now if you want,
-      // but we can migrate them next.
+      // NOTE: other actions (open-item, delete-item, etc.) can be migrated next.
     },
     { signal }
   );
