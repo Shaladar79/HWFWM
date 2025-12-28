@@ -18,10 +18,8 @@
       "feature": {},
       "talent": {},
       "essenceAbility": {},
-
       "equipment": {},
-      "consumable": {},
-      "miscItem": {}
+      "consumable": {}
     }
   },
   "manifest": "https://raw.githubusercontent.com/Shaladar79/HWFWM/main/system.json",
