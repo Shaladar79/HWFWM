@@ -1,16 +1,50 @@
 // scripts/sheets/actor-sheet.mjs
-
-// NOTE: In ES modules, ALL imports must come before any other code.
-// This file is the "orchestrator" for the actor sheet and delegates to
-// scripts/sheets/actor/*.mjs modules when those modules expose functions.
-
-import * as Ctx from "./actor/context.mjs";
-import * as Tabs from "./actor/tabs.mjs";
-import * as Listeners from "./actor/listeners.mjs";
-import * as Essence from "./actor/essence.mjs";
-import * as TreasuresMisc from "./actor/treasures-misc.mjs";
+//
+// Actor sheet orchestrator.
+// Loads split modules from scripts/sheets/actor/*.mjs and delegates to them
+// WITHOUT using namespace "import * as X" imports (which make debugging harder).
+//
+// IMPORTANT: We intentionally use dynamic imports + caching so that
+// 1) A missing/renamed export won't hard-crash the whole sheet
+// 2) You can refactor split modules incrementally without breaking the UI
 
 const { HandlebarsApplicationMixin } = foundry.applications.api;
+
+// ------------------------------------------------------------
+// Module loader (cached)
+// ------------------------------------------------------------
+const _moduleCache = new Map();
+
+/**
+ * Safely import a module once and cache it.
+ * Returns null if the module fails to load.
+ */
+async function loadModule(path) {
+  if (_moduleCache.has(path)) return _moduleCache.get(path);
+  try {
+    const mod = await import(path);
+    _moduleCache.set(path, mod);
+    return mod;
+  } catch (err) {
+    console.error(`HWFWM | Failed to load module: ${path}`, err);
+    _moduleCache.set(path, null);
+    return null;
+  }
+}
+
+/**
+ * Call the first function that exists on the module from the provided list.
+ */
+async function callFirst(mod, fnNames, args) {
+  if (!mod) return false;
+  for (const name of fnNames) {
+    if (typeof mod?.[name] === "function") {
+      await mod[name](args);
+      return true;
+    }
+  }
+  return false;
+}
 
 export class HwfwmActorSheet extends HandlebarsApplicationMixin(
   foundry.applications.sheets.ActorSheetV2
@@ -19,16 +53,11 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     tag: "form",
     classes: ["hwfwm-system", "sheet", "actor", "pc", "hwfwm-sheet"],
     position: { width: 875, height: 500 },
-    form: {
-      submitOnChange: true,
-      closeOnSubmit: false
-    }
+    form: { submitOnChange: true, closeOnSubmit: false }
   });
 
   static PARTS = {
-    form: {
-      template: "systems/hwfwm-system/templates/actor/actor-sheet.hbs"
-    }
+    form: { template: "systems/hwfwm-system/templates/actor/actor-sheet.hbs" }
   };
 
   _activeTab = "overview";
@@ -41,54 +70,36 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
   _domController = null;
 
   async _prepareContext(options) {
-    // Base Foundry context
     const context = await super._prepareContext(options);
 
-    // Always bind the live actor system onto context.system
+    // Always bind the live actor system + config
     context.system = this.document?.system ?? context.system ?? {};
     context.config = CONFIG["hwfwm-system"] ?? {};
 
-    // Delegate to your split context builder if present
-    // Expected (optional) signature:
-    //   prepareActorContext({ sheet, actor, context, options })
-    if (typeof Ctx.prepareActorContext === "function") {
-      await Ctx.prepareActorContext({
-        sheet: this,
-        actor: this.document,
-        context,
-        options
-      });
-    } else if (typeof Ctx.prepareContext === "function") {
-      // fallback common naming
-      await Ctx.prepareContext({
-        sheet: this,
-        actor: this.document,
-        context,
-        options
-      });
-    }
+    // Load modules (cached)
+    const Ctx = await loadModule("./actor/context.mjs");
+    const TreasuresMisc = await loadModule("./actor/treasures-misc.mjs");
+    const Essence = await loadModule("./actor/essence.mjs");
 
-    // Delegate misc catalog / misc rows prep if present
-    // Expected (optional) signature:
-    //   prepareTreasuresMiscContext({ sheet, actor, context })
-    if (typeof TreasuresMisc.prepareTreasuresMiscContext === "function") {
-      await TreasuresMisc.prepareTreasuresMiscContext({
-        sheet: this,
-        actor: this.document,
-        context
-      });
-    }
+    // Context delegation (supports multiple naming conventions)
+    await callFirst(Ctx, ["prepareActorContext", "prepareContext", "prepareActorSheetContext"], {
+      sheet: this,
+      actor: this.document,
+      context,
+      options
+    });
 
-    // Delegate essence UI prep if present
-    // Expected (optional) signature:
-    //   prepareEssenceContext({ sheet, actor, context })
-    if (typeof Essence.prepareEssenceContext === "function") {
-      await Essence.prepareEssenceContext({
-        sheet: this,
-        actor: this.document,
-        context
-      });
-    }
+    await callFirst(TreasuresMisc, ["prepareTreasuresMiscContext", "prepareTreasuresMiscContext"], {
+      sheet: this,
+      actor: this.document,
+      context
+    });
+
+    await callFirst(Essence, ["prepareEssenceContext", "prepareEssenceUIContext"], {
+      sheet: this,
+      actor: this.document,
+      context
+    });
 
     return context;
   }
@@ -105,29 +116,32 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     // Kill old DOM listeners and rebind to the new root
     if (this._domController) this._domController.abort();
     this._domController = new AbortController();
-    const { signal } = this._domController;
+    const controller = this._domController;
 
-    // Delegate tab activation to split module if present
-    // Expected (optional) signature:
-    //   activateTabs({ sheet, root, signal })
-    if (typeof Tabs.activateTabs === "function") {
-      Tabs.activateTabs({ sheet: this, root, signal });
-    } else if (typeof Tabs.bindTabs === "function") {
-      Tabs.bindTabs({ sheet: this, root, signal });
-    } else {
-      // If you do not have a tabs module implementation loaded,
-      // do nothing here; sheet will still render.
-    }
+    // Bind listeners via split module (preferred)
+    // This is the cleanest: one module owns ALL event wiring.
+    (async () => {
+      const Listeners = await loadModule("./actor/listeners.mjs");
+      const Tabs = await loadModule("./actor/tabs.mjs");
 
-    // Delegate listeners wiring to split module if present
-    // Expected (optional) signature:
-    //   bindListeners({ sheet, root, signal })
-    if (typeof Listeners.bindListeners === "function") {
-      Listeners.bindListeners({ sheet: this, root, signal });
-      return; // listeners module fully owns event wiring
-    }
+      // Tabs: support a couple possible shapes
+      // - bindActorSheetListeners may already call activateTabGroup internally (best)
+      // - otherwise allow a separate tabs binder if you have one
+      await callFirst(Tabs, ["activateTabs", "bindTabs"], {
+        sheet: this,
+        root,
+        signal: controller.signal
+      });
 
-    // If your listeners module is not providing a binder yet,
-    // we still bind nothing here to avoid double-binding or conflicts.
+      // Listeners: support both your earlier naming and the later refactor naming
+      const bound = await callFirst(Listeners, ["bindActorSheetListeners", "bindListeners"], {
+        sheet: this,
+        root,
+        controller
+      });
+
+      // If nothing bound, do nothing (avoid double-binding).
+      if (!bound) return;
+    })();
   }
 }
