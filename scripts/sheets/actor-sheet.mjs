@@ -504,6 +504,7 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
             const catalog = CONFIG["hwfwm-system"]?.miscItemCatalog ?? {};
 
             // Group mapping (UI label -> catalog group value)
+            // IMPORTANT: values MUST match misc-items.mjs group strings exactly.
             const TYPE_OPTIONS = [
               { value: "Sundries", label: "Sundries" },
               { value: "Awakening Stones", label: "Awakening Stones" },
