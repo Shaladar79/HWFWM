@@ -1,5 +1,11 @@
+// scripts/sheets/actor/treasures-misc.mjs
+
+/**
+ * Returns a flat misc catalog:
+ * { "essence.fire": {name, group, ...}, ... }
+ * Works even if cfg.miscItemCatalog was accidentally bucketed.
+ */
 export function getFlatMiscCatalog() {
-  // normalize in case cfg is accidentally bucketed
   const raw = CONFIG["hwfwm-system"]?.miscItemCatalog ?? {};
   const out = {};
 
@@ -21,6 +27,7 @@ export function getFlatMiscCatalog() {
 export function openAddMiscDialog(sheet) {
   const catalog = getFlatMiscCatalog();
 
+  // IMPORTANT: these values must match entry.group from your misc-items config
   const TYPE_OPTIONS = [
     { value: "Sundries", label: "Sundries" },
     { value: "Awakening Stones", label: "Awakening Stones" },
@@ -40,7 +47,10 @@ export function openAddMiscDialog(sheet) {
     if (!rows.length) return `<option value="">— None Available —</option>`;
     return [
       `<option value="">— Select —</option>`,
-      ...rows.map((r) => `<option value="${foundry.utils.escapeHTML(r.key)}">${foundry.utils.escapeHTML(r.name)}</option>`)
+      ...rows.map(
+        (r) =>
+          `<option value="${foundry.utils.escapeHTML(r.key)}">${foundry.utils.escapeHTML(r.name)}</option>`
+      )
     ].join("");
   };
 
@@ -53,7 +63,9 @@ export function openAddMiscDialog(sheet) {
         <select name="miscType">
           ${TYPE_OPTIONS.map(
             (o) =>
-              `<option value="${foundry.utils.escapeHTML(o.value)}" ${o.value === defaultGroup ? "selected" : ""}>${foundry.utils.escapeHTML(o.label)}</option>`
+              `<option value="${foundry.utils.escapeHTML(o.value)}" ${
+                o.value === defaultGroup ? "selected" : ""
+              }>${foundry.utils.escapeHTML(o.label)}</option>`
           ).join("")}
         </select>
       </div>
@@ -101,7 +113,7 @@ export function openAddMiscDialog(sheet) {
             const form = html[0]?.querySelector?.("form.hwfwm-misc-dialog");
             if (!form) return;
 
-            // IMPORTANT: the stored key must be miscKey, never miscType
+            // CRITICAL: store the selected ITEM KEY (miscKey), not the type
             const key = (form.querySelector('select[name="miscKey"]')?.value ?? "").trim();
             const qtyRaw = form.querySelector('input[name="miscQty"]')?.value ?? "1";
             const qty = Math.max(0, Number(qtyRaw));
@@ -119,13 +131,18 @@ export function openAddMiscDialog(sheet) {
             if (current[key]) {
               const existingQty = Number(current[key]?.quantity ?? 0);
               const safeExistingQty = Number.isFinite(existingQty) ? existingQty : 0;
+
               current[key] = {
                 name: current[key]?.name ?? entry.name ?? key,
                 notes: current[key]?.notes ?? entry.notes ?? "",
                 quantity: safeExistingQty + qty
               };
             } else {
-              current[key] = { name: entry.name ?? key, quantity: qty, notes: entry.notes ?? "" };
+              current[key] = {
+                name: entry.name ?? key,
+                quantity: qty,
+                notes: entry.notes ?? ""
+              };
             }
 
             await sheet.document.update({ "system.treasures.miscItems": current });
