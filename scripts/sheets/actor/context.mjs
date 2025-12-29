@@ -1,8 +1,16 @@
+// scripts/sheets/actor/context.mjs
+
 import { computeEssenceUI } from "./essence.mjs";
 import { getFlatMiscCatalog } from "./treasures-misc.mjs";
 
-export async function buildActorSheetContext(sheet, options) {
-  const context = await sheet.constructor._super._prepareContext.call(sheet, options);
+/**
+ * Build the actor sheet context.
+ * @param {HwfwmActorSheet} sheet
+ * @param {object} baseContext - result of super._prepareContext(options)
+ * @param {object} options
+ */
+export async function buildActorSheetContext(sheet, baseContext, options) {
+  const context = baseContext ?? {};
   const cfg = CONFIG["hwfwm-system"] ?? {};
 
   context.system = sheet.document?.system ?? context.system ?? {};
@@ -53,14 +61,15 @@ export async function buildActorSheetContext(sheet, options) {
   context.system._ui.addAptitudeKey = context.system._ui.addAptitudeKey ?? "";
   context.system._ui.addMiscItemKey = context.system._ui.addMiscItemKey ?? "";
 
-  // Subtab persistence mirrors your original behavior
+  // Subtab persistence
   const storedEssenceTab = context.system._ui.essenceSubTab ?? "power";
   if (!sheet._activeSubTabs.essence) sheet._activeSubTabs.essence = storedEssenceTab;
   context.system._ui.essenceSubTab = sheet._activeSubTabs.essence ?? storedEssenceTab ?? "power";
 
   const storedTreasuresTab = context.system._ui.treasuresSubTab ?? "equipment";
   if (!sheet._activeSubTabs.treasures) sheet._activeSubTabs.treasures = storedTreasuresTab;
-  context.system._ui.treasuresSubTab = sheet._activeSubTabs.treasures ?? storedTreasuresTab ?? "equipment";
+  context.system._ui.treasuresSubTab =
+    sheet._activeSubTabs.treasures ?? storedTreasuresTab ?? "equipment";
 
   // catalogs
   context.specialtyCatalog = cfg.specialtyCatalog ?? {};
@@ -70,9 +79,11 @@ export async function buildActorSheetContext(sheet, options) {
   context.essenceCatalog = cfg.essenceCatalog ?? {};
   context.confluenceEssenceCatalog = cfg.confluenceEssenceCatalog ?? {};
 
-  // IMPORTANT: always provide a FLAT misc catalog to the sheet
+  // IMPORTANT: always provide a FLAT misc catalog
   context.miscItemCatalog = getFlatMiscCatalog();
 
+  // Essence UI
+  // (supports either signature; your essence.mjs can ignore the extra param)
   context.essenceUI = computeEssenceUI(sheet, context.system);
 
   // Treasures: items
