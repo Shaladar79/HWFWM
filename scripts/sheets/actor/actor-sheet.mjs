@@ -9,7 +9,7 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
   foundry.applications.sheets.ActorSheetV2
 ) {
   static DEFAULT_OPTIONS = foundry.utils.mergeObject(super.DEFAULT_OPTIONS, {
-    // IMPORTANT: Do not force tag:"form" here. The PARTS.form template is the <form>.
+    tag: "form",
     classes: ["hwfwm-system", "sheet", "actor", "pc", "hwfwm-sheet"],
     position: { width: 875, height: 500 },
     form: { submitOnChange: true, closeOnSubmit: false }
