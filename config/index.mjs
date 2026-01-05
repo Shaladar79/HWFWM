@@ -1,13 +1,16 @@
 import { RANKS, RANK_ORDER } from "./ranks.mjs";
 import { ROLES, ROLE_ORDER } from "./roles.mjs";
-import { RACES, RACE_ORDER } from "./races.mjs";
+
+// UPDATED: also import the mechanics-ready race catalogs
+import { RACES, RACE_ORDER, RACE_ADJUSTMENTS, RACE_DESCRIPTIONS } from "./races.mjs";
+
 import { BACKGROUNDS, BACKGROUND_ORDER } from "./backgrounds.mjs";
 import { HWFWM_SPECIALTIES } from "./specialties.mjs";
 import { HWFWM_AFFINITIES } from "./affinities.mjs";
 import { HWFWM_RESISTANCES } from "./resistances.mjs";
 import { HWFWM_APTITUDES } from "./aptitudes.mjs";
 
-// NEW: Rank descriptions (Overview tab)
+// Rank descriptions (Overview tab)
 import { RANK_DESCRIPTIONS } from "./rank-desc.mjs";
 
 // Essence
@@ -26,8 +29,13 @@ export const HWFWM_CONFIG = {
   roles: ROLES,
   roleOrder: ROLE_ORDER,
 
+  // UI (Dropdown)
   races: RACES,
   raceOrder: RACE_ORDER,
+
+  // NEW: Race mechanics/lore catalogs (safe additive config)
+  raceAdjustments: RACE_ADJUSTMENTS,
+  raceDescriptions: RACE_DESCRIPTIONS,
 
   backgrounds: BACKGROUNDS,
   backgroundOrder: BACKGROUND_ORDER,
