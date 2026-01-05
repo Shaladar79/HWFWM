@@ -809,3 +809,93 @@
   box-sizing: border-box;
   resize: vertical;
 }
+
+/* =========================================================
+   Header v2: Portrait + inline fields under Name
+   ========================================================= */
+
+.hwfwm-header-layout {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+/* Portrait block */
+.hwfwm-header-portrait {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  align-content: start;
+}
+
+.hwfwm-header-portrait__img {
+  width: 110px;
+  height: 110px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.hwfwm-header-portrait__type {
+  font-weight: 800;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.70);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  text-align: center;
+}
+
+/* Right side: name + inline fields */
+.hwfwm-header-main {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* Inline row: Rank / Race / Role / Background */
+.hwfwm-header-inline {
+  display: grid;
+  grid-template-columns: 120px 1fr 1fr 1fr;
+  gap: 10px;
+  align-items: end;
+  min-width: 0;
+}
+
+.hwfwm-header-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* Smaller labels for inline header */
+.hwfwm-header-label--small {
+  font-weight: 800;
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.70);
+}
+
+/* Make Rank more compact */
+.hwfwm-header-field--rank .hwfwm-header-select {
+  text-align: center;
+  font-weight: 800;
+}
+
+/* Responsive: stack fields on narrow sheets */
+@media (max-width: 900px) {
+  .hwfwm-header-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .hwfwm-header-portrait {
+    grid-template-columns: 110px 1fr;
+    justify-items: start;
+    column-gap: 12px;
+    align-items: center;
+  }
+
+  .hwfwm-header-inline {
+    grid-template-columns: 1fr 1fr;
+  }
+}
