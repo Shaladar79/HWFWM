@@ -1,26 +1,46 @@
-<form class="hwfwm-sheet__root">
-  {{> "systems/hwfwm-system/templates/actor/parts/header.hbs" }}
-  {{> "systems/hwfwm-system/templates/actor/parts/tabs-nav.hbs" }}
+// scripts/sheets/actor/actor-sheet.mjs
 
-  <section class="hwfwm-sheet__body">
-    <div class="tab" data-tab="overview" data-group="primary">
-      {{> "systems/hwfwm-system/templates/actor/tabs/overview.hbs" }}
-    </div>
+import { buildActorSheetContext } from "./context.mjs";
+import { bindActorSheetListeners } from "./listeners.mjs";
 
-    <div class="tab" data-tab="status" data-group="primary">
-      {{> "systems/hwfwm-system/templates/actor/tabs/status.hbs" }}
-    </div>
+const { HandlebarsApplicationMixin } = foundry.applications.api;
 
-    <div class="tab" data-tab="traits" data-group="primary">
-      {{> "systems/hwfwm-system/templates/actor/tabs/traits.hbs" }}
-    </div>
+export class HwfwmActorSheet extends HandlebarsApplicationMixin(
+  foundry.applications.sheets.ActorSheetV2
+) {
+  static DEFAULT_OPTIONS = foundry.utils.mergeObject(super.DEFAULT_OPTIONS, {
+    // IMPORTANT: Do not force tag:"form" here. The PARTS.form template is the <form>.
+    classes: ["hwfwm-system", "sheet", "actor", "pc", "hwfwm-sheet"],
+    position: { width: 875, height: 500 },
+    form: { submitOnChange: true, closeOnSubmit: false }
+  });
 
-    <div class="tab" data-tab="essence" data-group="primary">
-      {{> "systems/hwfwm-system/templates/actor/tabs/essence.hbs" }}
-    </div>
+  static PARTS = {
+    form: { template: "systems/hwfwm-system/templates/actor/actor-sheet.hbs" }
+  };
 
-    <div class="tab" data-tab="treasures" data-group="primary">
-      {{> "systems/hwfwm-system/templates/actor/tabs/treasures.hbs" }}
-    </div>
-  </section>
-</form>
+  static ESSENCE_ATTRS = ["power", "speed", "spirit", "recovery"];
+
+  _activeTab = "overview";
+  _activeSubTabs = { traits: "enhancements", essence: null, treasures: null };
+  _domController = null;
+
+  async _prepareContext(options) {
+    const baseContext = await super._prepareContext(options);
+    return await buildActorSheetContext(this, baseContext, options);
+  }
+
+  _onRender(...args) {
+    super._onRender(...args);
+
+    let root = this.element;
+    if (Array.isArray(root)) root = root[0];
+    if (root && !(root instanceof HTMLElement) && root[0] instanceof HTMLElement) root = root[0];
+    if (!(root instanceof HTMLElement)) return;
+
+    if (this._domController) this._domController.abort();
+    this._domController = new AbortController();
+
+    bindActorSheetListeners(this, root, this._domController);
+  }
+}
