@@ -1,5 +1,6 @@
 import { HWFWM_CONFIG } from "./config/index.mjs";
 import { HwfwmActorSheet } from "./scripts/sheets/actor/actor-sheet.mjs";
+import { HwfwmActor } from "./scripts/documents/actor.mjs"; // ✅ NEW
 
 // Essence Ability sheet class (imported)
 import { HwfwmEssenceAbilitySheet } from "./scripts/sheets/essence-ability-sheet.mjs";
@@ -40,10 +41,6 @@ class HwfwmTalentSheet extends ItemSheet {
  * NOTE:
  * For now, Equipment and Consumable will be inline-edited in the Actor sheet inventory table.
  * We are NOT registering dedicated item sheets for them yet.
- * If you want dedicated item sheets later, we can add:
- * - HwfwmEquipmentSheet
- * - HwfwmConsumableSheet
- * and register them like Feature/Talent.
  */
 
 Hooks.once("init", async () => {
@@ -51,6 +48,9 @@ Hooks.once("init", async () => {
 
   // Register system-wide config namespace
   CONFIG["hwfwm-system"] = HWFWM_CONFIG;
+
+  // ✅ Register Actor document class (derived data engine)
+  CONFIG.Actor.documentClass = HwfwmActor;
 
   // ---------------------------------------------------------
   // Handlebars helpers used by templates
@@ -61,7 +61,7 @@ Hooks.once("init", async () => {
   Handlebars.registerHelper("or", (...args) => args.slice(0, -1).some(Boolean));
   Handlebars.registerHelper("not", (v) => !v);
 
-  // Preload actor sheet templates + partials (required when using {{> partial }})
+  // Preload actor sheet templates + partials
   await loadTemplates([
     "systems/hwfwm-system/templates/actor/actor-sheet.hbs",
 
@@ -89,7 +89,7 @@ Hooks.once("init", async () => {
     "systems/hwfwm-system/templates/item/essence-ability-sheet.hbs"
   ]);
 
-  // v13+ namespaced Actors collection (avoids deprecation warning)
+  // v13+ namespaced Actors collection
   const ActorsCollection = foundry.documents.collections.Actors;
 
   // Register our sheet for PC actors only
