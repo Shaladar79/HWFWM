@@ -175,6 +175,12 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
 
       const action = actionBtn.dataset.action;
 
+      // IMPORTANT:
+      // Foundry window controls also use data-action (e.g., "close").
+      // Only intercept actions that this sheet actually handles.
+      const handledActions = new Set(["add-misc-item", "remove-misc-item"]);
+      if (!handledActions.has(action)) return;
+
       ev.preventDefault();
       ev.stopPropagation();
       ev.stopImmediatePropagation?.();
