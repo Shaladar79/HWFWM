@@ -1,8 +1,21 @@
-import { RANKS, RANK_ORDER } from "./ranks.mjs";
+import {
+  RANKS,
+  RANK_ORDER,
+  RANK_TIER_VALUE,
+  RANK_RESOURCE_MULTIPLIER,
+  RANK_PACE_MOD,
+  RANK_TRAUMA
+} from "./ranks.mjs";
+
 import { ROLES, ROLE_ORDER } from "./roles.mjs";
 
-// UPDATED: also import the mechanics-ready race catalogs
-import { RACES, RACE_ORDER, RACE_ADJUSTMENTS, RACE_DESCRIPTIONS } from "./races.mjs";
+// UPDATED: mechanics-ready race catalogs
+import {
+  RACES,
+  RACE_ORDER,
+  RACE_ADJUSTMENTS,
+  RACE_DESCRIPTIONS
+} from "./races.mjs";
 
 import { BACKGROUNDS, BACKGROUND_ORDER } from "./backgrounds.mjs";
 import { HWFWM_SPECIALTIES } from "./specialties.mjs";
@@ -21,35 +34,55 @@ import { HWFWM_CONFLUENCE_ESSENCES } from "./confluence-essences.mjs";
 import { HWFWM_MISC_ITEMS } from "./misc-items.mjs";
 
 export const HWFWM_CONFIG = {
-  // Core Progression
+  // -------------------------------------------------
+  // Core Rank Progression
+  // -------------------------------------------------
   ranks: RANKS,
   rankOrder: RANK_ORDER,
   rankDescriptions: RANK_DESCRIPTIONS,
 
+  // Numeric rank mechanics (authoritative source)
+  rankTierValues: RANK_TIER_VALUE,
+  rankResourceMultiplier: RANK_RESOURCE_MULTIPLIER,
+  rankPaceMod: RANK_PACE_MOD,
+  rankTrauma: RANK_TRAUMA,
+
+  // -------------------------------------------------
+  // Roles
+  // -------------------------------------------------
   roles: ROLES,
   roleOrder: ROLE_ORDER,
 
-  // UI (Dropdown)
+  // -------------------------------------------------
+  // Races (UI + mechanics + lore)
+  // -------------------------------------------------
   races: RACES,
   raceOrder: RACE_ORDER,
-
-  // NEW: Race mechanics/lore catalogs (safe additive config)
   raceAdjustments: RACE_ADJUSTMENTS,
   raceDescriptions: RACE_DESCRIPTIONS,
 
+  // -------------------------------------------------
+  // Backgrounds
+  // -------------------------------------------------
   backgrounds: BACKGROUNDS,
   backgroundOrder: BACKGROUND_ORDER,
 
+  // -------------------------------------------------
   // Traits
+  // -------------------------------------------------
   specialtyCatalog: HWFWM_SPECIALTIES,
   affinityCatalog: HWFWM_AFFINITIES,
   resistanceCatalog: HWFWM_RESISTANCES,
   aptitudeCatalog: HWFWM_APTITUDES,
 
+  // -------------------------------------------------
   // Essences
+  // -------------------------------------------------
   essenceCatalog: HWFWM_ESSENCES,
   confluenceEssenceCatalog: HWFWM_CONFLUENCE_ESSENCES,
 
+  // -------------------------------------------------
   // Treasures
+  // -------------------------------------------------
   miscItemCatalog: HWFWM_MISC_ITEMS
 };
