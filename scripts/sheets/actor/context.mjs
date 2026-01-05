@@ -42,9 +42,8 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
   // DERIVED RANK (Header)
   // ---------------------------------------------------------------------------
   // Tier values per rankKey: normal 0, iron 1, bronze 2, silver 3, gold 4, diamond 5
-  // If you later add these into CONFIG, this will pick them up automatically.
-  const rankTierValue =
-    cfg.rankTierValue ??
+  // This should live in config eventually; until then we default here.
+  const rankTierValues =
     cfg.rankTierValues ??
     {
       normal: 0,
@@ -65,41 +64,21 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
     return "normal";
   }
 
-  // Best-effort resolver for where attribute "rank keys" live in actor data.
-  // This keeps us stable while you evolve schema.
-  function getAttrRankKey(attr) {
-    const sys = context.system ?? {};
-
-    return (
-      // Common: system.attributes.power.rankKey
-      sys.attributes?.[attr]?.rankKey ??
-      // Common alternative: system.attrs.power.rankKey
-      sys.attrs?.[attr]?.rankKey ??
-      // Sometimes stored under details: system.details.powerRankKey
-      sys.details?.[`${attr}RankKey`] ??
-      // Sometimes stored under details as nested object: system.details.power.rankKey
-      sys.details?.[attr]?.rankKey ??
-      // Sometimes stored flat under system: system.power.rankKey
-      sys?.[attr]?.rankKey ??
-      // Or system[powerRankKey]
-      sys?.[`${attr}RankKey`] ??
-      // fallback to empty
-      ""
-    );
-  }
-
+  // NOW LOCKED: We only read from the actual actor schema:
+  // system.attributes.<attr>.rankKey
+  const sys = context.system ?? {};
   const attrRankKeys = {
-    power: getAttrRankKey("power"),
-    speed: getAttrRankKey("speed"),
-    spirit: getAttrRankKey("spirit"),
-    recovery: getAttrRankKey("recovery")
+    power: sys.attributes?.power?.rankKey ?? "normal",
+    speed: sys.attributes?.speed?.rankKey ?? "normal",
+    spirit: sys.attributes?.spirit?.rankKey ?? "normal",
+    recovery: sys.attributes?.recovery?.rankKey ?? "normal"
   };
 
   const derivedRankTotal =
-    (rankTierValue[attrRankKeys.power] ?? 0) +
-    (rankTierValue[attrRankKeys.speed] ?? 0) +
-    (rankTierValue[attrRankKeys.spirit] ?? 0) +
-    (rankTierValue[attrRankKeys.recovery] ?? 0);
+    (rankTierValues[attrRankKeys.power] ?? 0) +
+    (rankTierValues[attrRankKeys.speed] ?? 0) +
+    (rankTierValues[attrRankKeys.spirit] ?? 0) +
+    (rankTierValues[attrRankKeys.recovery] ?? 0);
 
   const derivedRankKey = deriveRankKeyFromTierTotal(derivedRankTotal);
   const derivedRankLabel = ranks?.[derivedRankKey] ?? derivedRankKey;
@@ -109,7 +88,7 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
   context.derivedRankKey = derivedRankKey;
   context.derivedRankLabel = derivedRankLabel;
 
-  // Optional: expose the per-attribute rank keys for debugging/display if desired
+  // Optional debugging
   context._attrRankKeys = attrRankKeys;
 
   // Items
@@ -157,7 +136,6 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
   context.miscItemCatalog = getFlatMiscCatalog();
 
   // Essence UI
-  // (supports either signature; your essence.mjs can ignore the extra param)
   context.essenceUI = computeEssenceUI(sheet, context.system);
 
   // Treasures: items
