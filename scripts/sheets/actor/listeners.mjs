@@ -7,11 +7,24 @@ import { openAddMiscDialog, removeMiscByKey, updateMiscField } from "./treasures
 /**
  * Bind all DOM listeners for the actor sheet.
  *
- * IMPORTANT:
- * This function MUST accept a single object argument because actor-sheet.mjs
- * calls it like: bindActorSheetListeners({ sheet, root, controller })
+ * Supports BOTH signatures:
+ *  - bindActorSheetListeners(sheet, root, controller)
+ *  - bindActorSheetListeners({ sheet, root, controller })
  */
-export function bindActorSheetListeners({ sheet, root, controller }) {
+export function bindActorSheetListeners(arg1, arg2, arg3) {
+  // Normalize arguments into { sheet, root, controller }
+  let sheet, root, controller;
+
+  if (arg1 && typeof arg1 === "object" && "sheet" in arg1 && "root" in arg1 && "controller" in arg1) {
+    ({ sheet, root, controller } = arg1);
+  } else {
+    sheet = arg1;
+    root = arg2;
+    controller = arg3;
+  }
+
+  if (!sheet || !root || !controller) return;
+
   const { signal } = controller;
 
   // -----------------------
