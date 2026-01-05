@@ -15,7 +15,13 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
   // Normalize arguments into { sheet, root, controller }
   let sheet, root, controller;
 
-  if (arg1 && typeof arg1 === "object" && "sheet" in arg1 && "root" in arg1 && "controller" in arg1) {
+  if (
+    arg1 &&
+    typeof arg1 === "object" &&
+    "sheet" in arg1 &&
+    "root" in arg1 &&
+    "controller" in arg1
+  ) {
     ({ sheet, root, controller } = arg1);
   } else {
     sheet = arg1;
@@ -75,7 +81,7 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
   });
 
   // -----------------------
-  // Change handler (capture)
+  // Change handler (IMPORTANT: do NOT capture)
   // -----------------------
   root.addEventListener(
     "change",
@@ -91,7 +97,7 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
         target.dataset?.itemField
       ) {
         ev.preventDefault?.();
-        ev.stopPropagation();
+        ev.stopPropagation?.();
         ev.stopImmediatePropagation?.();
 
         const itemId = target.dataset.itemId;
@@ -118,7 +124,6 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
           return;
         }
 
-        // All other fields are passed as-is (e.g. "system.category")
         await item.update({ [field]: value });
         return;
       }
@@ -132,7 +137,7 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
         target.dataset?.miscField
       ) {
         ev.preventDefault?.();
-        ev.stopPropagation();
+        ev.stopPropagation?.();
         ev.stopImmediatePropagation?.();
 
         const key = target.dataset.miscKey;
@@ -144,24 +149,31 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
           value = Number.isFinite(n) ? n : 0;
         }
 
-        // updateMiscField is where qty<=0 should remove the row
         await updateMiscField(sheet, { key, field, value });
         return;
       }
 
       // ------------------------------------------------
-      // Essence enforcement
+      // Essence enforcement (ONLY intercept if it handled)
       // ------------------------------------------------
       if (target instanceof HTMLSelectElement) {
         const handled = await handleEssenceSelectChange(sheet, target);
         if (handled) {
           ev.preventDefault?.();
-          ev.stopPropagation();
+          ev.stopPropagation?.();
           ev.stopImmediatePropagation?.();
+          return;
         }
       }
+
+      // ------------------------------------------------
+      // IMPORTANT:
+      // For all normal actor fields (name="system...."), do NOTHING here.
+      // Let Foundry's ApplicationV2 form handler receive the event and
+      // persist changes (submitOnChange).
+      // ------------------------------------------------
     },
-    { signal, capture: true }
+    { signal, capture: false }
   );
 
   // -----------------------
@@ -170,19 +182,17 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
   root.addEventListener(
     "click",
     async (ev) => {
-      const actionBtn = ev.target.closest("[data-action]");
+      const actionBtn = ev.target?.closest?.("[data-action]");
       if (!actionBtn) return;
 
       const action = actionBtn.dataset.action;
 
-      // IMPORTANT:
-      // Foundry window controls also use data-action (e.g., "close").
-      // Only intercept actions that this sheet actually handles.
-      const handledActions = new Set(["add-misc-item", "remove-misc-item"]);
-      if (!handledActions.has(action)) return;
+      // Foundry window chrome uses data-action too.
+      // Only intercept actions we own.
+      if (action !== "add-misc-item" && action !== "remove-misc-item") return;
 
-      ev.preventDefault();
-      ev.stopPropagation();
+      ev.preventDefault?.();
+      ev.stopPropagation?.();
       ev.stopImmediatePropagation?.();
 
       if (action === "add-misc-item") {
@@ -195,8 +205,6 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
         await removeMiscByKey(sheet, key);
         return;
       }
-
-      // NOTE: other actions (open-item, delete-item, etc.) can be migrated next.
     },
     { signal, capture: true }
   );
