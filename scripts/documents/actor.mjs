@@ -5,8 +5,10 @@ import {
   RANK_TIER_VALUE,
   RANK_RESOURCE_MULTIPLIER,
   RANK_TRAUMA,
-  RANK_PACE_MOD // ✅ ADD
+  RANK_PACE_MOD
 } from "../../config/ranks.mjs";
+
+import { RACE_ADJUSTMENTS } from "../../config/races.mjs"; // ✅ ADD
 
 export class HwfwmActor extends Actor {
   prepareDerivedData() {
@@ -15,6 +17,7 @@ export class HwfwmActor extends Actor {
     const system = (this.system ?? {});
     system.attributes = system.attributes ?? {};
     system.resources = system.resources ?? {};
+    system.details = system.details ?? {};
 
     // -----------------------------
     // 1) Attributes derived math
@@ -24,6 +27,7 @@ export class HwfwmActor extends Actor {
 
     for (const a of attrs) {
       const node = (system.attributes[a] = system.attributes[a] ?? {});
+
       const rankKey = String(node.rankKey ?? "normal");
       const base = Number(RANK_BASE_ATTRIBUTES?.[rankKey] ?? 0);
 
@@ -67,7 +71,19 @@ export class HwfwmActor extends Actor {
     system._derived.rankTierTotal = tierTotal;
 
     // -----------------------------
-    // 3) Resources max (baseline 10)
+    // 3) Resolve race adjustments
+    // -----------------------------
+    const raceKey = String(system.details?.raceKey ?? "outworlder");
+    const raceAdjRaw = RACE_ADJUSTMENTS?.[raceKey] ?? RACE_ADJUSTMENTS?.outworlder ?? {};
+    const raceAdj = {
+      lifeForce: Number(raceAdjRaw.lifeForce ?? 0),
+      mana: Number(raceAdjRaw.mana ?? 0),
+      stamina: Number(raceAdjRaw.stamina ?? 0),
+      pace: Number(raceAdjRaw.pace ?? 0)
+    };
+
+    // -----------------------------
+    // 4) Resources max (baseline 10)
     // -----------------------------
     const BASE_RESOURCE_NORMAL = 10;
     const mult = Number(RANK_RESOURCE_MULTIPLIER?.[derivedRankKey] ?? 1);
@@ -77,25 +93,32 @@ export class HwfwmActor extends Actor {
     system.resources.stamina = system.resources.stamina ?? { value: 0, max: 0 };
     system.resources.trauma = system.resources.trauma ?? { value: 0, max: 0 };
 
-    const maxBase = Math.round(BASE_RESOURCE_NORMAL * mult);
+    const rankMaxBase = Math.round(BASE_RESOURCE_NORMAL * mult);
 
-    system.resources.lifeForce.max = maxBase;
-    system.resources.mana.max = maxBase;
-    system.resources.stamina.max = maxBase;
+    const lfMax = Math.max(0, rankMaxBase + raceAdj.lifeForce);
+    const manaMax = Math.max(0, rankMaxBase + raceAdj.mana);
+    const stamMax = Math.max(0, rankMaxBase + raceAdj.stamina);
 
-    system.resources.trauma.max = Number(RANK_TRAUMA?.[derivedRankKey] ?? 0);
+    system.resources.lifeForce.max = lfMax;
+    system.resources.mana.max = manaMax;
+    system.resources.stamina.max = stamMax;
 
-    system.resources.lifeForce.value = Math.min(Number(system.resources.lifeForce.value ?? 0), system.resources.lifeForce.max);
-    system.resources.mana.value = Math.min(Number(system.resources.mana.value ?? 0), system.resources.mana.max);
-    system.resources.stamina.value = Math.min(Number(system.resources.stamina.value ?? 0), system.resources.stamina.max);
-    system.resources.trauma.value = Math.min(Number(system.resources.trauma.value ?? 0), system.resources.trauma.max);
+    system.resources.trauma.max = Math.max(0, Number(RANK_TRAUMA?.[derivedRankKey] ?? 0));
+
+    system.resources.lifeForce.value = Math.min(Number(system.resources.lifeForce.value ?? 0), lfMax);
+    system.resources.mana.value = Math.min(Number(system.resources.mana.value ?? 0), manaMax);
+    system.resources.stamina.value = Math.min(Number(system.resources.stamina.value ?? 0), stamMax);
+    system.resources.trauma.value = Math.min(
+      Number(system.resources.trauma.value ?? 0),
+      system.resources.trauma.max
+    );
 
     // -----------------------------
-    // 4) Pace (rank-only for now)
+    // 5) Pace (rank + race for now)
     // -----------------------------
     system.resources.pace = system.resources.pace ?? { value: 0 };
 
-    // Until race mods are added: pace is ONLY rank pace mod
-    system.resources.pace.value = Number(RANK_PACE_MOD?.[derivedRankKey] ?? 0);
+    const paceRank = Number(RANK_PACE_MOD?.[derivedRankKey] ?? 0);
+    system.resources.pace.value = paceRank + raceAdj.pace;
   }
 }
