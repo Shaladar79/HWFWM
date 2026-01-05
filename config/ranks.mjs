@@ -37,3 +37,37 @@ export const RANK_BASE_ATTRIBUTES = {
   diamond: 55
 };
 
+/**
+ * Numeric tier value used for math / aggregation.
+ * These values are summed across attributes to derive the character’s overall rank.
+ */
+export const RANK_TIER_VALUE = {
+  normal: 0,
+  iron: 1,
+  bronze: 2,
+  silver: 3,
+  gold: 4,
+  diamond: 5
+};
+
+/**
+ * Convert the summed tier score into a derived rank key.
+ *
+ * Rules:
+ *  - < 4      => normal
+ *  - 4–7      => iron
+ *  - 8–11     => bronze
+ *  - 12–15    => silver
+ *  - 16–19    => gold
+ *  - 20+      => diamond
+ */
+export function deriveRankKeyFromTierTotal(total) {
+  const t = Number(total) || 0;
+
+  if (t >= 20) return "diamond";
+  if (t >= 16) return "gold";
+  if (t >= 12) return "silver";
+  if (t >= 8) return "bronze";
+  if (t >= 4) return "iron";
+  return "normal";
+}
