@@ -1,65 +1,75 @@
 <header class="hwfwm-sheet__header">
-  <input
-    class="hwfwm-sheet__name"
-    name="name"
-    type="text"
-    value="{{document.name}}"
-    placeholder="Name"
-  />
 
-  <div class="hwfwm-header-grid">
+  <div class="hwfwm-header-layout">
 
-    <!-- LEFT COLUMN -->
-    <div class="hwfwm-header-col">
-      <div class="hwfwm-header-field">
-        <label class="hwfwm-header-label">Rank</label>
-        <input
-          class="hwfwm-header-select"
-          type="text"
-          value="{{derivedRankLabel}}"
-          readonly
-        />
-        {{!-- Optional debug --}}
-        {{!-- <div class="hwfwm-muted">Score: {{derivedRankTotal}}</div> --}}
-      </div>
-
-      <div class="hwfwm-header-field">
-        <label class="hwfwm-header-label">Race</label>
-        <select class="hwfwm-header-select" name="system.details.raceKey">
-          <option value="">—</option>
-          {{#each raceOptions as |opt|}}
-            <option value="{{opt.value}}" {{#if (eq ../details.raceKey opt.value)}}selected{{/if}}>
-              {{opt.label}}
-            </option>
-          {{/each}}
-        </select>
+    <!-- LEFT: Portrait + Type -->
+    <div class="hwfwm-header-portrait">
+      <img class="hwfwm-header-portrait__img" src="{{document.img}}" data-edit="img" alt="{{document.name}}" />
+      <div class="hwfwm-header-portrait__type">
+        {{document.type}}
       </div>
     </div>
 
-    <!-- RIGHT COLUMN -->
-    <div class="hwfwm-header-col">
-      <div class="hwfwm-header-field">
-        <label class="hwfwm-header-label">Role</label>
-        <select class="hwfwm-header-select" name="system.details.roleKey">
-          <option value="">—</option>
-          {{#each roleOptions as |opt|}}
-            <option value="{{opt.value}}" {{#if (eq ../details.roleKey opt.value)}}selected{{/if}}>
-              {{opt.label}}
-            </option>
-          {{/each}}
-        </select>
-      </div>
+    <!-- RIGHT: Name + Inline fields -->
+    <div class="hwfwm-header-main">
 
-      <div class="hwfwm-header-field">
-        <label class="hwfwm-header-label">Background</label>
-        <select class="hwfwm-header-select" name="system.details.backgroundKey">
-          <option value="">—</option>
-          {{#each backgroundOptions as |opt|}}
-            <option value="{{opt.value}}" {{#if (eq ../details.backgroundKey opt.value)}}selected{{/if}}>
-              {{opt.label}}
-            </option>
-          {{/each}}
-        </select>
+      <input
+        class="hwfwm-sheet__name"
+        name="name"
+        type="text"
+        value="{{document.name}}"
+        placeholder="Name"
+      />
+
+      <div class="hwfwm-header-inline">
+
+        <!-- Rank (derived, read-only, compact) -->
+        <div class="hwfwm-header-field hwfwm-header-field--rank">
+          <label class="hwfwm-header-label hwfwm-header-label--small">Rank</label>
+          <input
+            class="hwfwm-header-select"
+            type="text"
+            value="{{derivedRankLabel}}"
+            readonly
+          />
+        </div>
+
+        <div class="hwfwm-header-field">
+          <label class="hwfwm-header-label hwfwm-header-label--small">Race</label>
+          <select class="hwfwm-header-select" name="system.details.raceKey">
+            <option value="">—</option>
+            {{#each raceOptions as |opt|}}
+              <option value="{{opt.value}}" {{#if (eq ../details.raceKey opt.value)}}selected{{/if}}>
+                {{opt.label}}
+              </option>
+            {{/each}}
+          </select>
+        </div>
+
+        <div class="hwfwm-header-field">
+          <label class="hwfwm-header-label hwfwm-header-label--small">Role</label>
+          <select class="hwfwm-header-select" name="system.details.roleKey">
+            <option value="">—</option>
+            {{#each roleOptions as |opt|}}
+              <option value="{{opt.value}}" {{#if (eq ../details.roleKey opt.value)}}selected{{/if}}>
+                {{opt.label}}
+              </option>
+            {{/each}}
+          </select>
+        </div>
+
+        <div class="hwfwm-header-field">
+          <label class="hwfwm-header-label hwfwm-header-label--small">Background</label>
+          <select class="hwfwm-header-select" name="system.details.backgroundKey">
+            <option value="">—</option>
+            {{#each backgroundOptions as |opt|}}
+              <option value="{{opt.value}}" {{#if (eq ../details.backgroundKey opt.value)}}selected{{/if}}>
+                {{opt.label}}
+              </option>
+            {{/each}}
+          </select>
+        </div>
+
       </div>
     </div>
 
