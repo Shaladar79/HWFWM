@@ -10,18 +10,18 @@
   <div class="hwfwm-header-grid">
 
     <!-- LEFT COLUMN -->
-    <div class="hwfwm-header-col">
-      <div class="hwfwm-header-field">
-        <label class="hwfwm-header-label">Rank</label>
-        <select class="hwfwm-header-select" name="system.details.rankKey">
-          <option value="">—</option>
-          {{#each rankOptions as |opt|}}
-            <option value="{{opt.value}}" {{#if (eq ../details.rankKey opt.value)}}selected{{/if}}>
-              {{opt.label}}
-            </option>
-          {{/each}}
-        </select>
-      </div>
+    <div class="hwfwm-header-field">
+  <label class="hwfwm-header-label">Rank</label>
+  <input
+    class="hwfwm-header-select"
+    type="text"
+    value="{{derivedRankLabel}}"
+    readonly
+  />
+  {{!-- Optional: show the numeric tier score driving the rank --}}
+  {{!-- <div class="hwfwm-muted">Score: {{derivedRankTotal}}</div> --}}
+</div>
+
 
       <div class="hwfwm-header-field">
         <label class="hwfwm-header-label">Race</label>
