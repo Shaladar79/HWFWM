@@ -10,18 +10,18 @@
   <div class="hwfwm-header-grid">
 
     <!-- LEFT COLUMN -->
-    <div class="hwfwm-header-field">
-  <label class="hwfwm-header-label">Rank</label>
-  <input
-    class="hwfwm-header-select"
-    type="text"
-    value="{{derivedRankLabel}}"
-    readonly
-  />
-  {{!-- Optional: show the numeric tier score driving the rank --}}
-  {{!-- <div class="hwfwm-muted">Score: {{derivedRankTotal}}</div> --}}
-</div>
-
+    <div class="hwfwm-header-col">
+      <div class="hwfwm-header-field">
+        <label class="hwfwm-header-label">Rank</label>
+        <input
+          class="hwfwm-header-select"
+          type="text"
+          value="{{derivedRankLabel}}"
+          readonly
+        />
+        {{!-- Optional debug --}}
+        {{!-- <div class="hwfwm-muted">Score: {{derivedRankTotal}}</div> --}}
+      </div>
 
       <div class="hwfwm-header-field">
         <label class="hwfwm-header-label">Race</label>
@@ -50,18 +50,17 @@
         </select>
       </div>
 
-     <div class="hwfwm-header-field">
-  <label class="hwfwm-header-label">Background</label>
-  <select class="hwfwm-header-select" name="system.details.backgroundKey">
-    <option value="">—</option>
-    {{#each backgroundOptions as |opt|}}
-      <option value="{{opt.value}}" {{#if (eq ../details.backgroundKey opt.value)}}selected{{/if}}>
-        {{opt.label}}
-      </option>
-    {{/each}}
-  </select>
-</div>
-
+      <div class="hwfwm-header-field">
+        <label class="hwfwm-header-label">Background</label>
+        <select class="hwfwm-header-select" name="system.details.backgroundKey">
+          <option value="">—</option>
+          {{#each backgroundOptions as |opt|}}
+            <option value="{{opt.value}}" {{#if (eq ../details.backgroundKey opt.value)}}selected{{/if}}>
+              {{opt.label}}
+            </option>
+          {{/each}}
+        </select>
+      </div>
     </div>
 
   </div>
