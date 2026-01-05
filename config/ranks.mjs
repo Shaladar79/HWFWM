@@ -75,3 +75,16 @@ export const RANK_PACE_MOD = {
   gold: 6,
   diamond: 8
 };
+
+/**
+ * Rank-based Trauma value
+ * Determines baseline Trauma by character rank
+ */
+export const RANK_TRAUMA = {
+  normal: 3,
+  iron: 4,
+  bronze: 5,
+  silver: 7,
+  gold: 9,
+  diamond: 12
+};
