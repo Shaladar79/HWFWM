@@ -9,7 +9,6 @@ export const RACES = {
   draconian: "Draconian",
   elf: "Elf",
   human: "Human",
-  lehenik: "Lehenik",
   leonid: "Leonid",
   runic: "Runic",
   smoulder: "Smoulder"
@@ -24,7 +23,6 @@ export const RACE_ORDER = [
   "draconian",
   "elf",
   "human",
-  "lehenik",
   "leonid",
   "runic",
   "smoulder"
