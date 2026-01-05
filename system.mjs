@@ -1,47 +1,9 @@
 import { HWFWM_CONFIG } from "./config/index.mjs";
 import { HwfwmActorSheet } from "./scripts/sheets/actor/actor-sheet.mjs";
-import { HwfwmActor } from "./scripts/documents/actor.mjs"; // ✅ NEW
+import { HwfwmActor } from "./scripts/documents/actor.mjs";
 
 // Essence Ability sheet class (imported)
 import { HwfwmEssenceAbilitySheet } from "./scripts/sheets/essence-ability-sheet.mjs";
-
-/* --------------------------------------------
- * Minimal Item Sheets (placeholder)
- * -------------------------------------------- */
-
-class HwfwmFeatureSheet extends ItemSheet {
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      classes: ["hwfwm-system", "sheet", "item", "feature"],
-      width: 520,
-      height: 420
-    });
-  }
-
-  get template() {
-    return "systems/hwfwm-system/templates/item/feature-sheet.hbs";
-  }
-}
-
-class HwfwmTalentSheet extends ItemSheet {
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      classes: ["hwfwm-system", "sheet", "item", "talent"],
-      width: 520,
-      height: 420
-    });
-  }
-
-  get template() {
-    return "systems/hwfwm-system/templates/item/talent-sheet.hbs";
-  }
-}
-
-/**
- * NOTE:
- * For now, Equipment and Consumable will be inline-edited in the Actor sheet inventory table.
- * We are NOT registering dedicated item sheets for them yet.
- */
 
 Hooks.once("init", async () => {
   console.log("HWFWM System | Initialized");
@@ -49,7 +11,7 @@ Hooks.once("init", async () => {
   // Register system-wide config namespace
   CONFIG["hwfwm-system"] = HWFWM_CONFIG;
 
-  // ✅ Register Actor document class (derived data engine)
+  // Register Actor document class (derived data engine)
   CONFIG.Actor.documentClass = HwfwmActor;
 
   // ---------------------------------------------------------
@@ -83,13 +45,16 @@ Hooks.once("init", async () => {
     "systems/hwfwm-system/templates/actor/tabs/traits/enhancements.hbs",
     "systems/hwfwm-system/templates/actor/tabs/traits/features.hbs",
 
+    // (Add these once you create them for the rank block in Overview)
+    // "systems/hwfwm-system/templates/actor/tabs/overview/rank-summary.hbs",
+
     // Item sheets
     "systems/hwfwm-system/templates/item/feature-sheet.hbs",
     "systems/hwfwm-system/templates/item/talent-sheet.hbs",
     "systems/hwfwm-system/templates/item/essence-ability-sheet.hbs"
   ]);
 
-  // v13+ namespaced Actors collection
+  // v13+ namespaced Actors collection (avoids deprecation warning)
   const ActorsCollection = foundry.documents.collections.Actors;
 
   // Register our sheet for PC actors only
@@ -98,6 +63,38 @@ Hooks.once("init", async () => {
     makeDefault: true,
     label: "HWFWM PC Sheet"
   });
+
+  // ---------------------------------------------------------
+  // Minimal Item Sheets (placeholder)
+  // Define inside init so globals are guaranteed available
+  // ---------------------------------------------------------
+  class HwfwmFeatureSheet extends ItemSheet {
+    static get defaultOptions() {
+      return foundry.utils.mergeObject(super.defaultOptions, {
+        classes: ["hwfwm-system", "sheet", "item", "feature"],
+        width: 520,
+        height: 420
+      });
+    }
+
+    get template() {
+      return "systems/hwfwm-system/templates/item/feature-sheet.hbs";
+    }
+  }
+
+  class HwfwmTalentSheet extends ItemSheet {
+    static get defaultOptions() {
+      return foundry.utils.mergeObject(super.defaultOptions, {
+        classes: ["hwfwm-system", "sheet", "item", "talent"],
+        width: 520,
+        height: 420
+      });
+    }
+
+    get template() {
+      return "systems/hwfwm-system/templates/item/talent-sheet.hbs";
+    }
+  }
 
   // Register Item sheets
   if (typeof Items !== "undefined") {
