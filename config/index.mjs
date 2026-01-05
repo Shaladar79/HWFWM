@@ -7,17 +7,21 @@ import { HWFWM_AFFINITIES } from "./affinities.mjs";
 import { HWFWM_RESISTANCES } from "./resistances.mjs";
 import { HWFWM_APTITUDES } from "./aptitudes.mjs";
 
+// NEW: Rank descriptions (Overview tab)
+import { RANK_DESCRIPTIONS } from "./rank-desc.mjs";
+
 // Essence
 import { HWFWM_ESSENCES } from "./essences.mjs";
 import { HWFWM_CONFLUENCE_ESSENCES } from "./confluence-essences.mjs";
 
-// NEW: Misc Inventory Items (actor-data, not Item documents)
+// Misc Inventory Items (actor-data, not Item documents)
 import { HWFWM_MISC_ITEMS } from "./misc-items.mjs";
 
 export const HWFWM_CONFIG = {
   // Core Progression
   ranks: RANKS,
   rankOrder: RANK_ORDER,
+  rankDescriptions: RANK_DESCRIPTIONS,
 
   roles: ROLES,
   roleOrder: ROLE_ORDER,
