@@ -35,16 +35,16 @@ export const RACE_ORDER = [
  * For now, Outworlder is locked to 0 across the board (per your note).
  */
 export const RACE_ADJUSTMENTS = {
-  outworlder: { lifeForce: 0, mana: 0, stamina: 0, pace: 0 },
+  outworlder: { lifeForce: 5, mana: 5, stamina: 5, pace: 5 },
 
   // placeholders (set later)
-  celestine: { lifeForce: 0, mana: 0, stamina: 0, pace: 0 },
-  draconian: { lifeForce: 0, mana: 0, stamina: 0, pace: 0 },
-  elf: { lifeForce: 0, mana: 0, stamina: 0, pace: 0 },
-  human: { lifeForce: 0, mana: 0, stamina: 0, pace: 0 },
-  leonid: { lifeForce: 0, mana: 0, stamina: 0, pace: 0 },
-  runic: { lifeForce: 0, mana: 0, stamina: 0, pace: 0 },
-  smoulder: { lifeForce: 0, mana: 0, stamina: 0, pace: 0 }
+  celestine: { lifeForce: 5, mana: 5, stamina: 3, pace: 6 },
+  draconian: { lifeForce: 7, mana: 6, stamina: 3, pace: 4 },
+  elf: { lifeForce: 4, mana: 9, stamina: 1, pace: 6 },
+  human: { lifeForce: 5, mana: 5, stamina: 5, pace: 5 },
+  leonid: { lifeForce: 5, mana: 3, stamina: 6, pace: 6 },
+  runic: { lifeForce: 7, mana: 8, stamina: 1, pace: 5 },
+  smoulder: { lifeForce: 8, mana: 1, stamina: 7, pace: 4 }
 };
 
 /**
