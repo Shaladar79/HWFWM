@@ -88,6 +88,16 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
   context.derivedRankKey = derivedRankKey;
   context.derivedRankLabel = derivedRankLabel;
 
+    // ---------------------------------------------------------------------------
+  // Overview: Rank label + description (read-only)
+  // ---------------------------------------------------------------------------
+  const rankDescriptions = cfg.rankDescriptions ?? {};
+  context.overviewRankLabel = derivedRankLabel;
+
+  // Fall back to a safe placeholder if we haven't authored the text yet
+  context.overviewRankDescription =
+    rankDescriptions?.[derivedRankKey] ?? "Rank description not yet defined.";
+
   // Optional debugging
   context._attrRankKeys = attrRankKeys;
 
