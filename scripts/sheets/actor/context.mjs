@@ -38,6 +38,80 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
     backgroundKey: details.backgroundKey ?? ""
   };
 
+  // ---------------------------------------------------------------------------
+  // DERIVED RANK (Header)
+  // ---------------------------------------------------------------------------
+  // Tier values per rankKey: normal 0, iron 1, bronze 2, silver 3, gold 4, diamond 5
+  // If you later add these into CONFIG, this will pick them up automatically.
+  const rankTierValue =
+    cfg.rankTierValue ??
+    cfg.rankTierValues ??
+    {
+      normal: 0,
+      iron: 1,
+      bronze: 2,
+      silver: 3,
+      gold: 4,
+      diamond: 5
+    };
+
+  function deriveRankKeyFromTierTotal(total) {
+    const t = Number(total) || 0;
+    if (t >= 20) return "diamond";
+    if (t >= 16) return "gold";
+    if (t >= 12) return "silver";
+    if (t >= 8) return "bronze";
+    if (t >= 4) return "iron";
+    return "normal";
+  }
+
+  // Best-effort resolver for where attribute "rank keys" live in actor data.
+  // This keeps us stable while you evolve schema.
+  function getAttrRankKey(attr) {
+    const sys = context.system ?? {};
+
+    return (
+      // Common: system.attributes.power.rankKey
+      sys.attributes?.[attr]?.rankKey ??
+      // Common alternative: system.attrs.power.rankKey
+      sys.attrs?.[attr]?.rankKey ??
+      // Sometimes stored under details: system.details.powerRankKey
+      sys.details?.[`${attr}RankKey`] ??
+      // Sometimes stored under details as nested object: system.details.power.rankKey
+      sys.details?.[attr]?.rankKey ??
+      // Sometimes stored flat under system: system.power.rankKey
+      sys?.[attr]?.rankKey ??
+      // Or system[powerRankKey]
+      sys?.[`${attr}RankKey`] ??
+      // fallback to empty
+      ""
+    );
+  }
+
+  const attrRankKeys = {
+    power: getAttrRankKey("power"),
+    speed: getAttrRankKey("speed"),
+    spirit: getAttrRankKey("spirit"),
+    recovery: getAttrRankKey("recovery")
+  };
+
+  const derivedRankTotal =
+    (rankTierValue[attrRankKeys.power] ?? 0) +
+    (rankTierValue[attrRankKeys.speed] ?? 0) +
+    (rankTierValue[attrRankKeys.spirit] ?? 0) +
+    (rankTierValue[attrRankKeys.recovery] ?? 0);
+
+  const derivedRankKey = deriveRankKeyFromTierTotal(derivedRankTotal);
+  const derivedRankLabel = ranks?.[derivedRankKey] ?? derivedRankKey;
+
+  // Expose to templates (header)
+  context.derivedRankTotal = derivedRankTotal;
+  context.derivedRankKey = derivedRankKey;
+  context.derivedRankLabel = derivedRankLabel;
+
+  // Optional: expose the per-attribute rank keys for debugging/display if desired
+  context._attrRankKeys = attrRankKeys;
+
   // Items
   const items = Array.from(sheet.document?.items ?? []);
   const grantedSources = new Set(["race", "role", "background", "rank"]);
