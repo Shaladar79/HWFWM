@@ -19,6 +19,9 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     form: { template: "systems/hwfwm-system/templates/actor/actor-sheet.hbs" }
   };
 
+  // RESTORED: used by essence.mjs via sheet.constructor.ESSENCE_ATTRS
+  static ESSENCE_ATTRS = ["power", "speed", "spirit", "recovery"];
+
   _activeTab = "overview";
   _activeSubTabs = { traits: "enhancements", essence: null, treasures: null };
   _domController = null;
@@ -45,4 +48,3 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     bindActorSheetListeners(this, root, this._domController);
   }
 }
-
