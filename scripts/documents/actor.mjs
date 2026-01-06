@@ -8,8 +8,15 @@ import {
   RANK_PACE_MOD
 } from "../../config/ranks.mjs";
 
-import { RACE_ADJUSTMENTS } from "../../config/races.mjs"; // ✅ ADD
+import { RACE_ADJUSTMENTS } from "../../config/races.mjs";
 
+/**
+ * Actor derived data engine for HWFWM.
+ * Authoritative ordering:
+ *  - Resources: (BASE + race + role + background) THEN multiply by rank multiplier
+ *  - Trauma: rank-based
+ *  - Pace: race base + rank pace mod (for now)
+ */
 export class HwfwmActor extends Actor {
   prepareDerivedData() {
     super.prepareDerivedData();
@@ -71,7 +78,8 @@ export class HwfwmActor extends Actor {
     system._derived.rankTierTotal = tierTotal;
 
     // -----------------------------
-    // 3) Resolve race adjustments
+    // 3) Resolve adjustments
+    //    (race now; role/background ready for later)
     // -----------------------------
     const raceKey = String(system.details?.raceKey ?? "outworlder");
     const raceAdjRaw = RACE_ADJUSTMENTS?.[raceKey] ?? RACE_ADJUSTMENTS?.outworlder ?? {};
@@ -82,8 +90,25 @@ export class HwfwmActor extends Actor {
       pace: Number(raceAdjRaw.pace ?? 0)
     };
 
+    // Role adjustments placeholder (wire up once roles.mjs exports them)
+    // Expected shape: { [roleKey]: { lifeForce, mana, stamina } }
+    const roleKey = String(system.details?.roleKey ?? "");
+    const roleAdj = {
+      lifeForce: 0,
+      mana: 0,
+      stamina: 0
+    };
+    // Background adjustments placeholder (wire up later)
+    const backgroundKey = String(system.details?.backgroundKey ?? "");
+    const backgroundAdj = {
+      lifeForce: 0,
+      mana: 0,
+      stamina: 0
+    };
+
     // -----------------------------
-    // 4) Resources max (baseline 10)
+    // 4) Resources max
+    //    IMPORTANT: (base + adjustments) THEN multiply
     // -----------------------------
     const BASE_RESOURCE_NORMAL = 10;
     const mult = Number(RANK_RESOURCE_MULTIPLIER?.[derivedRankKey] ?? 1);
@@ -93,18 +118,36 @@ export class HwfwmActor extends Actor {
     system.resources.stamina = system.resources.stamina ?? { value: 0, max: 0 };
     system.resources.trauma = system.resources.trauma ?? { value: 0, max: 0 };
 
-    const rankMaxBase = Math.round(BASE_RESOURCE_NORMAL * mult);
+    const lfPre =
+      BASE_RESOURCE_NORMAL +
+      raceAdj.lifeForce +
+      roleAdj.lifeForce +
+      backgroundAdj.lifeForce;
 
-    const lfMax = Math.max(0, rankMaxBase + raceAdj.lifeForce);
-    const manaMax = Math.max(0, rankMaxBase + raceAdj.mana);
-    const stamMax = Math.max(0, rankMaxBase + raceAdj.stamina);
+    const manaPre =
+      BASE_RESOURCE_NORMAL +
+      raceAdj.mana +
+      roleAdj.mana +
+      backgroundAdj.mana;
+
+    const stamPre =
+      BASE_RESOURCE_NORMAL +
+      raceAdj.stamina +
+      roleAdj.stamina +
+      backgroundAdj.stamina;
+
+    const lfMax = Math.max(0, Math.round(lfPre * mult));
+    const manaMax = Math.max(0, Math.round(manaPre * mult));
+    const stamMax = Math.max(0, Math.round(stamPre * mult));
 
     system.resources.lifeForce.max = lfMax;
     system.resources.mana.max = manaMax;
     system.resources.stamina.max = stamMax;
 
+    // Trauma max is rank-based (no multiplier)
     system.resources.trauma.max = Math.max(0, Number(RANK_TRAUMA?.[derivedRankKey] ?? 0));
 
+    // Clamp current values
     system.resources.lifeForce.value = Math.min(Number(system.resources.lifeForce.value ?? 0), lfMax);
     system.resources.mana.value = Math.min(Number(system.resources.mana.value ?? 0), manaMax);
     system.resources.stamina.value = Math.min(Number(system.resources.stamina.value ?? 0), stamMax);
@@ -114,11 +157,16 @@ export class HwfwmActor extends Actor {
     );
 
     // -----------------------------
-    // 5) Pace (rank + race for now)
+    // 5) Pace (race + rank for now)
     // -----------------------------
     system.resources.pace = system.resources.pace ?? { value: 0 };
 
     const paceRank = Number(RANK_PACE_MOD?.[derivedRankKey] ?? 0);
-    system.resources.pace.value = paceRank + raceAdj.pace;
+    system.resources.pace.value = Math.max(0, paceRank + raceAdj.pace);
+
+    // (Optional) prevent unused-var lint complaints if you add linting later
+    void roleKey;
+    void backgroundKey;
   }
 }
+
