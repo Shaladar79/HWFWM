@@ -68,6 +68,88 @@
         </div>
 
       </div>
+
+      <!-- Bottom line: Attribute Saves (label clickable for roll; total read-only) -->
+      <div class="hwfwm-header-saves">
+
+        <div class="hwfwm-header-save">
+          <button
+            type="button"
+            class="hwfwm-header-save__label"
+            data-action="roll-attribute"
+            data-attr="power"
+          >
+            Power Save:
+          </button>
+          <input
+            class="hwfwm-header-save__value"
+            type="text"
+            value="{{system.attributes.power.total}}"
+            readonly
+            data-key="powerSave"
+            data-path="system.attributes.power.total"
+          />
+        </div>
+
+        <div class="hwfwm-header-save">
+          <button
+            type="button"
+            class="hwfwm-header-save__label"
+            data-action="roll-attribute"
+            data-attr="speed"
+          >
+            Speed Save:
+          </button>
+          <input
+            class="hwfwm-header-save__value"
+            type="text"
+            value="{{system.attributes.speed.total}}"
+            readonly
+            data-key="speedSave"
+            data-path="system.attributes.speed.total"
+          />
+        </div>
+
+        <div class="hwfwm-header-save">
+          <button
+            type="button"
+            class="hwfwm-header-save__label"
+            data-action="roll-attribute"
+            data-attr="spirit"
+          >
+            Spirit Save:
+          </button>
+          <input
+            class="hwfwm-header-save__value"
+            type="text"
+            value="{{system.attributes.spirit.total}}"
+            readonly
+            data-key="spiritSave"
+            data-path="system.attributes.spirit.total"
+          />
+        </div>
+
+        <div class="hwfwm-header-save">
+          <button
+            type="button"
+            class="hwfwm-header-save__label"
+            data-action="roll-attribute"
+            data-attr="recovery"
+          >
+            Recovery Save:
+          </button>
+          <input
+            class="hwfwm-header-save__value"
+            type="text"
+            value="{{system.attributes.recovery.total}}"
+            readonly
+            data-key="recoverySave"
+            data-path="system.attributes.recovery.total"
+          />
+        </div>
+
+      </div>
+
     </div>
 
   </div>
