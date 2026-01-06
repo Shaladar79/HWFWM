@@ -3,7 +3,7 @@
 import { activateTabGroup } from "./tabs.mjs";
 import { handleEssenceSelectChange } from "./essence.mjs";
 import { openAddMiscDialog, removeMiscByKey, updateMiscField } from "./treasures-misc.mjs";
-import { HWFWM_SPECIALTIES } from "../../config/specialties.mjs"; // ✅ specialties catalog (reference data)
+import { HWFWM_SPECIALTIES } from "../../../config/specialties.mjs" // ✅ specialties catalog (reference data)
 
 /**
  * Bind all DOM listeners for the actor sheet.
