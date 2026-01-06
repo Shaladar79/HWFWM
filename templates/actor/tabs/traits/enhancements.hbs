@@ -24,80 +24,39 @@
     <div class="hwfwm-spec-head">
       <div>Specialty</div>
       <div>Attribute</div>
-      <div>Total</div>
+      <div>Score</div>
       <div>Description</div>
       <div></div>
     </div>
 
-    {{!-- Base list (fixed) --}}
+    {{!-- Selected specialties (actor-owned progression data; display info from catalog) --}}
     {{#each system.specialties as |spec key|}}
-    <div class="hwfwm-spec-row">
-      <div class="hwfwm-spec-name">{{spec.name}}</div>
+      {{#with (lookup ../specialtyCatalog key) as |meta|}}
+      <div class="hwfwm-spec-row">
+        <div class="hwfwm-spec-name">{{meta.name}}</div>
 
-      <input type="text"
-             name="system.specialties.{{key}}.attribute"
-             value="{{spec.attribute}}"
-             placeholder="Attribute" />
+        <div class="hwfwm-spec-attr">{{meta.attribute}}</div>
 
-      <input type="number"
-             name="system.specialties.{{key}}.total"
-             value="{{spec.total}}"
-             placeholder="0" />
+        <input type="number"
+               name="system.specialties.{{key}}.score"
+               value="{{spec.score}}"
+               min="0"
+               step="1"
+               placeholder="0" />
 
-      <input type="text"
-             name="system.specialties.{{key}}.notes"
-             value="{{spec.notes}}"
-             placeholder="Description" />
+        <div class="hwfwm-spec-desc">{{meta.description}}</div>
 
-      <div class="hwfwm-spec-actions">
-        <button type="button"
-                class="hwfwm-roll"
-                data-roll="specialty"
-                data-key="{{key}}"
-                {{#unless spec.total}}disabled{{/unless}}>
-          Roll
-        </button>
+        <div class="hwfwm-spec-actions">
+          <button type="button"
+                  class="hwfwm-roll"
+                  data-roll="specialty"
+                  data-key="{{key}}"
+                  disabled>
+            Roll
+          </button>
+        </div>
       </div>
-    </div>
-    {{/each}}
-
-    {{!-- Custom-added list (removable) --}}
-    {{#each system.specialtiesCustom as |spec key|}}
-    <div class="hwfwm-spec-row">
-      <div class="hwfwm-spec-name">{{spec.name}}</div>
-
-      <input type="text"
-             name="system.specialtiesCustom.{{key}}.attribute"
-             value="{{spec.attribute}}"
-             placeholder="Attribute" />
-
-      <input type="number"
-             name="system.specialtiesCustom.{{key}}.total"
-             value="{{spec.total}}"
-             placeholder="0" />
-
-      <input type="text"
-             name="system.specialtiesCustom.{{key}}.notes"
-             value="{{spec.notes}}"
-             placeholder="Description" />
-
-      <div class="hwfwm-spec-actions">
-        <button type="button"
-                class="hwfwm-roll"
-                data-roll="specialty-custom"
-                data-key="{{key}}"
-                {{#unless spec.total}}disabled{{/unless}}>
-          Roll
-        </button>
-
-        <button type="button"
-                class="hwfwm-itembtn hwfwm-itembtn--danger"
-                data-action="remove-specialty"
-                data-key="{{key}}">
-          Remove
-        </button>
-      </div>
-    </div>
+      {{/with}}
     {{/each}}
 
   </div>
