@@ -27,24 +27,12 @@ export const BACKGROUND_ORDER = [
  * Keep values at 0 until you decide balance per background.
  */
 export const BACKGROUND_ADJUSTMENTS = {
-  commoner: { lifeForce: 0, mana: 0, stamina: 0 },
-  criminal: { lifeForce: 0, mana: 0, stamina: 0 },
-  artisan: { lifeForce: 0, mana: 0, stamina: 0 },
-  noble: { lifeForce: 0, mana: 0, stamina: 0 },
-  scholar: { lifeForce: 0, mana: 0, stamina: 0 }
+  commoner: { lifeForce: 4, mana: 2, stamina: 2 },
+  criminal: { lifeForce: 3, mana: 2, stamina: 3 },
+  artisan: { lifeForce: 2, mana: 3, stamina: 3 },
+  noble: { lifeForce: 2, mana: 4, stamina: 2 },
+  scholar: { lifeForce: 2, mana: 5, stamina: 1 }
 };
-
-/**
- * Optional per-rank upgrades (placeholder for later systems)
- * Example shape:
- *  {
- *    scholar: {
- *      iron:   { status: { pace: 1 } },
- *      silver: { status: { pace: 1 } }
- *    }
- *  }
- */
-export const BACKGROUND_BY_RANK = {};
 
 /**
  * Optional UI descriptions (Overview/Traits hover text)
