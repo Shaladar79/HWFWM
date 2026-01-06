@@ -16,60 +16,122 @@ export const HWFWM_SPECIALTIES = {
 
   athletics: {
     name: "Athletics",
-    attribute: "Power"
+    attribute: "Power",
+    description: "Feats of physical strength such as lifting, climbing, jumping, swimming, and sustained exertion."
   },
 
   combatGrappling: {
     name: "Combat: Grappling",
-    attribute: "Power"
+    attribute: "Power",
+    description: "Wrestling, holds, pins, and contests of raw physical strength against an opponent."
   },
 
   combatMedium: {
     name: "Combat: Medium Weapons",
-    attribute: "Power"
+    attribute: "Power",
+    description: "Use of standard one-handed melee weapons relying on force and control rather than finesse."
   },
 
   combatHeavy: {
     name: "Combat: Heavy Weapons",
-    attribute: "Power"
+    attribute: "Power",
+    description: "Use of large or two-handed weapons that depend on strength, momentum, and impact."
   },
 
   combatHurling: {
     name: "Combat: Hurling",
-    attribute: "Power"
+    attribute: "Power",
+    description: "Throwing large or heavy objects as weapons, emphasizing mass and brute force."
   },
 
   endurance: {
     name: "Endurance",
-    attribute: "Power"
+    attribute: "Power",
+    description: "Resistance to fatigue, exhaustion, and prolonged physical strain."
   },
 
   painTolerance: {
     name: "Pain Tolerance",
-    attribute: "Power"
+    attribute: "Power",
+    description: "Ability to continue functioning despite injury, pain, or physical trauma."
   },
 
   intimidation: {
     name: "Intimidation",
-    attribute: "Power"
+    attribute: "Power",
+    description: "Coercion and dominance through physical presence, size, and implied violence."
   },
 
   /* -------------------------------------------- */
-  /* Existing / Other Attribute Specialties       */
+  /* Speed Specialties                            */
   /* -------------------------------------------- */
 
   acrobatics: {
     name: "Acrobatics",
-    attribute: "Speed"
+    attribute: "Speed",
+    description: "Balance, tumbling, evasive movement, and controlled agile motion."
   },
+
+  combatUnarmed: {
+    name: "Combat: Unarmed",
+    attribute: "Speed",
+    description: "Fast, precise strikes and martial techniques relying on speed rather than brute force."
+  },
+
+  combatLight: {
+    name: "Combat: Light Weapons",
+    attribute: "Speed",
+    description: "Use of finesse-focused melee weapons such as daggers and rapiers."
+  },
+
+  combatThrowing: {
+    name: "Combat: Throwing",
+    attribute: "Speed",
+    description: "Thrown weapons and light objects where accuracy and timing are paramount."
+  },
+
+  combatRanged: {
+    name: "Combat: Ranged Weapons",
+    attribute: "Speed",
+    description: "Use of bows, crossbows, firearms, and other ranged weapons requiring precision and timing."
+  },
+
+  sleightOfHand: {
+    name: "Sleight of Hand",
+    attribute: "Speed",
+    description: "Fine motor control, quick manipulation, pickpocketing, and rapid hand movements."
+  },
+
+  stealth: {
+    name: "Stealth",
+    attribute: "Speed",
+    description: "Moving unseen and unheard, hiding, and shadowing targets."
+  },
+
+  thievery: {
+    name: "Thievery",
+    attribute: "Speed",
+    description: "Bypassing locks, traps, and security through dexterity and illicit skill."
+  },
+
+  /* -------------------------------------------- */
+  /* Spirit Specialties                           */
+  /* -------------------------------------------- */
 
   perception: {
     name: "Perception",
-    attribute: "Spirit"
+    attribute: "Spirit",
+    description: "Awareness, alertness, and the ability to notice hidden or subtle details."
   },
+
+  /* -------------------------------------------- */
+  /* Recovery Specialties                         */
+  /* -------------------------------------------- */
 
   survival: {
     name: "Survival",
-    attribute: "Recovery"
+    attribute: "Recovery",
+    description: "Enduring harsh environments, finding resources, and maintaining life in the wild."
   }
 };
+
