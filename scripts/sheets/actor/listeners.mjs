@@ -3,6 +3,7 @@
 import { activateTabGroup } from "./tabs.mjs";
 import { handleEssenceSelectChange } from "./essence.mjs";
 import { openAddMiscDialog, removeMiscByKey, updateMiscField } from "./treasures-misc.mjs";
+import { HWFWM_SPECIALTIES } from "../../config/specialties.mjs"; // ✅ specialties catalog (reference data)
 
 /**
  * Bind all DOM listeners for the actor sheet.
@@ -32,6 +33,46 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
   if (!sheet || !root || !controller) return;
 
   const { signal } = controller;
+
+  const toStr = (v) => String(v ?? "").trim();
+
+  /**
+   * Add a specialty to the actor.
+   * - Reads selection from system._ui.addSpecialtyKey
+   * - Writes minimal actor-owned entry into system.specialties.<key>
+   * - Clears system._ui.addSpecialtyKey after successful add
+   */
+  const addSelectedSpecialty = async () => {
+    const actor = sheet.document;
+    if (!actor) return;
+
+    const selectedKey = toStr(actor.system?._ui?.addSpecialtyKey);
+    if (!selectedKey) return;
+
+    const spec = HWFWM_SPECIALTIES?.[selectedKey];
+    if (!spec) return; // unknown key; ignore safely
+
+    const existing = actor.system?.specialties?.[selectedKey];
+    if (existing) {
+      // Already added; clear selection for UX and exit
+      await actor.update({ "system._ui.addSpecialtyKey": "" }).catch(() => {});
+      return;
+    }
+
+    // Minimal, future-proof specialty data stored on actor:
+    // - Keep the authoritative display info in config (name/attribute/description)
+    // - Store actor-specific progression fields here
+    const payload = {
+      [`system.specialties.${selectedKey}`]: {
+        key: selectedKey,
+        score: 0,
+        source: "manual"
+      },
+      "system._ui.addSpecialtyKey": ""
+    };
+
+    await actor.update(payload);
+  };
 
   // -----------------------
   // Tabs
@@ -189,7 +230,7 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
 
       // Foundry window chrome uses data-action too.
       // Only intercept actions we own.
-      if (action !== "add-misc-item" && action !== "remove-misc-item") return;
+      if (action !== "add-misc-item" && action !== "remove-misc-item" && action !== "add-specialty") return;
 
       ev.preventDefault?.();
       ev.stopPropagation?.();
@@ -203,6 +244,11 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
       if (action === "remove-misc-item") {
         const key = actionBtn.dataset.key ?? actionBtn.getAttribute("data-key");
         await removeMiscByKey(sheet, key);
+        return;
+      }
+
+      if (action === "add-specialty") {
+        await addSelectedSpecialty();
         return;
       }
     },
