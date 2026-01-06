@@ -34,40 +34,37 @@
           />
         </div>
 
+        <!-- Race (read-only display; editable in Overview) -->
         <div class="hwfwm-header-field">
           <label class="hwfwm-header-label hwfwm-header-label--small">Race</label>
-          <select class="hwfwm-header-select" name="system.details.raceKey">
-            <option value="">—</option>
-            {{#each raceOptions as |opt|}}
-              <option value="{{opt.value}}" {{#if (eq ../details.raceKey opt.value)}}selected{{/if}}>
-                {{opt.label}}
-              </option>
-            {{/each}}
-          </select>
+          <input
+            class="hwfwm-header-select"
+            type="text"
+            value="{{selectedRaceLabel}}"
+            readonly
+          />
         </div>
 
+        <!-- Role (read-only display; editable in Overview) -->
         <div class="hwfwm-header-field">
           <label class="hwfwm-header-label hwfwm-header-label--small">Role</label>
-          <select class="hwfwm-header-select" name="system.details.roleKey">
-            <option value="">—</option>
-            {{#each roleOptions as |opt|}}
-              <option value="{{opt.value}}" {{#if (eq ../details.roleKey opt.value)}}selected{{/if}}>
-                {{opt.label}}
-              </option>
-            {{/each}}
-          </select>
+          <input
+            class="hwfwm-header-select"
+            type="text"
+            value="{{selectedRoleLabel}}"
+            readonly
+          />
         </div>
 
+        <!-- Background (read-only display; editable in Overview) -->
         <div class="hwfwm-header-field">
           <label class="hwfwm-header-label hwfwm-header-label--small">Background</label>
-          <select class="hwfwm-header-select" name="system.details.backgroundKey">
-            <option value="">—</option>
-            {{#each backgroundOptions as |opt|}}
-              <option value="{{opt.value}}" {{#if (eq ../details.backgroundKey opt.value)}}selected{{/if}}>
-                {{opt.label}}
-              </option>
-            {{/each}}
-          </select>
+          <input
+            class="hwfwm-header-select"
+            type="text"
+            value="{{selectedBackgroundLabel}}"
+            readonly
+          />
         </div>
 
       </div>
