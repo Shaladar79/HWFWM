@@ -7,7 +7,14 @@ import {
   RANK_TRAUMA
 } from "./ranks.mjs";
 
-import { ROLES, ROLE_ORDER } from "./roles.mjs";
+// UPDATED: pull in role mechanics/lore catalogs
+import {
+  ROLES,
+  ROLE_ORDER,
+  ROLE_ADJUSTMENTS,
+  ROLE_BY_RANK,
+  ROLE_DESCRIPTIONS
+} from "./roles.mjs";
 
 // UPDATED: mechanics-ready race catalogs
 import {
@@ -48,10 +55,15 @@ export const HWFWM_CONFIG = {
   rankTrauma: RANK_TRAUMA,
 
   // -------------------------------------------------
-  // Roles
+  // Roles (UI + mechanics hooks + lore)
   // -------------------------------------------------
   roles: ROLES,
   roleOrder: ROLE_ORDER,
+
+  // NEW: Role mechanics/lore catalogs
+  roleAdjustments: ROLE_ADJUSTMENTS,
+  roleByRank: ROLE_BY_RANK,
+  roleDescriptions: ROLE_DESCRIPTIONS,
 
   // -------------------------------------------------
   // Races (UI + mechanics + lore)
