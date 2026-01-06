@@ -186,5 +186,35 @@ export const HWFWM_SPECIALTIES = {
     name: "Survival",
     attribute: "Recovery",
     description: "Enduring harsh environments, finding resources, and maintaining life in the wild."
+  },
+
+  tracking: {
+    name: "Tracking",
+    attribute: "Recovery",
+    description: "Following creatures or people by reading trail signs and environmental clues."
+  },
+
+  navigation: {
+    name: "Navigation",
+    attribute: "Recovery",
+    description: "Map use, orientation, route planning, and avoiding becoming lost."
+  },
+
+  firstAid: {
+    name: "First Aid",
+    attribute: "Recovery",
+    description: "Immediate non-magical treatment and stabilization of injuries and trauma."
+  },
+
+  animalHandling: {
+    name: "Animal Handling",
+    attribute: "Recovery",
+    description: "Calming, controlling, training, and caring for animals and mounts."
+  },
+
+  campcraft: {
+    name: "Campcraft",
+    attribute: "Recovery",
+    description: "Efficient camp setup, safe fires, sanitation, watch routines, and travel logistics."
   }
 };
