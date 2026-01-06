@@ -20,6 +20,30 @@ export class HwfwmActor extends Actor {
     system.resources = system.resources ?? {};
     system.details = system.details ?? {};
 
+    const toNum = (v, fallback = 0) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : fallback;
+    };
+
+    const getRoleByRankNode = (roleKey, rankKey) => {
+      if (!roleKey || !rankKey) return null;
+      return ROLE_BY_RANK?.[roleKey]?.[rankKey] ?? null;
+    };
+
+    // Placeholder-ready resolver:
+    // Today: only uses node.status.pace
+    // Later: extend to other status fields (reaction, shielding, etc.) and/or attributePct unlocks
+    const resolveRoleByRankBonuses = (roleKey, rankKey) => {
+      const node = getRoleByRankNode(roleKey, rankKey);
+      const status = node?.status ?? {};
+      return {
+        node,
+        status: {
+          pace: toNum(status.pace, 0)
+        }
+      };
+    };
+
     // -----------------------------
     // 1) Attributes derived math
     // -----------------------------
@@ -29,9 +53,9 @@ export class HwfwmActor extends Actor {
     for (const a of attrs) {
       const node = (system.attributes[a] = system.attributes[a] ?? {});
       const rankKey = String(node.rankKey ?? "normal");
-      const base = Number(RANK_BASE_ATTRIBUTES?.[rankKey] ?? 0);
-      const num = Number(node.num ?? 0);
-      const mod = Number(node.mod ?? 0);
+      const base = toNum(RANK_BASE_ATTRIBUTES?.[rankKey], 0);
+      const num = toNum(node.num, 0);
+      const mod = toNum(node.mod, 0);
       node.base = base;
       node.total = base + (num * NUM_TO_TOTAL) + mod;
     }
@@ -53,7 +77,7 @@ export class HwfwmActor extends Actor {
       (RANK_TIER_VALUE[attrRankKeys.recovery] ?? 0);
 
     const deriveRankKeyFromTierTotal = (total) => {
-      const t = Number(total) || 0;
+      const t = toNum(total, 0);
       if (t >= 20) return "diamond";
       if (t >= 16) return "gold";
       if (t >= 12) return "silver";
@@ -74,23 +98,24 @@ export class HwfwmActor extends Actor {
     const raceKey = String(system.details?.raceKey ?? "outworlder");
     const raceAdjRaw = RACE_ADJUSTMENTS?.[raceKey] ?? RACE_ADJUSTMENTS?.outworlder ?? {};
     const raceAdj = {
-      lifeForce: Number(raceAdjRaw.lifeForce ?? 0),
-      mana: Number(raceAdjRaw.mana ?? 0),
-      stamina: Number(raceAdjRaw.stamina ?? 0),
-      pace: Number(raceAdjRaw.pace ?? 0)
+      lifeForce: toNum(raceAdjRaw.lifeForce, 0),
+      mana: toNum(raceAdjRaw.mana, 0),
+      stamina: toNum(raceAdjRaw.stamina, 0),
+      pace: toNum(raceAdjRaw.pace, 0)
     };
 
     const roleKey = String(system.details?.roleKey ?? "");
     const roleAdjRaw = ROLE_ADJUSTMENTS?.[roleKey] ?? {};
     const roleAdj = {
-      lifeForce: Number(roleAdjRaw.lifeForce ?? 0),
-      mana: Number(roleAdjRaw.mana ?? 0),
-      stamina: Number(roleAdjRaw.stamina ?? 0)
+      lifeForce: toNum(roleAdjRaw.lifeForce, 0),
+      mana: toNum(roleAdjRaw.mana, 0),
+      stamina: toNum(roleAdjRaw.stamina, 0)
     };
 
-    // Role-by-rank hook (placeholder-ready; used for pace now, later for other upgrades)
-    const roleRankNode = ROLE_BY_RANK?.[roleKey]?.[derivedRankKey] ?? null;
-    const rolePaceBonus = Number(roleRankNode?.status?.pace ?? 0);
+    // Role-by-rank hook (clean placeholder surface)
+    const roleByRank = resolveRoleByRankBonuses(roleKey, derivedRankKey);
+    system._derived.roleByRank = roleByRank?.node ?? null; // exposed for UI/debugging if desired
+    const rolePaceBonus = roleByRank.status.pace;
 
     // Background adjustments placeholder
     const backgroundKey = String(system.details?.backgroundKey ?? "");
@@ -100,7 +125,7 @@ export class HwfwmActor extends Actor {
     // 4) Resources max: (base + adjustments) THEN multiply
     // -----------------------------
     const BASE_RESOURCE_NORMAL = 10;
-    const mult = Number(RANK_RESOURCE_MULTIPLIER?.[derivedRankKey] ?? 1);
+    const mult = toNum(RANK_RESOURCE_MULTIPLIER?.[derivedRankKey], 1);
 
     system.resources.lifeForce = system.resources.lifeForce ?? { value: 0, max: 0 };
     system.resources.mana = system.resources.mana ?? { value: 0, max: 0 };
@@ -119,22 +144,21 @@ export class HwfwmActor extends Actor {
     system.resources.mana.max = manaMax;
     system.resources.stamina.max = stamMax;
 
-    system.resources.trauma.max = Math.max(0, Number(RANK_TRAUMA?.[derivedRankKey] ?? 0));
+    system.resources.trauma.max = Math.max(0, toNum(RANK_TRAUMA?.[derivedRankKey], 0));
 
-    system.resources.lifeForce.value = Math.min(Number(system.resources.lifeForce.value ?? 0), lfMax);
-    system.resources.mana.value = Math.min(Number(system.resources.mana.value ?? 0), manaMax);
-    system.resources.stamina.value = Math.min(Number(system.resources.stamina.value ?? 0), stamMax);
-    system.resources.trauma.value = Math.min(Number(system.resources.trauma.value ?? 0), system.resources.trauma.max);
+    system.resources.lifeForce.value = Math.min(toNum(system.resources.lifeForce.value, 0), lfMax);
+    system.resources.mana.value = Math.min(toNum(system.resources.mana.value, 0), manaMax);
+    system.resources.stamina.value = Math.min(toNum(system.resources.stamina.value, 0), stamMax);
+    system.resources.trauma.value = Math.min(toNum(system.resources.trauma.value, 0), system.resources.trauma.max);
 
     // -----------------------------
     // 5) Pace (race + rank + role-by-rank pace hook)
     // -----------------------------
     system.resources.pace = system.resources.pace ?? { value: 0 };
 
-    const paceRank = Number(RANK_PACE_MOD?.[derivedRankKey] ?? 0);
+    const paceRank = toNum(RANK_PACE_MOD?.[derivedRankKey], 0);
     system.resources.pace.value = Math.max(0, paceRank + raceAdj.pace + rolePaceBonus);
 
     void backgroundKey;
   }
 }
-
