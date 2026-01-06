@@ -24,7 +24,6 @@ export const BACKGROUND_ORDER = [
 /**
  * Baseline background adjustments (applied before rank multiplier)
  * Shape mirrors races/roles: { lifeForce, mana, stamina, pace? }
- * Keep values at 0 until you decide balance per background.
  */
 export const BACKGROUND_ADJUSTMENTS = {
   commoner: { lifeForce: 4, mana: 2, stamina: 2 },
