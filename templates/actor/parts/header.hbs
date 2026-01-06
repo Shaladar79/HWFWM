@@ -69,17 +69,21 @@
 
       </div>
 
-      <!-- Bottom line: Attribute Saves (label clickable for roll; total read-only) -->
-      <div class="hwfwm-header-saves">
+      <!-- Bottom line: Attribute Saves (labels aligned above compact totals) -->
+      <div
+        class="hwfwm-header-saves"
+        style="display: grid; grid-template-columns: repeat(4, max-content); gap: 10px; margin-top: 8px;"
+      >
 
-        <div class="hwfwm-header-save">
+        <div class="hwfwm-header-save" style="display: flex; flex-direction: column; align-items: center;">
           <button
             type="button"
             class="hwfwm-header-save__label"
             data-action="roll-attribute"
             data-attr="power"
+            style="padding: 0; line-height: 1.1;"
           >
-            Power Save:
+            Power Save
           </button>
           <input
             class="hwfwm-header-save__value"
@@ -88,17 +92,19 @@
             readonly
             data-key="powerSave"
             data-path="system.attributes.power.total"
+            style="width: 56px; height: 24px; padding: 2px 4px; text-align: center;"
           />
         </div>
 
-        <div class="hwfwm-header-save">
+        <div class="hwfwm-header-save" style="display: flex; flex-direction: column; align-items: center;">
           <button
             type="button"
             class="hwfwm-header-save__label"
             data-action="roll-attribute"
             data-attr="speed"
+            style="padding: 0; line-height: 1.1;"
           >
-            Speed Save:
+            Speed Save
           </button>
           <input
             class="hwfwm-header-save__value"
@@ -107,17 +113,19 @@
             readonly
             data-key="speedSave"
             data-path="system.attributes.speed.total"
+            style="width: 56px; height: 24px; padding: 2px 4px; text-align: center;"
           />
         </div>
 
-        <div class="hwfwm-header-save">
+        <div class="hwfwm-header-save" style="display: flex; flex-direction: column; align-items: center;">
           <button
             type="button"
             class="hwfwm-header-save__label"
             data-action="roll-attribute"
             data-attr="spirit"
+            style="padding: 0; line-height: 1.1;"
           >
-            Spirit Save:
+            Spirit Save
           </button>
           <input
             class="hwfwm-header-save__value"
@@ -126,17 +134,19 @@
             readonly
             data-key="spiritSave"
             data-path="system.attributes.spirit.total"
+            style="width: 56px; height: 24px; padding: 2px 4px; text-align: center;"
           />
         </div>
 
-        <div class="hwfwm-header-save">
+        <div class="hwfwm-header-save" style="display: flex; flex-direction: column; align-items: center;">
           <button
             type="button"
             class="hwfwm-header-save__label"
             data-action="roll-attribute"
             data-attr="recovery"
+            style="padding: 0; line-height: 1.1;"
           >
-            Recovery Save:
+            Recovery Save
           </button>
           <input
             class="hwfwm-header-save__value"
@@ -145,6 +155,7 @@
             readonly
             data-key="recoverySave"
             data-path="system.attributes.recovery.total"
+            style="width: 56px; height: 24px; padding: 2px 4px; text-align: center;"
           />
         </div>
 
