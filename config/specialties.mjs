@@ -10,10 +10,53 @@
  */
 
 export const HWFWM_SPECIALTIES = {
+  /* -------------------------------------------- */
+  /* Power Specialties                            */
+  /* -------------------------------------------- */
+
   athletics: {
     name: "Athletics",
     attribute: "Power"
   },
+
+  combatGrappling: {
+    name: "Combat: Grappling",
+    attribute: "Power"
+  },
+
+  combatMedium: {
+    name: "Combat: Medium Weapons",
+    attribute: "Power"
+  },
+
+  combatHeavy: {
+    name: "Combat: Heavy Weapons",
+    attribute: "Power"
+  },
+
+  combatHurling: {
+    name: "Combat: Hurling",
+    attribute: "Power"
+  },
+
+  endurance: {
+    name: "Endurance",
+    attribute: "Power"
+  },
+
+  painTolerance: {
+    name: "Pain Tolerance",
+    attribute: "Power"
+  },
+
+  intimidation: {
+    name: "Intimidation",
+    attribute: "Power"
+  },
+
+  /* -------------------------------------------- */
+  /* Existing / Other Attribute Specialties       */
+  /* -------------------------------------------- */
 
   acrobatics: {
     name: "Acrobatics",
