@@ -121,7 +121,61 @@ export const HWFWM_SPECIALTIES = {
   perception: {
     name: "Perception",
     attribute: "Spirit",
-    description: "Awareness, alertness, and the ability to notice hidden or subtle details."
+    description: "Awareness, alertness, and the ability to notice hidden, subtle, or supernatural details."
+  },
+
+  magicTheory: {
+    name: "Magic Theory",
+    attribute: "Spirit",
+    description: "Academic understanding of magical systems, spell structure, and mana behavior."
+  },
+
+  ritualMagic: {
+    name: "Ritual Magic",
+    attribute: "Spirit",
+    description: "Knowledge and execution of structured, long-form magical rites, circles, and ceremonies."
+  },
+
+  auraLore: {
+    name: "Aura Lore",
+    attribute: "Spirit",
+    description: "Understanding aura types, signatures, intensity, and spiritual interactions."
+  },
+
+  essenceLore: {
+    name: "Essence Lore",
+    attribute: "Spirit",
+    description: "Knowledge of essences, essence stones, and the rules governing essence abilities."
+  },
+
+  astralLore: {
+    name: "Astral Lore",
+    attribute: "Spirit",
+    description: "Understanding astral spaces, planes, thresholds, and metaphysical geography."
+  },
+
+  monsterLore: {
+    name: "Monster Lore",
+    attribute: "Spirit",
+    description: "Knowledge of magical creatures, aberrations, and non-humanoid threats."
+  },
+
+  auraControl: {
+    name: "Aura Control",
+    attribute: "Spirit",
+    description: "Shaping, stabilizing, suppressing, or expanding one’s own aura."
+  },
+
+  auraProjection: {
+    name: "Aura Projection",
+    attribute: "Spirit",
+    description: "Directing aura outward for pressure, signaling, intimidation, or influence."
+  },
+
+  suppressAura: {
+    name: "Suppress Aura",
+    attribute: "Spirit",
+    description: "Overwhelming others through focused spiritual pressure and dominating presence."
   },
 
   /* -------------------------------------------- */
@@ -134,4 +188,3 @@ export const HWFWM_SPECIALTIES = {
     description: "Enduring harsh environments, finding resources, and maintaining life in the wild."
   }
 };
-
