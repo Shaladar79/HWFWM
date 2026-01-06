@@ -10,6 +10,7 @@ import {
 
 import { RACE_ADJUSTMENTS } from "../../config/races.mjs";
 import { ROLE_ADJUSTMENTS, ROLE_BY_RANK } from "../../config/roles.mjs"; // ✅ add ROLE_BY_RANK
+import { BACKGROUND_ADJUSTMENTS } from "../../config/backgrounds.mjs"; // ✅ wire background baseline adjustments
 
 export class HwfwmActor extends Actor {
   prepareDerivedData() {
@@ -117,9 +118,15 @@ export class HwfwmActor extends Actor {
     system._derived.roleByRank = roleByRank?.node ?? null; // exposed for UI/debugging if desired
     const rolePaceBonus = roleByRank.status.pace;
 
-    // Background adjustments placeholder
+    // Background baseline adjustments (no by-rank behavior)
     const backgroundKey = String(system.details?.backgroundKey ?? "");
-    const backgroundAdj = { lifeForce: 0, mana: 0, stamina: 0 };
+    const backgroundAdjRaw = BACKGROUND_ADJUSTMENTS?.[backgroundKey] ?? {};
+    const backgroundAdj = {
+      lifeForce: toNum(backgroundAdjRaw.lifeForce, 0),
+      mana: toNum(backgroundAdjRaw.mana, 0),
+      stamina: toNum(backgroundAdjRaw.stamina, 0)
+      // pace: intentionally not supported for backgrounds per current decisions
+    };
 
     // -----------------------------
     // 4) Resources max: (base + adjustments) THEN multiply
