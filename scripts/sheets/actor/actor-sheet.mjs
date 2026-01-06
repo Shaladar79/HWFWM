@@ -27,7 +27,54 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
 
   async _prepareContext(options) {
     const baseContext = await super._prepareContext(options);
-    return await buildActorSheetContext(this, baseContext, options);
+    const ctx = await buildActorSheetContext(this, baseContext, options);
+
+    // ------------------------------------------------------------
+    // Header/Overview read models:
+    // - Header is read-only for Race/Role/Background
+    // - Overview owns the editable dropdowns + description display
+    // ------------------------------------------------------------
+    const cfg = CONFIG?.["hwfwm-system"] ?? {};
+
+    const pickLabel = (optionsList, key, fallback = "—") => {
+      if (!Array.isArray(optionsList)) return fallback;
+      const hit = optionsList.find((o) => String(o?.value ?? "") === String(key ?? ""));
+      return String(hit?.label ?? fallback);
+    };
+
+    const pickDesc = (descMap, key, fallback = "") => {
+      if (!descMap || typeof descMap !== "object") return fallback;
+      return String(descMap?.[key] ?? fallback);
+    };
+
+    // Try multiple possible config shapes (keeps this resilient while configs evolve)
+    const raceDescMap =
+      cfg.raceDescriptions ?? cfg.racesDescriptions ?? cfg.racesDesc ?? cfg.RACE_DESCRIPTIONS ?? {};
+    const roleDescMap =
+      cfg.roleDescriptions ?? cfg.rolesDescriptions ?? cfg.rolesDesc ?? cfg.ROLE_DESCRIPTIONS ?? {};
+    const backgroundDescMap =
+      cfg.backgroundDescriptions ??
+      cfg.backgroundsDescriptions ??
+      cfg.backgroundsDesc ??
+      cfg.BACKGROUND_DESCRIPTIONS ??
+      {};
+
+    const details = ctx.details ?? {};
+    const raceKey = details.raceKey ?? "";
+    const roleKey = details.roleKey ?? "";
+    const backgroundKey = details.backgroundKey ?? "";
+
+    // Labels (for header read-only inputs)
+    ctx.selectedRaceLabel = pickLabel(ctx.raceOptions, raceKey, "—");
+    ctx.selectedRoleLabel = pickLabel(ctx.roleOptions, roleKey, "—");
+    ctx.selectedBackgroundLabel = pickLabel(ctx.backgroundOptions, backgroundKey, "—");
+
+    // Descriptions (for Overview cards)
+    ctx.selectedRaceDescription = pickDesc(raceDescMap, raceKey, "");
+    ctx.selectedRoleDescription = pickDesc(roleDescMap, roleKey, "");
+    ctx.selectedBackgroundDescription = pickDesc(backgroundDescMap, backgroundKey, "");
+
+    return ctx;
   }
 
   _onRender(...args) {
@@ -44,3 +91,4 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     bindActorSheetListeners(this, root, this._domController);
   }
 }
+
