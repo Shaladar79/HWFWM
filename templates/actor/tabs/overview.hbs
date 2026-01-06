@@ -1,5 +1,6 @@
 <div class="hwfwm-layout">
 
+  <!-- Rank -->
   <div class="hwfwm-card">
     <div class="hwfwm-card__title">Rank</div>
 
@@ -17,5 +18,67 @@
     </div>
   </div>
 
-</div>
+  <!-- Race -->
+  <div class="hwfwm-card">
+    <div class="hwfwm-card__title">Race</div>
 
+    <div class="hwfwm-field">
+      <div class="hwfwm-label">Race</div>
+      <select name="system.details.raceKey">
+        <option value="">—</option>
+        {{#each raceOptions as |opt|}}
+          <option value="{{opt.value}}" {{#if (eq ../details.raceKey opt.value)}}selected{{/if}}>
+            {{opt.label}}
+          </option>
+        {{/each}}
+      </select>
+    </div>
+
+    <div class="hwfwm-muted" style="margin-top: 10px;">
+      {{selectedRaceDescription}}
+    </div>
+  </div>
+
+  <!-- Role -->
+  <div class="hwfwm-card">
+    <div class="hwfwm-card__title">Role</div>
+
+    <div class="hwfwm-field">
+      <div class="hwfwm-label">Role</div>
+      <select name="system.details.roleKey">
+        <option value="">—</option>
+        {{#each roleOptions as |opt|}}
+          <option value="{{opt.value}}" {{#if (eq ../details.roleKey opt.value)}}selected{{/if}}>
+            {{opt.label}}
+          </option>
+        {{/each}}
+      </select>
+    </div>
+
+    <div class="hwfwm-muted" style="margin-top: 10px;">
+      {{selectedRoleDescription}}
+    </div>
+  </div>
+
+  <!-- Background -->
+  <div class="hwfwm-card">
+    <div class="hwfwm-card__title">Background</div>
+
+    <div class="hwfwm-field">
+      <div class="hwfwm-label">Background</div>
+      <select name="system.details.backgroundKey">
+        <option value="">—</option>
+        {{#each backgroundOptions as |opt|}}
+          <option value="{{opt.value}}" {{#if (eq ../details.backgroundKey opt.value)}}selected{{/if}}>
+            {{opt.label}}
+          </option>
+        {{/each}}
+      </select>
+    </div>
+
+    <div class="hwfwm-muted" style="margin-top: 10px;">
+      {{selectedBackgroundDescription}}
+    </div>
+  </div>
+
+</div>
