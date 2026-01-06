@@ -63,6 +63,28 @@ export const HWFWM_SPECIALTIES = {
   },
 
   /* -------------------------------------------- */
+  /* Power Crafting Specialties                   */
+  /* -------------------------------------------- */
+
+  blacksmithing: {
+    name: "Blacksmithing",
+    attribute: "Power",
+    description: "Forging metal weapons, tools, and components through heat, hammering, and shaping."
+  },
+
+  stonemasonry: {
+    name: "Stonemasonry",
+    attribute: "Power",
+    description: "Shaping, carving, and assembling stone structures and durable stone components."
+  },
+
+  woodworking: {
+    name: "Woodworking",
+    attribute: "Power",
+    description: "Heavy carpentry and shaping solid wooden objects, frames, and structural components."
+  },
+
+  /* -------------------------------------------- */
   /* Speed Specialties                            */
   /* -------------------------------------------- */
 
@@ -112,6 +134,28 @@ export const HWFWM_SPECIALTIES = {
     name: "Thievery",
     attribute: "Speed",
     description: "Bypassing locks, traps, and security through dexterity and illicit skill."
+  },
+
+  /* -------------------------------------------- */
+  /* Speed Crafting Specialties                   */
+  /* -------------------------------------------- */
+
+  fletching: {
+    name: "Fletching",
+    attribute: "Speed",
+    description: "Crafting arrows, bolts, and other precision ammunition requiring careful balance and assembly."
+  },
+
+  jewelry: {
+    name: "Jewelry",
+    attribute: "Speed",
+    description: "Fine metalwork and gem setting requiring delicate precision and detailed craftsmanship."
+  },
+
+  textiles: {
+    name: "Textiles",
+    attribute: "Speed",
+    description: "Working cloth and flexible materials (including leather): cutting, stitching, fitting, and assembly."
   },
 
   /* -------------------------------------------- */
@@ -174,8 +218,18 @@ export const HWFWM_SPECIALTIES = {
 
   suppressAura: {
     name: "Suppress Aura",
-    attribute: "Spirit",
+   attribute: "Spirit",
     description: "Overwhelming others through focused spiritual pressure and dominating presence."
+  },
+
+  /* -------------------------------------------- */
+  /* Spirit Crafting Specialties                  */
+  /* -------------------------------------------- */
+
+  alchemy: {
+    name: "Alchemy",
+    attribute: "Spirit",
+    description: "Creating potions, reagents, and transformative compounds using magical principles."
   },
 
   /* -------------------------------------------- */
@@ -216,5 +270,34 @@ export const HWFWM_SPECIALTIES = {
     name: "Campcraft",
     attribute: "Recovery",
     description: "Efficient camp setup, safe fires, sanitation, watch routines, and travel logistics."
+  },
+
+  /* -------------------------------------------- */
+  /* Recovery Crafting Specialties                */
+  /* -------------------------------------------- */
+
+  cooking: {
+    name: "Cooking",
+    attribute: "Recovery",
+    description: "Preparing meals and rations for sustainment, morale, and basic restorative benefits."
+  },
+
+  brewing: {
+    name: "Brewing",
+    attribute: "Recovery",
+    description: "Producing non-alchemical drinks, tonics, and stamina-focused beverages."
+  },
+
+  herbalism: {
+    name: "Herbalism",
+    attribute: "Recovery",
+    description: "Harvesting and preparing natural ingredients without magical transformation."
+  },
+
+  fieldRepair: {
+    name: "Field Repair",
+    attribute: "Recovery",
+    description: "Quick fixes and patchwork repairs to keep gear functional in the field."
   }
 };
+
