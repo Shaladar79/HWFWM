@@ -2,7 +2,7 @@
   "id": "hwfwm-system",
   "title": "He Who Fights With Monsters - Dev",
   "description": "A Foundry VTT game system inspired by the He Who Fights With Monsters LitRPG series.",
-  "version": "0.0.4.10",
+  "version": "0.0.4.12",
   "authors": [{ "name": "Shaladar" }],
   "compatibility": {
     "minimum": "13",
