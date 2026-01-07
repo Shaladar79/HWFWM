@@ -35,10 +35,8 @@ export const BACKGROUND_ADJUSTMENTS = {
   artisan: { lifeForce: 2, mana: 3, stamina: 3 },
   noble: { lifeForce: 2, mana: 4, stamina: 2 },
   scholar: { lifeForce: 2, mana: 5, stamina: 1 },
-
-  // Placeholders: you said you'll do resource changes for these
-  soldier: { lifeForce: 0, mana: 0, stamina: 0 },
-  merchant: { lifeForce: 0, mana: 0, stamina: 0 }
+  soldier: { lifeForce: 5, mana: 1, stamina: 2 },
+  merchant: { lifeForce: 3, mana: 1, stamina: 4 }
 };
 
 /**
