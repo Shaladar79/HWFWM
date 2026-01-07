@@ -42,7 +42,6 @@ export const RACE_ORDER = [
 
 export const RACE_ADJUSTMENTS = {
   outworlder: { lifeForce: 5, mana: 5, stamina: 5, pace: 5 },
-
   celestine: { lifeForce: 5, mana: 5, stamina: 3, pace: 6 },
   draconian: { lifeForce: 7, mana: 6, stamina: 3, pace: 4 },
   elf:       { lifeForce: 4, mana: 9, stamina: 1, pace: 6 },
