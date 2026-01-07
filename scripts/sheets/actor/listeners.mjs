@@ -8,7 +8,7 @@ import { BACKGROUND_GRANTED_SPECIALTIES } from "../../../config/backgrounds.mjs"
 /**
  * Persist background-granted specialties onto the Actor (one-way add).
  * - Adds missing specialty keys to system.specialties
- * - NEVER overwrites an existing manual entry
+ * - NEVER overwrites an existing entry
  * - Does NOT remove specialties if background later changes (safe behavior for now)
  */
 async function persistBackgroundGrantedSpecialties(sheet, backgroundKey) {
@@ -31,7 +31,7 @@ async function persistBackgroundGrantedSpecialties(sheet, backgroundKey) {
     for (const key of granted) {
       if (!key) continue;
 
-      // If it already exists, we treat it as manually owned (or previously persisted)
+      // If it already exists, do not overwrite
       if (current?.[key]) continue;
 
       update[`system.specialties.${key}`] = {
@@ -45,9 +45,45 @@ async function persistBackgroundGrantedSpecialties(sheet, backgroundKey) {
       await actor.update(update);
     }
   } catch (err) {
-    // Never break the sheet due to a sync failure
     console.warn("HWFWM | persistBackgroundGrantedSpecialties failed", err);
   }
+}
+
+/**
+ * Add a selected specialty (manual pick) to the actor.
+ * Reads the pick from system._ui.addSpecialtyKey.
+ */
+async function addSelectedSpecialty(sheet) {
+  const actor = sheet?.document;
+  if (!actor) return;
+
+  const selectedKey = String(actor.system?._ui?.addSpecialtyKey ?? "").trim();
+  if (!selectedKey) return;
+
+  // Validate against catalog (optional but recommended)
+  const catalog = CONFIG["hwfwm-system"]?.specialtyCatalog ?? {};
+  if (!catalog?.[selectedKey]) {
+    ui?.notifications?.warn?.(`Unknown specialty key: ${selectedKey}`);
+    return;
+  }
+
+  const current = actor.system?.specialties ?? {};
+  if (current?.[selectedKey]) {
+    // Already has it; just clear the dropdown to reduce friction
+    await actor.update({ "system._ui.addSpecialtyKey": "" });
+    return;
+  }
+
+  const update = {
+    [`system.specialties.${selectedKey}`]: {
+      score: 0,
+      source: "manual",
+      granted: false
+    },
+    "system._ui.addSpecialtyKey": ""
+  };
+
+  await actor.update(update);
 }
 
 /**
@@ -142,8 +178,7 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
       // Background change: persist granted specialties
       // ------------------------------------------------
       if (target instanceof HTMLSelectElement && target.name === "system.details.backgroundKey") {
-        // We do NOT prevent default. Let ApplicationV2 submit the field normally.
-        // We simply persist any newly granted specialties.
+        // Do NOT prevent default; let ApplicationV2 persist backgroundKey normally.
         await persistBackgroundGrantedSpecialties(sheet, target.value);
         return;
       }
@@ -184,96 +219,4 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
           return;
         }
 
-        await item.update({ [field]: value });
-        return;
-      }
-
-      // ------------------------------------------------
-      // Misc inline edits (actor system data, not Items)
-      // ------------------------------------------------
-      if (
-        (target instanceof HTMLInputElement || target instanceof HTMLSelectElement) &&
-        target.dataset?.miscKey &&
-        target.dataset?.miscField
-      ) {
-        ev.preventDefault?.();
-        ev.stopPropagation?.();
-        ev.stopImmediatePropagation?.();
-
-        const key = target.dataset.miscKey;
-        const field = target.dataset.miscField;
-
-        let value = target.value;
-        if (target instanceof HTMLInputElement && target.type === "number") {
-          const n = Number(value);
-          value = Number.isFinite(n) ? n : 0;
-        }
-
-        await updateMiscField(sheet, { key, field, value });
-        return;
-      }
-
-      // ------------------------------------------------
-      // Essence enforcement (ONLY intercept if it handled)
-      // ------------------------------------------------
-      if (target instanceof HTMLSelectElement) {
-        const handled = await handleEssenceSelectChange(sheet, target);
-        if (handled) {
-          ev.preventDefault?.();
-          ev.stopPropagation?.();
-          ev.stopImmediatePropagation?.();
-          return;
-        }
-      }
-
-      // ------------------------------------------------
-      // IMPORTANT:
-      // For all normal actor fields (name="system...."), do NOTHING here.
-      // Let Foundry's ApplicationV2 form handler receive the event and
-      // persist changes (submitOnChange).
-      // ------------------------------------------------
-    },
-    { signal, capture: false }
-  );
-
-  // -----------------------
-  // Click handler (delegated)
-  // -----------------------
-  root.addEventListener(
-    "click",
-    async (ev) => {
-      const actionBtn = ev.target?.closest?.("[data-action]");
-      if (!actionBtn) return;
-
-      const action = actionBtn.dataset.action;
-
-      // Foundry window chrome uses data-action too.
-      // Only intercept actions we own.
-      if (action !== "add-misc-item" && action !== "remove-misc-item") return;
-
-      ev.preventDefault?.();
-      ev.stopPropagation?.();
-      ev.stopImmediatePropagation?.();
-
-      if (action === "add-misc-item") {
-        openAddMiscDialog(sheet);
-        return;
-      }
-
-      if (action === "remove-misc-item") {
-        const key = actionBtn.dataset.key ?? actionBtn.getAttribute("data-key");
-        await removeMiscByKey(sheet, key);
-        return;
-      }
-    },
-    { signal, capture: true }
-  );
-}
-
-/**
- * Optional alias so actor-sheet.mjs can call either name safely.
- */
-export function bindListeners(args) {
-  return bindActorSheetListeners(args);
-}
-
+        await item.update({ [field]: va
