@@ -29,34 +29,38 @@
       <div></div>
     </div>
 
-    {{!-- Selected specialties (actor-owned progression data; display info from catalog) --}}
-    {{#each system.specialties as |spec key|}}
-      {{#with (lookup ../specialtyCatalog key) as |meta|}}
+    {{!-- Effective specialties (manual + granted) --}}
+    {{#each effectiveSpecialties as |spec|}}
       <div class="hwfwm-spec-row">
-        <div class="hwfwm-spec-name">{{meta.name}}</div>
+        <div class="hwfwm-spec-name">
+          {{spec.name}}
+          {{#if spec.isGranted}}
+            <span class="hwfwm-muted" style="margin-left: 6px;">(Granted)</span>
+          {{/if}}
+        </div>
 
-        <div class="hwfwm-spec-attr">{{meta.attribute}}</div>
+        <div class="hwfwm-spec-attr">{{spec.attribute}}</div>
 
         <input type="number"
-               name="system.specialties.{{key}}.score"
+               name="system.specialties.{{spec.key}}.score"
                value="{{spec.score}}"
                min="0"
                step="1"
-               placeholder="0" />
+               placeholder="0"
+               {{#if spec.isGranted}}readonly{{/if}} />
 
-        <div class="hwfwm-spec-desc">{{meta.description}}</div>
+        <div class="hwfwm-spec-desc">{{spec.description}}</div>
 
         <div class="hwfwm-spec-actions">
           <button type="button"
                   class="hwfwm-roll"
                   data-roll="specialty"
-                  data-key="{{key}}"
+                  data-key="{{spec.key}}"
                   disabled>
             Roll
           </button>
         </div>
       </div>
-      {{/with}}
     {{/each}}
 
   </div>
