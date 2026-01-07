@@ -24,7 +24,10 @@
 
     <div class="hwfwm-field">
       <div class="hwfwm-label">Race</div>
-      <select name="system.details.raceKey">
+      <select
+        name="system.details.raceKey"
+        {{#if system._flags.choicesLocked}}disabled{{/if}}
+      >
         <option value="">—</option>
         {{#each raceOptions as |opt|}}
           <option value="{{opt.value}}" {{#if (eq ../details.raceKey opt.value)}}selected{{/if}}>
@@ -45,7 +48,10 @@
 
     <div class="hwfwm-field">
       <div class="hwfwm-label">Role</div>
-      <select name="system.details.roleKey">
+      <select
+        name="system.details.roleKey"
+        {{#if system._flags.choicesLocked}}disabled{{/if}}
+      >
         <option value="">—</option>
         {{#each roleOptions as |opt|}}
           <option value="{{opt.value}}" {{#if (eq ../details.roleKey opt.value)}}selected{{/if}}>
@@ -66,7 +72,10 @@
 
     <div class="hwfwm-field">
       <div class="hwfwm-label">Background</div>
-      <select name="system.details.backgroundKey">
+      <select
+        name="system.details.backgroundKey"
+        {{#if system._flags.choicesLocked}}disabled{{/if}}
+      >
         <option value="">—</option>
         {{#each backgroundOptions as |opt|}}
           <option value="{{opt.value}}" {{#if (eq ../details.backgroundKey opt.value)}}selected{{/if}}>
@@ -82,4 +91,3 @@
   </div>
 
 </div>
-
