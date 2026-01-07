@@ -2,6 +2,10 @@
 
 import { computeEssenceUI } from "./essence.mjs";
 import { getFlatMiscCatalog } from "./treasures-misc.mjs";
+import {
+  BACKGROUND_DESCRIPTIONS,
+  BACKGROUND_GRANTED_SPECIALTIES
+} from "../../config/backgrounds.mjs";
 
 /**
  * Build the actor sheet context.
@@ -88,7 +92,7 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
   context.derivedRankKey = derivedRankKey;
   context.derivedRankLabel = derivedRankLabel;
 
-    // ---------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
   // Overview: Rank label + description (read-only)
   // ---------------------------------------------------------------------------
   const rankDescriptions = cfg.rankDescriptions ?? {};
@@ -97,6 +101,14 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
   // Fall back to a safe placeholder if we haven't authored the text yet
   context.overviewRankDescription =
     rankDescriptions?.[derivedRankKey] ?? "Rank description not yet defined.";
+
+  // ---------------------------------------------------------------------------
+  // Overview: Background description (read-only)
+  // ---------------------------------------------------------------------------
+  const bgKey = context.details?.backgroundKey ?? "";
+  context.overviewBackgroundLabel = backgrounds?.[bgKey] ?? (bgKey || "—");
+  context.overviewBackgroundDescription =
+    BACKGROUND_DESCRIPTIONS?.[bgKey] ?? (bgKey ? "Background description not yet defined." : "—");
 
   // Optional debugging
   context._attrRankKeys = attrRankKeys;
@@ -141,6 +153,41 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
   context.aptitudeCatalog = cfg.aptitudeCatalog ?? {};
   context.essenceCatalog = cfg.essenceCatalog ?? {};
   context.confluenceEssenceCatalog = cfg.confluenceEssenceCatalog ?? {};
+
+  // ---------------------------------------------------------------------------
+  // Traits: Effective Specialties (manual + granted by background)
+  // ---------------------------------------------------------------------------
+  const manualSpecialties = sys.specialties ?? {};
+  const grantedByBackground = BACKGROUND_GRANTED_SPECIALTIES?.[bgKey] ?? [];
+
+  // Union keys: manual entries + granted keys
+  const effectiveKeys = new Set([
+    ...Object.keys(manualSpecialties),
+    ...grantedByBackground
+  ]);
+
+  const effectiveSpecialties = Array.from(effectiveKeys)
+    .map((key) => {
+      const meta = context.specialtyCatalog?.[key] ?? null;
+      const owned = manualSpecialties?.[key] ?? null;
+      const isGranted = grantedByBackground.includes(key);
+
+      return {
+        key,
+        // meta (reference)
+        name: meta?.name ?? key,
+        attribute: meta?.attribute ?? "",
+        description: meta?.description ?? "",
+        // actor-owned progression
+        score: Number(owned?.score ?? 0),
+        // provenance
+        isGranted,
+        source: owned?.source ?? (isGranted ? "background" : "manual")
+      };
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  context.effectiveSpecialties = effectiveSpecialties;
 
   // IMPORTANT: always provide a FLAT misc catalog
   context.miscItemCatalog = getFlatMiscCatalog();
