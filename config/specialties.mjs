@@ -124,36 +124,6 @@ export const HWFWM_SPECIALTIES = {
     description: "Awareness, alertness, and the ability to notice hidden, subtle, or supernatural details."
   },
 
-  persuasion: {
-    name: "Persuasion",
-    attribute: "Spirit",
-    description: "Influencing others through argument, charm, negotiation, and social pressure."
-  },
-
-  leadership: {
-    name: "Leadership",
-    attribute: "Spirit",
-    description: "Command presence, coordination, morale control, and directing others under pressure."
-  },
-
-  bartering: {
-    name: "Bartering",
-    attribute: "Spirit",
-    description: "Haggling, pricing, deal-making, and reading leverage in trade negotiations."
-  },
-
-  perform: {
-    name: "Perform",
-    attribute: "Spirit",
-    description: "Music, acting, storytelling, and stagecraft used to entertain or sway an audience."
-  },
-
-  research: {
-    name: "Research",
-    attribute: "Spirit",
-    description: "Finding, verifying, and synthesizing information from records, investigation, and study."
-  },
-
   magicTheory: {
     name: "Magic Theory",
     attribute: "Spirit",
@@ -208,6 +178,18 @@ export const HWFWM_SPECIALTIES = {
     description: "Overwhelming others through focused spiritual pressure and dominating presence."
   },
 
+  combatSpellcasting: {
+    name: "Combat: Spellcasting",
+    attribute: "Spirit",
+    description: "Casting offensive and defensive spells under combat pressure, emphasizing control, timing, and magical execution."
+  },
+
+  combatWand: {
+    name: "Combat: Wand",
+    attribute: "Spirit",
+    description: "Combat use of wands and wand techniques, focusing on channeling, precision, and rapid magical delivery."
+  },
+
   /* -------------------------------------------- */
   /* Recovery Specialties                         */
   /* -------------------------------------------- */
@@ -246,46 +228,5 @@ export const HWFWM_SPECIALTIES = {
     name: "Campcraft",
     attribute: "Recovery",
     description: "Efficient camp setup, safe fires, sanitation, watch routines, and travel logistics."
-  },
-
-  /* -------------------------------------------- */
-  /* Crafting Specialties                         */
-  /* (needed for Artisan/Soldier choice dialogs)  */
-  /* -------------------------------------------- */
-
-  craftingBlacksmithing: {
-    name: "Crafting: Blacksmithing",
-    attribute: "Power",
-    description: "Forging and shaping metal tools, weapons, fittings, and functional hardware."
-  },
-
-  craftingWoodworking: {
-    name: "Crafting: Woodworking",
-    attribute: "Power",
-    description: "Building and repairing wooden items, structures, shafts, handles, and frames."
-  },
-
-  craftingTextiles: {
-    name: "Crafting: Textiles",
-    attribute: "Speed",
-    description: "Weaving, tailoring, leatherworking, and fine material work under a single discipline."
-  },
-
-  craftingAlchemy: {
-    name: "Crafting: Alchemy",
-    attribute: "Spirit",
-    description: "Potions, reagents, extracts, and controlled magical/chemical reactions."
-  },
-
-  craftingEngineering: {
-    name: "Crafting: Engineering",
-    attribute: "Spirit",
-    description: "Mechanisms, devices, repair logic, and precision assembly beyond basic handiwork."
-  },
-
-  craftingCooking: {
-    name: "Crafting: Cooking",
-    attribute: "Recovery",
-    description: "Preparing meals, preservation, rations, and kitchen logistics for travel or settlement."
   }
 };
