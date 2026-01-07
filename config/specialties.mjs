@@ -168,6 +168,12 @@ export const HWFWM_SPECIALTIES = {
     description: "Awareness, alertness, and the ability to notice hidden, subtle, or supernatural details."
   },
 
+  persuasion: {
+    name: "Persuasion",
+    attribute: "Spirit",
+    description: "Influencing others through argument, charm, negotiation, and social pressure."
+  },
+
   magicTheory: {
     name: "Magic Theory",
     attribute: "Spirit",
