@@ -88,3 +88,20 @@ export const RANK_TRAUMA = {
   gold: 9,
   diamond: 12
 };
+
+/**
+ * Base recovery rates per rank (AUTHORITATIVE BASELINE).
+ *
+ * Units: "per recovery interval" (interval definition is a system rule to be finalized later).
+ * For now, this establishes non-zero, testable baseline values.
+ *
+ * Modifiers may later add to or multiply these values (race/role/background/affinity/aptitude/features).
+ */
+export const RANK_BASE_RECOVERY = {
+  normal:  { mana: 1, stamina: 1, lifeForce: 1 },
+  iron:    { mana: 2, stamina: 2, lifeForce: 2 },
+  bronze:  { mana: 3, stamina: 3, lifeForce: 3 },
+  silver:  { mana: 4, stamina: 4, lifeForce: 4 },
+  gold:    { mana: 5, stamina: 5, lifeForce: 5 },
+  diamond: { mana: 6, stamina: 6, lifeForce: 6 }
+};
