@@ -79,7 +79,7 @@ export const RACE_DESCRIPTIONS = {
     "Earth- and fire-aspected beings born of stone, magma, and living flame.",
 
   draconian:
-    ""
+    "Dragon-blooded beings defined by physical dominance, innate sorcery, and elemental breath."
 };
 
 /* -------------------------------------------- */
@@ -109,7 +109,9 @@ export const RACE_GRANTED_AFFINITIES = {
 
   runic: ["magic"],
 
-  smoulder: ["earth", "fire"]
+  smoulder: ["earth", "fire"],
+
+  draconian: ["magic"]
 };
 
 /* -------------------------------------------- */
@@ -279,6 +281,44 @@ export const RACE_GRANTED_FEATURES = {
       description:
         "Active. Superheat objects. Costs 10 Mana."
     }
+  ],
+
+  /* -------- Draconian -------- */
+  draconian: [
+    {
+      key: "draconicMight",
+      name: "Draconic Might",
+      grantKey: "race:draconian:draconicMight",
+      description:
+        "Passive. Gain +3% Power."
+    },
+    {
+      key: "draconicPower",
+      name: "Draconic Power",
+      grantKey: "race:draconian:draconicPower",
+      description:
+        "Passive. Gain +2% Spirit and +5% spell damage. (Spell damage is placeholder until combat scaling is wired.)"
+    },
+    {
+      key: "dragonAncestry",
+      name: "Dragon Ancestry",
+      grantKey: "race:draconian:dragonAncestry",
+      description:
+        "Passive (placeholder). Gain +2% effect from all essence abilities. Draconian manifestations tend to be dragon-themed."
+    },
+    {
+      key: "dragonScales",
+      name: "Dragon Scales",
+      grantKey: "race:draconian:dragonScales",
+      description:
+        "Passive (placeholder). Gain +2 Natural Armor."
+    },
+    {
+      key: "dragonBreath",
+      name: "Dragon Breath",
+      grantKey: "race:draconian:dragonBreath",
+      description:
+        "Active (Special Attack). Breathe an element chosen at character creation. Costs 5 Mana and 5 Stamina. 5-round cooldown (placeholder). Action cost 5 (placeholder)."
+    }
   ]
 };
-
