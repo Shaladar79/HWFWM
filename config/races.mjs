@@ -63,3 +63,65 @@ export const RACE_DESCRIPTIONS = {
   runic: "",
   smoulder: ""
 };
+
+/* ------------------------------------------------------------------------------------------------ */
+/* Race → Granted Abilities (Persistence targets)                                                    */
+/* ------------------------------------------------------------------------------------------------ */
+
+/**
+ * Race-granted Feature items (persisted as embedded Items of type "feature").
+ *
+ * NOTE:
+ * - These are created/ensured by sheet listeners (later step).
+ * - Use grantKey to dedupe safely across renders.
+ * - For Humans, Essence Gifts are placeholders that will later "upgrade" when an Essence/Confluence is gained.
+ */
+export const RACE_GRANTED_FEATURES = {
+  human: [
+    {
+      key: "essenceGift1",
+      name: "Essence Gift I",
+      grantKey: "race:human:essenceGift1",
+      description:
+        "Placeholder. When you gain an Essence or Confluence Essence, this gift upgrades into an Essence-aligned ability."
+    },
+    {
+      key: "essenceGift2",
+      name: "Essence Gift II",
+      grantKey: "race:human:essenceGift2",
+      description:
+        "Placeholder. When you gain an Essence or Confluence Essence, this gift upgrades into an Essence-aligned ability."
+    },
+    {
+      key: "essenceGift3",
+      name: "Essence Gift III",
+      grantKey: "race:human:essenceGift3",
+      description:
+        "Placeholder. When you gain an Essence or Confluence Essence, this gift upgrades into an Essence-aligned ability."
+    },
+    {
+      key: "essenceGift4",
+      name: "Essence Gift IV",
+      grantKey: "race:human:essenceGift4",
+      description:
+        "Placeholder. When you gain an Essence or Confluence Essence, this gift upgrades into an Essence-aligned ability."
+    },
+    {
+      key: "humanAmbition",
+      name: "Human Ambition",
+      grantKey: "race:human:humanAmbition",
+      description:
+        "Placeholder. Gain 10% more advancement progress for Essence abilities and Specialty scores (i.e., 110% progress when you gain advancement)."
+    }
+  ]
+};
+
+/**
+ * Race → granted Aptitudes (persisted to system.aptitudes).
+ *
+ * NOTE:
+ * - This is persistence-only metadata; catalog display still comes from aptitudeCatalog in CONFIG.
+ */
+export const RACE_GRANTED_APTITUDES = {
+  human: ["specialAttack"]
+};
