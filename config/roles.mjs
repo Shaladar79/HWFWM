@@ -3,9 +3,10 @@
  *
  * Pattern:
  * - ROLES / ROLE_ORDER: dropdown display
- * - ROLE_ADJUSTMENTS: baseline status deltas (PRE-multiplier; same phase as race/background)
- * - ROLE_BY_RANK: upgrades unlocked at specific character ranks (additive; handled later)
- * - ROLE_DESCRIPTIONS: UI-only notes
+ * - ROLE_ADJUSTMENTS: baseline resource deltas (PRE-multiplier)
+ * - ROLE_GRANTED_SPECIALTIES: fixed specialty grants (2 per role)
+ * - ROLE_BY_RANK: rank-based unlocks (future-facing)
+ * - ROLE_DESCRIPTIONS: UI-only text
  */
 
 export const ROLES = {
@@ -30,11 +31,7 @@ export const ROLE_ORDER = [
 
 /**
  * Baseline role adjustments (applied BEFORE rank multiplier).
- * NOTE: No pace here by design.
- *
- * These deltas feed the same phase as race/background:
- *   pre = BASE(10) + raceAdj + roleAdj + backgroundAdj
- *   max = round(pre * rankMultiplier)
+ * These stack with race + background in the same phase.
  */
 export const ROLE_ADJUSTMENTS = {
   brawler:    { lifeForce: 7,  mana: 5,  stamina: 8 },
@@ -47,16 +44,25 @@ export const ROLE_ADJUSTMENTS = {
 };
 
 /**
+ * Fixed role-granted specialties.
+ * - Exactly  hookup; duplicate grants handled by actor logic
+ * - No combat specialties
+ * - No aura control
+ * - No choice rules
+ */
+export const ROLE_GRANTED_SPECIALTIES = {
+  brawler:    ["athletics", "endurance"],
+  defender:   ["endurance", "painTolerance"],
+  guardian:   ["perception", "survival"],
+  skirmisher: ["acrobatics", "stealth"],
+  healer:     ["firstAid", "ritualMagic"],
+  striker:    ["acrobatics", "perception"],
+  arcanist:   ["magicTheory", "ritualMagic"]
+};
+
+/**
  * Role upgrades by rank.
- *
- * ROLE_BY_RANK[roleKey][rankKey] = {
- *   status: { lifeForce, mana, stamina },                 // optional (additive; phase TBD)
- *   attributePct: { power, speed, spirit, recovery },     // optional (for later integration)
- *   notes: "..."                                          // optional (UI-only)
- * }
- *
- * NOTE: For now, "normal" entries can represent the role's baseline % identity,
- * even if the mechanical application is implemented later.
+ * Placeholder surface only — no mechanical enforcement yet.
  */
 export const ROLE_BY_RANK = {
   brawler: {
@@ -70,7 +76,7 @@ export const ROLE_BY_RANK = {
 
   defender: {
     normal:  { attributePct: { power: 2 } },
-    iron:    {}, // you mentioned examples like +2% power at iron; fill when ready
+    iron:    {},
     bronze:  {},
     silver:  {},
     gold:    {},
@@ -106,7 +112,7 @@ export const ROLE_BY_RANK = {
 
   striker: {
     normal:  { attributePct: { speed: 2 } },
-    iron:    {}, // you mentioned examples like +2% speed at iron; fill when ready
+    iron:    {},
     bronze:  {},
     silver:  {},
     gold:    {},
@@ -124,15 +130,14 @@ export const ROLE_BY_RANK = {
 };
 
 /**
- * UI-only descriptions.
+ * UI-only role descriptions.
  */
 export const ROLE_DESCRIPTIONS = {
-  brawler: "",
-  defender: "",
-  guardian: "",
-  skirmisher: "",
-  healer: "",
-  striker: "",
-  arcanist: ""
+  brawler:    "A close-quarters combatant who relies on strength, grit, and endurance.",
+  defender:   "A stalwart frontliner focused on protection, resilience, and control.",
+  guardian:   "A vigilant protector attuned to threats and environmental awareness.",
+  skirmisher: "A mobile fighter emphasizing agility, positioning, and evasion.",
+  healer:     "A support specialist trained in restoration, rituals, and stabilization.",
+  striker:    "An aggressive combatant focused on speed, pressure, and decisive action.",
+  arcanist:   "A scholar of magic who studies theory and performs structured rituals."
 };
-
