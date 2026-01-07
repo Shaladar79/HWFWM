@@ -58,7 +58,7 @@ export const RACE_ADJUSTMENTS = {
 
 export const RACE_DESCRIPTIONS = {
   outworlder:
-    "Baseline traveler from another world. No innate affinities or aptitudes.",
+    "A traveler from another world. Always gains Astral Affinity, then chooses 1 Aptitude and 4 Outworlder Gifts.",
 
   human:
     "Adaptable and ambitious. Humans grow through essence mastery and relentless drive.",
@@ -83,18 +83,125 @@ export const RACE_DESCRIPTIONS = {
 };
 
 /* -------------------------------------------- */
+/* Race Choice Rules (declarative; not wired)    */
+/* -------------------------------------------- */
+
+export const RACE_APTITUDE_CHOICE = {
+  outworlder: {
+    id: "outworlderAptitude",
+    label: "Choose 1 Aptitude"
+  }
+};
+
+export const RACE_FEATURE_CHOICE = {
+  outworlder: {
+    id: "outworlderGifts",
+    label: "Choose 4 Outworlder Gifts",
+    picks: 4
+  }
+};
+
+export const RACE_CHOICE_OPTIONS = {
+  outworlderGifts: [
+    "identify",
+    "essenceAbsorb",
+    "tongues",
+    "noTrace",
+    "skillBook",
+    "magicDevices",
+    "wellOfMana",
+    "wellOfStamina",
+    "manaFountain",
+    "staminaFountain",
+    "tough",
+    "fastRegeneration"
+  ]
+};
+
+export const RACE_GIFT_FEATURES = {
+  identify: {
+    key: "identify",
+    name: "Identify",
+    grantKey: "race:outworlder:identify",
+    description: "Active (placeholder). Spend 5 Mana to identify an item."
+  },
+  essenceAbsorb: {
+    key: "essenceAbsorb",
+    name: "Essence Absorb",
+    grantKey: "race:outworlder:essenceAbsorb",
+    description: "Passive (placeholder). Absorb essences and awakening stones without a ritual."
+  },
+  tongues: {
+    key: "tongues",
+    name: "Tongues",
+    grantKey: "race:outworlder:tongues",
+    description: "Passive (placeholder). Understand and speak any language."
+  },
+  noTrace: {
+    key: "noTrace",
+    name: "No Trace",
+    grantKey: "race:outworlder:noTrace",
+    description: "Passive (placeholder). Cannot be magically tracked."
+  },
+  skillBook: {
+    key: "skillBook",
+    name: "Skill Book",
+    grantKey: "race:outworlder:skillBook",
+    description: "Passive (placeholder). Can use Skill Books."
+  },
+  magicDevices: {
+    key: "magicDevices",
+    name: "Magic Devices",
+    grantKey: "race:outworlder:magicDevices",
+    description: "Passive (placeholder). Can use Magic Devices."
+  },
+  wellOfMana: {
+    key: "wellOfMana",
+    name: "Well of Mana",
+    grantKey: "race:outworlder:wellOfMana",
+    description: "Passive (placeholder). +5% maximum Mana."
+  },
+  wellOfStamina: {
+    key: "wellOfStamina",
+    name: "Well of Stamina",
+    grantKey: "race:outworlder:wellOfStamina",
+    description: "Passive (placeholder). +5% maximum Stamina."
+  },
+  manaFountain: {
+    key: "manaFountain",
+    name: "Mana Fountain",
+    grantKey: "race:outworlder:manaFountain",
+    description: "Passive (placeholder). +5% Mana recovery rate."
+  },
+  staminaFountain: {
+    key: "staminaFountain",
+    name: "Stamina Fountain",
+    grantKey: "race:outworlder:staminaFountain",
+    description: "Passive (placeholder). +5% Stamina recovery rate."
+  },
+  tough: {
+    key: "tough",
+    name: "Tough",
+    grantKey: "race:outworlder:tough",
+    description: "Passive (placeholder). +5% maximum Life Force."
+  },
+  fastRegeneration: {
+    key: "fastRegeneration",
+    name: "Fast Regeneration",
+    grantKey: "race:outworlder:fastRegeneration",
+    description: "Passive (placeholder). +5% Life Force recovery rate."
+  }
+};
+
+/* -------------------------------------------- */
 /* Race → Granted Aptitudes                      */
 /* -------------------------------------------- */
 
 export const RACE_GRANTED_APTITUDES = {
   human: ["specialAttack"],
-
   elf: ["spellcasting"],
-
   leonid: ["boon"],
-
   celestine: ["specialAbility"],
-
   runic: ["spellcasting"]
 };
 
@@ -103,14 +210,11 @@ export const RACE_GRANTED_APTITUDES = {
 /* -------------------------------------------- */
 
 export const RACE_GRANTED_AFFINITIES = {
+  outworlder: ["astral"],
   elf: ["life", "nature", "magic"],
-
   celestine: ["holy", "astral"],
-
   runic: ["magic"],
-
   smoulder: ["earth", "fire"],
-
   draconian: ["magic"]
 };
 
@@ -122,11 +226,32 @@ export const RACE_GRANTED_FEATURES = {
   /* -------- Human -------- */
   human: [
     {
-      key: "essenceGift",
-      name: "Essence Gift",
-      grantKey: "race:human:essenceGift",
+      key: "essenceGift1",
+      name: "Essence Gift I",
+      grantKey: "race:human:essenceGift1",
       description:
-        "Passive. Gain Essence Gift x4. Each gift evolves into an essence-aligned ability when an Essence or Confluence Essence is acquired."
+        "Passive. Essence Gift I. Evolves into an essence-aligned ability when an Essence or Confluence Essence is acquired."
+    },
+    {
+      key: "essenceGift2",
+      name: "Essence Gift II",
+      grantKey: "race:human:essenceGift2",
+      description:
+        "Passive. Essence Gift II. Evolves into an essence-aligned ability when an Essence or Confluence Essence is acquired."
+    },
+    {
+      key: "essenceGift3",
+      name: "Essence Gift III",
+      grantKey: "race:human:essenceGift3",
+      description:
+        "Passive. Essence Gift III. Evolves into an essence-aligned ability when an Essence or Confluence Essence is acquired."
+    },
+    {
+      key: "essenceGift4",
+      name: "Essence Gift IV",
+      grantKey: "race:human:essenceGift4",
+      description:
+        "Passive. Essence Gift IV. Evolves into an essence-aligned ability when an Essence or Confluence Essence is acquired."
     },
     {
       key: "humanAmbition",
@@ -297,14 +422,14 @@ export const RACE_GRANTED_FEATURES = {
       name: "Draconic Power",
       grantKey: "race:draconian:draconicPower",
       description:
-        "Passive. Gain +2% Spirit and +5% spell damage. (Spell damage is placeholder until combat scaling is wired.)"
+        "Passive. Gain +2% Spirit and +5% spell damage."
     },
     {
       key: "dragonAncestry",
       name: "Dragon Ancestry",
       grantKey: "race:draconian:dragonAncestry",
       description:
-        "Passive (placeholder). Gain +2% effect from all essence abilities. Draconian manifestations tend to be dragon-themed."
+        "Passive (placeholder). Gain +2% effect from all essence abilities."
     },
     {
       key: "dragonScales",
@@ -318,7 +443,7 @@ export const RACE_GRANTED_FEATURES = {
       name: "Dragon Breath",
       grantKey: "race:draconian:dragonBreath",
       description:
-        "Active (Special Attack). Breathe an element chosen at character creation. Costs 5 Mana and 5 Stamina. 5-round cooldown (placeholder). Action cost 5 (placeholder)."
+        "Active (Special Attack). Breathe an element chosen at character creation. Costs 5 Mana and 5 Stamina."
     }
   ]
 };
