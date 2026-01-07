@@ -10,7 +10,7 @@ import {
 
 import { RACE_ADJUSTMENTS } from "../../config/races.mjs";
 import { ROLE_ADJUSTMENTS, ROLE_BY_RANK } from "../../config/roles.mjs"; // ✅ add ROLE_BY_RANK
-import { BACKGROUND_ADJUSTMENTS } from "../../config/backgrounds.mjs"; // ✅ wire background baseline adjustments
+import { BACKGROUND_ADJUSTMENTS, BACKGROUND_GRANTED_SPECIALTIES } from "../../config/backgrounds.mjs"; // ✅ wire background baseline + granted specialties
 
 export class HwfwmActor extends Actor {
   prepareDerivedData() {
@@ -20,6 +20,7 @@ export class HwfwmActor extends Actor {
     system.attributes = system.attributes ?? {};
     system.resources = system.resources ?? {};
     system.details = system.details ?? {};
+    system.specialties = system.specialties ?? {}; // ✅ ensure exists (manual + granted merge surface)
 
     const toNum = (v, fallback = 0) => {
       const n = Number(v);
@@ -127,6 +128,34 @@ export class HwfwmActor extends Actor {
       stamina: toNum(backgroundAdjRaw.stamina, 0)
       // pace: intentionally not supported for backgrounds per current decisions
     };
+
+    // -----------------------------
+    // 3b) Granted specialties (background only for now)
+    // -----------------------------
+    const grantedByBackground = Array.isArray(BACKGROUND_GRANTED_SPECIALTIES?.[backgroundKey])
+      ? BACKGROUND_GRANTED_SPECIALTIES[backgroundKey]
+      : [];
+
+    // Expose the granted keys for UI/debugging
+    system._derived.specialtiesGranted = system._derived.specialtiesGranted ?? {};
+    system._derived.specialtiesGranted.background = grantedByBackground;
+
+    // Materialize granted specialties into system.specialties for a single coherent source.
+    // IMPORTANT: this is derived-only (not persisted) unless explicitly saved via actor.update elsewhere.
+    for (const key of grantedByBackground) {
+      if (!key) continue;
+
+      // Do not override a manually-owned specialty entry (the manual one wins)
+      if (system.specialties?.[key]) continue;
+
+      system.specialties[key] = {
+        key,
+        score: 0,
+        source: "background",
+        granted: true,
+        _derivedOnly: true
+      };
+    }
 
     // -----------------------------
     // 4) Resources max: (base + adjustments) THEN multiply
