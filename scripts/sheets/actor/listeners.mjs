@@ -219,4 +219,105 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
           return;
         }
 
-        await item.update({ [field]: va
+        await item.update({ [field]: value });
+        return;
+      }
+
+      // ------------------------------------------------
+      // Misc inline edits (actor system data, not Items)
+      // ------------------------------------------------
+      if (
+        (target instanceof HTMLInputElement || target instanceof HTMLSelectElement) &&
+        target.dataset?.miscKey &&
+        target.dataset?.miscField
+      ) {
+        ev.preventDefault?.();
+        ev.stopPropagation?.();
+        ev.stopImmediatePropagation?.();
+
+        const key = target.dataset.miscKey;
+        const field = target.dataset.miscField;
+
+        let value = target.value;
+        if (target instanceof HTMLInputElement && target.type === "number") {
+          const n = Number(value);
+          value = Number.isFinite(n) ? n : 0;
+        }
+
+        await updateMiscField(sheet, { key, field, value });
+        return;
+      }
+
+      // ------------------------------------------------
+      // Essence enforcement (ONLY intercept if it handled)
+      // ------------------------------------------------
+      if (target instanceof HTMLSelectElement) {
+        const handled = await handleEssenceSelectChange(sheet, target);
+        if (handled) {
+          ev.preventDefault?.();
+          ev.stopPropagation?.();
+          ev.stopImmediatePropagation?.();
+          return;
+        }
+      }
+
+      // ------------------------------------------------
+      // IMPORTANT:
+      // For all normal actor fields (name="system...."), do NOTHING here.
+      // Let Foundry's ApplicationV2 form handler receive the event and
+      // persist changes (submitOnChange).
+      // ------------------------------------------------
+    },
+    { signal, capture: false }
+  );
+
+  // -----------------------
+  // Click handler (delegated)
+  // -----------------------
+  root.addEventListener(
+    "click",
+    async (ev) => {
+      const actionBtn = ev.target?.closest?.("[data-action]");
+      if (!actionBtn) return;
+
+      const action = actionBtn.dataset.action;
+
+      // Foundry window chrome uses data-action too.
+      // Only intercept actions we own.
+      const allowed = new Set([
+        "add-misc-item",
+        "remove-misc-item",
+        "add-specialty"
+      ]);
+      if (!allowed.has(action)) return;
+
+      ev.preventDefault?.();
+      ev.stopPropagation?.();
+      ev.stopImmediatePropagation?.();
+
+      if (action === "add-misc-item") {
+        openAddMiscDialog(sheet);
+        return;
+      }
+
+      if (action === "remove-misc-item") {
+        const key = actionBtn.dataset.key ?? actionBtn.getAttribute("data-key");
+        await removeMiscByKey(sheet, key);
+        return;
+      }
+
+      if (action === "add-specialty") {
+        await addSelectedSpecialty(sheet);
+        return;
+      }
+    },
+    { signal, capture: true }
+  );
+}
+
+/**
+ * Optional alias so actor-sheet.mjs can call either name safely.
+ */
+export function bindListeners(args) {
+  return bindActorSheetListeners(args);
+}
