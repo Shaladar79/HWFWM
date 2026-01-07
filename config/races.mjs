@@ -69,12 +69,25 @@ export const RACE_DESCRIPTIONS = {
 /* ------------------------------------------------------------------------------------------------ */
 
 /**
+ * Aptitudes (rules placeholder, not yet implemented in mechanics):
+ * - Aptitudes grant a 10% reduction in mana OR stamina costs for Essence abilities of that aptitude type.
+ *
+ * Affinities (rules placeholder, not yet implemented in mechanics):
+ * - Affinities grant:
+ *   - +10% bonus to effects from abilities with a matching elemental type tag.
+ *   - Resistance of the matching type (which provides the -5% detrimental effect reduction).
+ *
+ * Resistances (rules placeholder, not yet implemented in mechanics):
+ * - Resistances grant -5% reduction to detrimental effects from abilities of that type.
+ */
+
+/**
  * Race-granted Feature items (persisted as embedded Items of type "feature").
  *
  * NOTE:
  * - These are created/ensured by sheet listeners (later step).
  * - Use grantKey to dedupe safely across renders.
- * - For Humans, Essence Gifts are placeholders that will later "upgrade" when an Essence/Confluence is gained.
+ * - Some entries are placeholders until their mechanics are wired.
  */
 export const RACE_GRANTED_FEATURES = {
   human: [
@@ -113,15 +126,48 @@ export const RACE_GRANTED_FEATURES = {
       description:
         "Placeholder. Gain 10% more advancement progress for Essence abilities and Specialty scores (i.e., 110% progress when you gain advancement)."
     }
+  ],
+
+  elf: [
+    {
+      key: "mysticBloodline",
+      name: "Mystic Bloodline",
+      grantKey: "race:elf:mysticBloodline",
+      description:
+        "Placeholder. Increase maximum Mana by 15% (applies after normal max calculation; mechanics not wired yet)."
+    },
+    {
+      key: "grace",
+      name: "Grace",
+      grantKey: "race:elf:grace",
+      description:
+        "Placeholder. +4 to Speed attribute total (mechanics not wired yet; intended as a flat bonus to Speed)."
+    }
   ]
 };
 
 /**
  * Race → granted Aptitudes (persisted to system.aptitudes).
- *
- * NOTE:
- * - This is persistence-only metadata; catalog display still comes from aptitudeCatalog in CONFIG.
  */
 export const RACE_GRANTED_APTITUDES = {
-  human: ["specialAttack"]
+  human: ["specialAttack"],
+  elf: ["spell"]
+};
+
+/**
+ * Race → granted Affinities (persisted to system.affinities).
+ */
+export const RACE_GRANTED_AFFINITIES = {
+  elf: ["life", "nature", "magic"]
+};
+
+/**
+ * Race → granted Resistances (persisted to system.resistances).
+ *
+ * NOTE:
+ * - Per your rules, resistances are where the -5% detrimental reduction is sourced from.
+ * - Affinities imply matching resistances; we grant them explicitly here for clarity.
+ */
+export const RACE_GRANTED_RESISTANCES = {
+  elf: ["life", "nature", "magic"]
 };
