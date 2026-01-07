@@ -94,7 +94,7 @@ async function promptForSpecialtyChoice({ title, label, options }) {
         },
         cancel: {
           label: "Cancel",
-          callback: () => resolve("")
+          callback: () => resolve("");
         }
       },
       default: "ok",
@@ -201,6 +201,25 @@ async function addSelectedSpecialty(sheet) {
   };
 
   await actor.update(update);
+}
+
+/**
+ * One-way lock to finalize character creation selections (race/role/background).
+ * - Sets system._flags.choicesLocked = true
+ * - Does not attempt to disable UI here; templates should render disabled based on the flag
+ */
+async function lockChoices(sheet) {
+  try {
+    const actor = sheet?.document;
+    if (!actor) return;
+
+    const alreadyLocked = Boolean(actor.system?._flags?.choicesLocked);
+    if (alreadyLocked) return;
+
+    await actor.update({ "system._flags.choicesLocked": true });
+  } catch (err) {
+    console.warn("HWFWM | lockChoices failed", err);
+  }
 }
 
 /**
@@ -405,7 +424,7 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
 
       // Foundry window chrome uses data-action too.
       // Only intercept actions we own.
-      const allowed = new Set(["add-misc-item", "remove-misc-item", "add-specialty"]);
+      const allowed = new Set(["add-misc-item", "remove-misc-item", "add-specialty", "lock-choices"]);
       if (!allowed.has(action)) return;
 
       ev.preventDefault?.();
@@ -427,6 +446,11 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
         await addSelectedSpecialty(sheet);
         return;
       }
+
+      if (action === "lock-choices") {
+        await lockChoices(sheet);
+        return;
+      }
     },
     { signal, capture: true }
   );
@@ -438,3 +462,4 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
 export function bindListeners(args) {
   return bindActorSheetListeners(args);
 }
+
