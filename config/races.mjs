@@ -1,6 +1,18 @@
 /**
- * Race configuration (display + future mechanics hooks).
+ * Race configuration (display + mechanics hooks).
+ *
+ * This file is AUTHORITATIVE DATA ONLY.
+ * No mechanics are applied here — everything is descriptive or declarative.
+ *
+ * Wiring rules (for later):
+ * - Aptitudes → Traits > Enhancements > Aptitudes
+ * - Affinities → Traits > Enhancements > Affinities
+ * - Granted Abilities → Features (Active / Passive sections later)
  */
+
+/* -------------------------------------------- */
+/* Race Labels                                  */
+/* -------------------------------------------- */
 
 export const RACES = {
   outworlder: "Outworlder",
@@ -13,9 +25,6 @@ export const RACES = {
   smoulder: "Smoulder"
 };
 
-/**
- * Canonical ordering for dropdowns and iteration.
- */
 export const RACE_ORDER = [
   "outworlder",
   "celestine",
@@ -27,249 +36,249 @@ export const RACE_ORDER = [
   "smoulder"
 ];
 
-/**
- * Race-based adjustments (baseline deltas).
- * These are applied AFTER rank scaling for max resources,
- * and added to derived pace (rank pace mod) for now.
- *
- * For now, Outworlder is locked to 0 across the board (per your note).
- */
+/* -------------------------------------------- */
+/* Baseline Resource / Pace Adjustments          */
+/* -------------------------------------------- */
+
 export const RACE_ADJUSTMENTS = {
   outworlder: { lifeForce: 5, mana: 5, stamina: 5, pace: 5 },
 
-  // placeholders (set later)
   celestine: { lifeForce: 5, mana: 5, stamina: 3, pace: 6 },
   draconian: { lifeForce: 7, mana: 6, stamina: 3, pace: 4 },
-  elf: { lifeForce: 4, mana: 9, stamina: 1, pace: 6 },
-  human: { lifeForce: 5, mana: 5, stamina: 5, pace: 5 },
-  leonid: { lifeForce: 5, mana: 3, stamina: 6, pace: 6 },
-  runic: { lifeForce: 7, mana: 8, stamina: 1, pace: 5 },
-  smoulder: { lifeForce: 8, mana: 1, stamina: 7, pace: 4 }
+  elf:       { lifeForce: 4, mana: 9, stamina: 1, pace: 6 },
+  human:     { lifeForce: 5, mana: 5, stamina: 5, pace: 5 },
+  leonid:    { lifeForce: 5, mana: 3, stamina: 6, pace: 6 },
+  runic:     { lifeForce: 7, mana: 8, stamina: 1, pace: 5 },
+  smoulder:  { lifeForce: 8, mana: 1, stamina: 7, pace: 4 }
 };
 
-/**
- * Race descriptions / notes (UI only).
- * Use these to record racial abilities that will later drive derived values.
- */
+/* -------------------------------------------- */
+/* Racial Descriptions (UI only)                 */
+/* -------------------------------------------- */
+
 export const RACE_DESCRIPTIONS = {
-  outworlder: "Baseline traveler from another world. (Adjustments: 0 LF / 0 Mana / 0 Stamina / 0 Pace for now.)",
+  outworlder:
+    "Baseline traveler from another world. No innate affinities or aptitudes.",
 
-  // placeholders (fill later)
-  celestine: "",
-  draconian: "",
-  elf: "",
-  human: "",
-  leonid: "",
-  runic: "",
-  smoulder: ""
+  human:
+    "Adaptable and ambitious. Humans grow through essence mastery and relentless drive.",
+
+  elf:
+    "Mystically attuned beings with strong ties to magic, nature, and the astral.",
+
+  leonid:
+    "Proud lionkin warriors whose strength and presence bolster allies.",
+
+  celestine:
+    "Heaven-touched beings infused with astral and holy energies.",
+
+  runic:
+    "Arcane constructs or rune-bound entities sustained by structured magic.",
+
+  smoulder:
+    "Earth- and fire-aspected beings born of stone, magma, and living flame.",
+
+  draconian:
+    ""
 };
 
-/* ------------------------------------------------------------------------------------------------ */
-/* Race → Granted Abilities (Persistence targets)                                                    */
-/* ------------------------------------------------------------------------------------------------ */
+/* -------------------------------------------- */
+/* Race → Granted Aptitudes                      */
+/* -------------------------------------------- */
 
-/**
- * Aptitudes (rules placeholder, not yet implemented in mechanics):
- * - Aptitudes grant a 10% reduction in stamina or mana costs for Essence abilities of that aptitude type.
- *
- * Affinities (rules placeholder, not yet implemented in mechanics):
- * - Affinities grant:
- *   - +10% bonus to effects from abilities with a matching elemental type tag.
- *   - Resistance of the matching type (which provides the -5% detrimental effect reduction).
- *
- * Resistances (rules placeholder, not yet implemented in mechanics):
- * - Resistances grant -5% reduction to detrimental effects from abilities of that type.
- */
+export const RACE_GRANTED_APTITUDES = {
+  human: ["specialAttack"],
 
-/**
- * Race-granted Feature items (persisted as embedded Items of type "feature").
- *
- * NOTE:
- * - These are created/ensured by sheet listeners (later step).
- * - Use grantKey to dedupe safely across renders.
- * - Some entries are placeholders until their mechanics are wired.
- */
+  elf: ["spellcasting"],
+
+  leonid: ["boon"],
+
+  celestine: ["specialAbility"],
+
+  runic: ["spellcasting"]
+};
+
+/* -------------------------------------------- */
+/* Race → Granted Affinities                     */
+/* -------------------------------------------- */
+
+export const RACE_GRANTED_AFFINITIES = {
+  elf: ["life", "nature", "magic"],
+
+  celestine: ["holy", "astral"],
+
+  runic: ["magic"],
+
+  smoulder: ["earth", "fire"]
+};
+
+/* -------------------------------------------- */
+/* Race → Granted Features (Abilities)           */
+/* -------------------------------------------- */
+
 export const RACE_GRANTED_FEATURES = {
+  /* -------- Human -------- */
   human: [
     {
-      key: "essenceGift1",
-      name: "Essence Gift I",
-      grantKey: "race:human:essenceGift1",
+      key: "essenceGift",
+      name: "Essence Gift",
+      grantKey: "race:human:essenceGift",
       description:
-        "Placeholder. When you gain an Essence or Confluence Essence, this gift upgrades into an Essence-aligned ability."
-    },
-    {
-      key: "essenceGift2",
-      name: "Essence Gift II",
-      grantKey: "race:human:essenceGift2",
-      description:
-        "Placeholder. When you gain an Essence or Confluence Essence, this gift upgrades into an Essence-aligned ability."
-    },
-    {
-      key: "essenceGift3",
-      name: "Essence Gift III",
-      grantKey: "race:human:essenceGift3",
-      description:
-        "Placeholder. When you gain an Essence or Confluence Essence, this gift upgrades into an Essence-aligned ability."
-    },
-    {
-      key: "essenceGift4",
-      name: "Essence Gift IV",
-      grantKey: "race:human:essenceGift4",
-      description:
-        "Placeholder. When you gain an Essence or Confluence Essence, this gift upgrades into an Essence-aligned ability."
+        "Passive. Gain Essence Gift x4. Each gift evolves into an essence-aligned ability when an Essence or Confluence Essence is acquired."
     },
     {
       key: "humanAmbition",
       name: "Human Ambition",
       grantKey: "race:human:humanAmbition",
       description:
-        "Placeholder. Gain 10% more advancement progress for Essence abilities and Specialty scores (i.e., 110% progress when you gain advancement)."
+        "Passive (placeholder). Gain 10% increased advancement toward Essence Abilities and Specialty scores."
     }
   ],
 
+  /* -------- Elf -------- */
   elf: [
     {
       key: "mysticBloodline",
       name: "Mystic Bloodline",
       grantKey: "race:elf:mysticBloodline",
       description:
-        "Placeholder. Increase maximum Mana by 15% (applies after normal max calculation; mechanics not wired yet)."
+        "Passive (placeholder). Increase maximum Mana by 15%."
     },
     {
       key: "grace",
       name: "Grace",
       grantKey: "race:elf:grace",
       description:
-        "Placeholder. +4 to Speed attribute total (mechanics not wired yet; intended as a flat bonus to Speed)."
+        "Passive. Gain +4 to the Speed attribute."
     }
   ],
 
+  /* -------- Leonid -------- */
   leonid: [
     {
       key: "ancestralStrength",
       name: "Ancestral Strength",
       grantKey: "race:leonid:ancestralStrength",
       description:
-        "Placeholder. +3% Power (intended as an additive attributePct bonus to Power; mechanics not wired yet)."
+        "Passive. Gain +3% Power."
     },
     {
       key: "ancestralSwiftness",
       name: "Ancestral Swiftness",
       grantKey: "race:leonid:ancestralSwiftness",
       description:
-        "Placeholder. +3% Speed (intended as an additive attributePct bonus to Speed; mechanics not wired yet)."
+        "Passive. Gain +3% Speed."
     },
     {
       key: "tireless",
       name: "Tireless",
       grantKey: "race:leonid:tireless",
       description:
-        "Placeholder. Reduce Stamina costs for abilities by 20% (mechanics not wired yet)."
+        "Passive (placeholder). Ability stamina costs are reduced by 20%."
     },
     {
       key: "sprint",
       name: "Sprint",
       grantKey: "race:leonid:sprint",
       description:
-        "Active (placeholder). Pay 10 Stamina to double your Pace for 1 round."
+        "Active. Double Pace for 1 round. Costs 10 Stamina."
     },
     {
       key: "leonidsRoar",
-      name: "Leonid's Roar",
-      grantKey: "race:leonid:leonidsRoar",
+      name: "Leonid’s Roar",
+      grantKey: "race:leonid:roar",
       description:
-        "Boon (placeholder). Roar to increase nearby allies' Power and Speed by 2% per character rank (Normal 2%, Iron 4%, Bronze 6%, Silver 8%, Gold 10%, Diamond 12%)."
+        "Active (Boon). Increase nearby allies’ Power and Speed by 2% per character rank for 1 round."
     }
   ],
 
+  /* -------- Celestine -------- */
   celestine: [
     {
       key: "celestialBounty",
       name: "Celestial Bounty",
-      grantKey: "race:celestine:celestialBounty",
+      grantKey: "race:celestine:bounty",
       description:
-        "Placeholder. Increase Mana recovery rate by 20% (recovery-rate mechanics not wired yet)."
+        "Passive (placeholder). Mana recovery rate increased by 20%."
     },
     {
       key: "celestialSwiftness",
       name: "Celestial Swiftness",
-      grantKey: "race:celestine:celestialSwiftness",
+      grantKey: "race:celestine:swiftness",
       description:
-        "Placeholder. +4% Speed (intended as an additive attributePct bonus to Speed; mechanics not wired yet)."
+        "Passive. Gain +4% Speed."
     },
     {
       key: "manaIntegrity",
       name: "Mana Integrity",
       grantKey: "race:celestine:manaIntegrity",
       description:
-        "Placeholder. Reduce Mana costs for abilities by 15% (mechanics not wired yet)."
+        "Passive (placeholder). Mana costs reduced by 15%."
     }
   ],
 
+  /* -------- Runic -------- */
   runic: [
     {
       key: "spellborn",
       name: "Spellborn",
       grantKey: "race:runic:spellborn",
       description:
-        "Passive (placeholder). Increase maximum Mana by 15% (applies after normal max calculation; mechanics not wired yet)."
+        "Passive (placeholder). Increase maximum Mana by 15%."
     },
     {
       key: "wellspring",
       name: "Wellspring",
       grantKey: "race:runic:wellspring",
       description:
-        "Passive (placeholder). Increase Mana recovery rate by 20% (recovery-rate mechanics not wired yet)."
+        "Passive (placeholder). Mana recovery rate increased by 20%."
     },
     {
       key: "adaptiveResistance",
       name: "Adaptive Resistance",
       grantKey: "race:runic:adaptiveResistance",
       description:
-        "Passive (placeholder). Gain resistance to recently encountered effects; specifically, the last damage type taken."
+        "Passive (placeholder). Gain resistance to the most recent damage type encountered."
     },
     {
       key: "manaBeacon",
       name: "Mana Beacon",
       grantKey: "race:runic:manaBeacon",
       description:
-        "Active (placeholder). Stabilize ambient magic. Costs 10 Mana to use."
+        "Active. Stabilize ambient magic in the area. Costs 10 Mana."
+    }
+  ],
+
+  /* -------- Smoulder -------- */
+  smoulder: [
+    {
+      key: "heartOfTheEarth",
+      name: "Heart of the Earth",
+      grantKey: "race:smoulder:heartOfTheEarth",
+      description:
+        "Passive (placeholder). While meditating, Mana and Stamina recovery are doubled."
+    },
+    {
+      key: "lifeFire",
+      name: "Life Fire",
+      grantKey: "race:smoulder:lifeFire",
+      description:
+        "Passive (placeholder). Take 10% less fire damage and regain Stamina equal to 10% of fire damage taken."
+    },
+    {
+      key: "earthBorn",
+      name: "Earth Born",
+      grantKey: "race:smoulder:earthBorn",
+      description:
+        "Passive (placeholder). Gain +2 Natural Armor."
+    },
+    {
+      key: "flameInvestiture",
+      name: "Flame Investiture",
+      grantKey: "race:smoulder:flameInvestiture",
+      description:
+        "Active. Superheat objects. Costs 10 Mana."
     }
   ]
 };
 
-/**
- * Race → granted Aptitudes (persisted to system.aptitudes).
- */
-export const RACE_GRANTED_APTITUDES = {
-  human: ["specialAttack"],
-  elf: ["spell"],
-  leonid: ["boon"],
-  celestine: ["specialAbility"],
-  runic: ["spell"]
-};
-
-/**
- * Race → granted Affinities (persisted to system.affinities).
- */
-export const RACE_GRANTED_AFFINITIES = {
-  elf: ["life", "nature", "magic"],
-  celestine: ["holy", "astral"],
-  runic: ["magic"]
-};
-
-/**
- * Race → granted Resistances (persisted to system.resistances).
- *
- * NOTE:
- * - Per your rules, resistances are where the -5% detrimental reduction is sourced from.
- * - Affinities imply matching resistances; we grant them explicitly here for clarity.
- * - Runic also has a separate "Adaptive Resistance" feature that is NOT represented here
- *   because it is contextual/dynamic (last damage type taken).
- */
-export const RACE_GRANTED_RESISTANCES = {
-  elf: ["life", "nature", "magic"],
-  celestine: ["holy", "astral"],
-  runic: ["magic"]
-};
