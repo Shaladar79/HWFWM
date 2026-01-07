@@ -63,28 +63,6 @@ export const HWFWM_SPECIALTIES = {
   },
 
   /* -------------------------------------------- */
-  /* Power Crafting Specialties                   */
-  /* -------------------------------------------- */
-
-  blacksmithing: {
-    name: "Blacksmithing",
-    attribute: "Power",
-    description: "Forging metal weapons, tools, and components through heat, hammering, and shaping."
-  },
-
-  stonemasonry: {
-    name: "Stonemasonry",
-    attribute: "Power",
-    description: "Shaping, carving, and assembling stone structures and durable stone components."
-  },
-
-  woodworking: {
-    name: "Woodworking",
-    attribute: "Power",
-    description: "Heavy carpentry and shaping solid wooden objects, frames, and structural components."
-  },
-
-  /* -------------------------------------------- */
   /* Speed Specialties                            */
   /* -------------------------------------------- */
 
@@ -137,28 +115,6 @@ export const HWFWM_SPECIALTIES = {
   },
 
   /* -------------------------------------------- */
-  /* Speed Crafting Specialties                   */
-  /* -------------------------------------------- */
-
-  fletching: {
-    name: "Fletching",
-    attribute: "Speed",
-    description: "Crafting arrows, bolts, and other precision ammunition requiring careful balance and assembly."
-  },
-
-  jewelry: {
-    name: "Jewelry",
-    attribute: "Speed",
-    description: "Fine metalwork and gem setting requiring delicate precision and detailed craftsmanship."
-  },
-
-  textiles: {
-    name: "Textiles",
-    attribute: "Speed",
-    description: "Working cloth and flexible materials (including leather): cutting, stitching, fitting, and assembly."
-  },
-
-  /* -------------------------------------------- */
   /* Spirit Specialties                           */
   /* -------------------------------------------- */
 
@@ -172,6 +128,30 @@ export const HWFWM_SPECIALTIES = {
     name: "Persuasion",
     attribute: "Spirit",
     description: "Influencing others through argument, charm, negotiation, and social pressure."
+  },
+
+  leadership: {
+    name: "Leadership",
+    attribute: "Spirit",
+    description: "Command presence, coordination, morale control, and directing others under pressure."
+  },
+
+  bartering: {
+    name: "Bartering",
+    attribute: "Spirit",
+    description: "Haggling, pricing, deal-making, and reading leverage in trade negotiations."
+  },
+
+  perform: {
+    name: "Perform",
+    attribute: "Spirit",
+    description: "Music, acting, storytelling, and stagecraft used to entertain or sway an audience."
+  },
+
+  research: {
+    name: "Research",
+    attribute: "Spirit",
+    description: "Finding, verifying, and synthesizing information from records, investigation, and study."
   },
 
   magicTheory: {
@@ -224,18 +204,8 @@ export const HWFWM_SPECIALTIES = {
 
   suppressAura: {
     name: "Suppress Aura",
-   attribute: "Spirit",
-    description: "Overwhelming others through focused spiritual pressure and dominating presence."
-  },
-
-  /* -------------------------------------------- */
-  /* Spirit Crafting Specialties                  */
-  /* -------------------------------------------- */
-
-  alchemy: {
-    name: "Alchemy",
     attribute: "Spirit",
-    description: "Creating potions, reagents, and transformative compounds using magical principles."
+    description: "Overwhelming others through focused spiritual pressure and dominating presence."
   },
 
   /* -------------------------------------------- */
@@ -279,31 +249,43 @@ export const HWFWM_SPECIALTIES = {
   },
 
   /* -------------------------------------------- */
-  /* Recovery Crafting Specialties                */
+  /* Crafting Specialties                         */
+  /* (needed for Artisan/Soldier choice dialogs)  */
   /* -------------------------------------------- */
 
-  cooking: {
-    name: "Cooking",
-    attribute: "Recovery",
-    description: "Preparing meals and rations for sustainment, morale, and basic restorative benefits."
+  craftingBlacksmithing: {
+    name: "Crafting: Blacksmithing",
+    attribute: "Power",
+    description: "Forging and shaping metal tools, weapons, fittings, and functional hardware."
   },
 
-  brewing: {
-    name: "Brewing",
-    attribute: "Recovery",
-    description: "Producing non-alchemical drinks, tonics, and stamina-focused beverages."
+  craftingWoodworking: {
+    name: "Crafting: Woodworking",
+    attribute: "Power",
+    description: "Building and repairing wooden items, structures, shafts, handles, and frames."
   },
 
-  herbalism: {
-    name: "Herbalism",
-    attribute: "Recovery",
-    description: "Harvesting and preparing natural ingredients without magical transformation."
+  craftingTextiles: {
+    name: "Crafting: Textiles",
+    attribute: "Speed",
+    description: "Weaving, tailoring, leatherworking, and fine material work under a single discipline."
   },
 
-  fieldRepair: {
-    name: "Field Repair",
+  craftingAlchemy: {
+    name: "Crafting: Alchemy",
+    attribute: "Spirit",
+    description: "Potions, reagents, extracts, and controlled magical/chemical reactions."
+  },
+
+  craftingEngineering: {
+    name: "Crafting: Engineering",
+    attribute: "Spirit",
+    description: "Mechanisms, devices, repair logic, and precision assembly beyond basic handiwork."
+  },
+
+  craftingCooking: {
+    name: "Crafting: Cooking",
     attribute: "Recovery",
-    description: "Quick fixes and patchwork repairs to keep gear functional in the field."
+    description: "Preparing meals, preservation, rations, and kitchen logistics for travel or settlement."
   }
 };
-
