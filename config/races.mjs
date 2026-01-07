@@ -41,15 +41,16 @@ export const RACE_ORDER = [
 /* -------------------------------------------- */
 
 export const RACE_ADJUSTMENTS = {
-  outworlder: { lifeForce: 5, mana: 5, stamina: 5, pace: 5 },
-  celestine: { lifeForce: 5, mana: 5, stamina: 3, pace: 6 },
-  draconian: { lifeForce: 7, mana: 6, stamina: 3, pace: 4 },
-  elf:       { lifeForce: 4, mana: 9, stamina: 1, pace: 6 },
-  human:     { lifeForce: 5, mana: 5, stamina: 5, pace: 5 },
-  leonid:    { lifeForce: 5, mana: 3, stamina: 6, pace: 6 },
-  runic:     { lifeForce: 7, mana: 8, stamina: 1, pace: 5 },
-  smoulder:  { lifeForce: 8, mana: 1, stamina: 7, pace: 4 }
+  outworlder: { lifeForce: 5, mana: 5, stamina: 5, pace: 5, manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0 },
+  celestine: { lifeForce: 5, mana: 5, stamina: 3, pace: 6, manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0 },
+  draconian: { lifeForce: 7, mana: 6, stamina: 3, pace: 4, manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 2 },
+  elf:       { lifeForce: 4, mana: 9, stamina: 1, pace: 6, manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0 },
+  human:     { lifeForce: 5, mana: 5, stamina: 5, pace: 5, manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0 },
+  leonid:    { lifeForce: 5, mana: 3, stamina: 6, pace: 6, manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0 },
+  runic:     { lifeForce: 7, mana: 8, stamina: 1, pace: 5, manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0 },
+  smoulder:  { lifeForce: 8, mana: 1, stamina: 7, pace: 4, manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 2 }
 };
+
 
 /* -------------------------------------------- */
 /* Racial Descriptions (UI only)                 */
