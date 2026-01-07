@@ -23,7 +23,7 @@ export const BACKGROUND_ORDER = [
 
 /**
  * Baseline background adjustments (applied before rank multiplier)
- * Shape mirrors races/roles: { lifeForce, mana, stamina, pace? }
+ * Shape mirrors races/roles: { lifeForce, mana, stamina }
  */
 export const BACKGROUND_ADJUSTMENTS = {
   commoner: { lifeForce: 4, mana: 2, stamina: 2 },
@@ -34,7 +34,15 @@ export const BACKGROUND_ADJUSTMENTS = {
 };
 
 /**
- * Optional UI descriptions (Overview/Traits hover text)
+ * Background → granted specialties
+ * NOTE: derived-only for now (not persisted)
+ */
+export const BACKGROUND_GRANTED_SPECIALTIES = {
+  criminal: ["thievery", "stealth"]
+};
+
+/**
+ * Optional UI descriptions (Overview / Traits)
  */
 export const BACKGROUND_DESCRIPTIONS = {
   commoner: "A practical upbringing grounded in everyday work and community.",
