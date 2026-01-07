@@ -205,6 +205,37 @@ export const RACE_GRANTED_FEATURES = {
       description:
         "Placeholder. Reduce Mana costs for abilities by 15% (mechanics not wired yet)."
     }
+  ],
+
+  runic: [
+    {
+      key: "spellborn",
+      name: "Spellborn",
+      grantKey: "race:runic:spellborn",
+      description:
+        "Passive (placeholder). Increase maximum Mana by 15% (applies after normal max calculation; mechanics not wired yet)."
+    },
+    {
+      key: "wellspring",
+      name: "Wellspring",
+      grantKey: "race:runic:wellspring",
+      description:
+        "Passive (placeholder). Increase Mana recovery rate by 20% (recovery-rate mechanics not wired yet)."
+    },
+    {
+      key: "adaptiveResistance",
+      name: "Adaptive Resistance",
+      grantKey: "race:runic:adaptiveResistance",
+      description:
+        "Passive (placeholder). Gain resistance to recently encountered effects; specifically, the last damage type taken."
+    },
+    {
+      key: "manaBeacon",
+      name: "Mana Beacon",
+      grantKey: "race:runic:manaBeacon",
+      description:
+        "Active (placeholder). Stabilize ambient magic. Costs 10 Mana to use."
+    }
   ]
 };
 
@@ -215,7 +246,8 @@ export const RACE_GRANTED_APTITUDES = {
   human: ["specialAttack"],
   elf: ["spell"],
   leonid: ["boon"],
-  celestine: ["specialAbility"]
+  celestine: ["specialAbility"],
+  runic: ["spell"]
 };
 
 /**
@@ -223,7 +255,8 @@ export const RACE_GRANTED_APTITUDES = {
  */
 export const RACE_GRANTED_AFFINITIES = {
   elf: ["life", "nature", "magic"],
-  celestine: ["holy", "astral"]
+  celestine: ["holy", "astral"],
+  runic: ["magic"]
 };
 
 /**
@@ -232,9 +265,11 @@ export const RACE_GRANTED_AFFINITIES = {
  * NOTE:
  * - Per your rules, resistances are where the -5% detrimental reduction is sourced from.
  * - Affinities imply matching resistances; we grant them explicitly here for clarity.
+ * - Runic also has a separate "Adaptive Resistance" feature that is NOT represented here
+ *   because it is contextual/dynamic (last damage type taken).
  */
 export const RACE_GRANTED_RESISTANCES = {
   elf: ["life", "nature", "magic"],
-  celestine: ["holy", "astral"]
+  celestine: ["holy", "astral"],
+  runic: ["magic"]
 };
-
