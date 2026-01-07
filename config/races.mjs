@@ -58,28 +58,28 @@ export const RACE_ADJUSTMENTS = {
 
 export const RACE_DESCRIPTIONS = {
   outworlder:
-    "A traveler from another world. Always gains Astral Affinity, then chooses 1 Aptitude and 4 Outworlder Gifts.",
+    "Outworlders are souls pulled through the deep astral, dying in their origin world and being reborn in a new one. They always awaken with Astral Affinity and then develop further through personal selection—an aptitude choice and a set of unique outworlder gifts. Outworlders are often noted to carry an unmistakable “springtime” scent regardless of their former race. Their gifts commonly revolve around astral survivability, adaptation, and unusual utility that other races typically require training or rituals to achieve.",
 
   human:
-    "Adaptable and ambitious. Humans grow through essence mastery and relentless drive.",
+    "Humans are the most prevalent people across Pallimustus, defined less by a single innate theme and more by adaptability. Their Essence Gifts evolve as they acquire essences, allowing humans to develop powers that mirror their personal path rather than a fixed racial identity. Humans also excel through ambition: they advance more efficiently in both essence abilities and specialties, accelerating long-term growth. While they are broadly average on paper, they become highly specialized in play as their gifts mature.",
 
   elf:
-    "Mystically attuned beings with strong ties to magic, nature, and the astral.",
+    "Elves are mystically attuned people whose traditions favor spellcraft over direct martial combat. They are strongly aligned with Life, Nature, and Magic affinities, granting them breadth in supportive, restorative, and transformative effects. Elven bloodlines are naturally mana-rich, and their grace lends notable speed and finesse. In practice, elves are defined by sustained magical output and the ability to shape a battlefield through layered effects rather than brute force.",
 
   leonid:
-    "Proud lionkin warriors whose strength and presence bolster allies.",
+    "Leonids are large, lion-like humanoids with a culture built around pride, presence, and physical excellence. Their ancestry expresses itself as direct improvements to Power and Speed, reinforced by tireless endurance that reduces stamina strain over time. Leonids can surge into short bursts of overwhelming mobility with Sprint, but their hallmark is Leonid’s Roar—a boon that scales with rank to elevate allies’ Power and Speed. In groups, leonids often serve as momentum engines that make everyone around them stronger and faster..",
 
   celestine:
-    "Heaven-touched beings infused with astral and holy energies.",
+    "Celestines are heaven-touched beings marked by metallic hair and matching eyes, and they naturally align with Holy and Astral affinities. They tend to manifest more special abilities than overt attacks, with strong internal efficiency that reduces mana burden and enhances recovery. Celestines are not naturally occurring; they arise as the offspring of two outworlders and can also reproduce among themselves. Their speed and presence are often pronounced, reflecting their celestial swiftness and disciplined mana integrity.",
 
   runic:
-    "Arcane constructs or rune-bound entities sustained by structured magic.",
+    "Runics are rune-bound beings whose tattoo-like markings are not superficial; the patterns are said to run down into the bones, reflecting structured magic embedded into their form. They are naturally aligned with Magic affinity and excel at sustained spellwork through increased mana capacity and enhanced recovery. Their adaptive resistance represents a living enchantment that adjusts to recent harm, while Mana Beacon stabilizes ambient magic when conditions become volatile. Runics feel less like a “people” defined by culture and more like a magical architecture that learned how to walk..",
 
   smoulder:
-    "Earth- and fire-aspected beings born of stone, magma, and living flame.",
+    "Smoulder are earth- and fire-aspected beings recognizable by glowing red or orange eyes and a strong connection to volcanic regions. Their nature grants them both Earth and Fire affinities and a body that trends toward natural armor and elemental resilience. Smoulder powers often reward discipline and recovery—meditation dramatically accelerates their mana and stamina restoration, and fire harm can be partially converted into stamina through their living flame. Between durability and elemental control, they are built to endure harsh environments and turn raw elemental forces into advantage.",
 
   draconian:
-    "Dragon-blooded beings defined by physical dominance, innate sorcery, and elemental breath."
+    "Draconians claim dragon ancestry, expressed through exceptional physical dominance and innate sorcery. Their scales provide natural protection, and their signature weapon is a breath attack tied to an element chosen at creation. Draconians also carry a deep magical affinity and benefit broadly from their essence abilities, with draconic manifestations shaping how those powers present."
 };
 
 /* -------------------------------------------- */
