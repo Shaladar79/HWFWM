@@ -3,7 +3,52 @@
 import { activateTabGroup } from "./tabs.mjs";
 import { handleEssenceSelectChange } from "./essence.mjs";
 import { openAddMiscDialog, removeMiscByKey, updateMiscField } from "./treasures-misc.mjs";
-import { HWFWM_SPECIALTIES } from "../../../config/specialties.mjs" // ✅ specialties catalog (reference data)
+import { BACKGROUND_GRANTED_SPECIALTIES } from "../../../config/backgrounds.mjs"; // ✅ correct relative path
+
+/**
+ * Persist background-granted specialties onto the Actor (one-way add).
+ * - Adds missing specialty keys to system.specialties
+ * - NEVER overwrites an existing manual entry
+ * - Does NOT remove specialties if background later changes (safe behavior for now)
+ */
+async function persistBackgroundGrantedSpecialties(sheet, backgroundKey) {
+  try {
+    const actor = sheet?.document;
+    if (!actor) return;
+
+    const bgKey = String(backgroundKey ?? "").trim();
+    if (!bgKey) return;
+
+    const granted = Array.isArray(BACKGROUND_GRANTED_SPECIALTIES?.[bgKey])
+      ? BACKGROUND_GRANTED_SPECIALTIES[bgKey]
+      : [];
+
+    if (!granted.length) return;
+
+    const current = actor.system?.specialties ?? {};
+    const update = {};
+
+    for (const key of granted) {
+      if (!key) continue;
+
+      // If it already exists, we treat it as manually owned (or previously persisted)
+      if (current?.[key]) continue;
+
+      update[`system.specialties.${key}`] = {
+        score: 0,
+        source: "background",
+        granted: true
+      };
+    }
+
+    if (Object.keys(update).length) {
+      await actor.update(update);
+    }
+  } catch (err) {
+    // Never break the sheet due to a sync failure
+    console.warn("HWFWM | persistBackgroundGrantedSpecialties failed", err);
+  }
+}
 
 /**
  * Bind all DOM listeners for the actor sheet.
@@ -34,45 +79,9 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
 
   const { signal } = controller;
 
-  const toStr = (v) => String(v ?? "").trim();
-
-  /**
-   * Add a specialty to the actor.
-   * - Reads selection from system._ui.addSpecialtyKey
-   * - Writes minimal actor-owned entry into system.specialties.<key>
-   * - Clears system._ui.addSpecialtyKey after successful add
-   */
-  const addSelectedSpecialty = async () => {
-    const actor = sheet.document;
-    if (!actor) return;
-
-    const selectedKey = toStr(actor.system?._ui?.addSpecialtyKey);
-    if (!selectedKey) return;
-
-    const spec = HWFWM_SPECIALTIES?.[selectedKey];
-    if (!spec) return; // unknown key; ignore safely
-
-    const existing = actor.system?.specialties?.[selectedKey];
-    if (existing) {
-      // Already added; clear selection for UX and exit
-      await actor.update({ "system._ui.addSpecialtyKey": "" }).catch(() => {});
-      return;
-    }
-
-    // Minimal, future-proof specialty data stored on actor:
-    // - Keep the authoritative display info in config (name/attribute/description)
-    // - Store actor-specific progression fields here
-    const payload = {
-      [`system.specialties.${selectedKey}`]: {
-        key: selectedKey,
-        score: 0,
-        source: "manual"
-      },
-      "system._ui.addSpecialtyKey": ""
-    };
-
-    await actor.update(payload);
-  };
+  // ✅ One-time sync on render/bind: if actor is missing any granted specialties, add them.
+  const initialBgKey = sheet.document?.system?.details?.backgroundKey ?? "";
+  persistBackgroundGrantedSpecialties(sheet, initialBgKey);
 
   // -----------------------
   // Tabs
@@ -128,6 +137,16 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
     "change",
     async (ev) => {
       const target = ev.target;
+
+      // ------------------------------------------------
+      // Background change: persist granted specialties
+      // ------------------------------------------------
+      if (target instanceof HTMLSelectElement && target.name === "system.details.backgroundKey") {
+        // We do NOT prevent default. Let ApplicationV2 submit the field normally.
+        // We simply persist any newly granted specialties.
+        await persistBackgroundGrantedSpecialties(sheet, target.value);
+        return;
+      }
 
       // ------------------------------------------------
       // Items inline edits (embedded Item documents)
@@ -230,7 +249,7 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
 
       // Foundry window chrome uses data-action too.
       // Only intercept actions we own.
-      if (action !== "add-misc-item" && action !== "remove-misc-item" && action !== "add-specialty") return;
+      if (action !== "add-misc-item" && action !== "remove-misc-item") return;
 
       ev.preventDefault?.();
       ev.stopPropagation?.();
@@ -246,11 +265,6 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
         await removeMiscByKey(sheet, key);
         return;
       }
-
-      if (action === "add-specialty") {
-        await addSelectedSpecialty();
-        return;
-      }
     },
     { signal, capture: true }
   );
@@ -262,3 +276,4 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
 export function bindListeners(args) {
   return bindActorSheetListeners(args);
 }
+
