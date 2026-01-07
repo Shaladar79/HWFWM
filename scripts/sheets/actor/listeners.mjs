@@ -3,7 +3,11 @@
 import { activateTabGroup } from "./tabs.mjs";
 import { handleEssenceSelectChange } from "./essence.mjs";
 import { openAddMiscDialog, removeMiscByKey, updateMiscField } from "./treasures-misc.mjs";
-import { BACKGROUND_GRANTED_SPECIALTIES } from "../../../config/backgrounds.mjs"; // ✅ correct relative path
+import {
+  BACKGROUND_GRANTED_SPECIALTIES,
+  BACKGROUND_SPECIALTY_CHOICE,
+  BACKGROUND_CHOICE_OPTIONS
+} from "../../../config/backgrounds.mjs"; // ✅ expand imports
 
 /**
  * Persist background-granted specialties onto the Actor (one-way add).
@@ -46,6 +50,119 @@ async function persistBackgroundGrantedSpecialties(sheet, backgroundKey) {
     }
   } catch (err) {
     console.warn("HWFWM | persistBackgroundGrantedSpecialties failed", err);
+  }
+}
+
+/**
+ * Present a simple dialog to choose a specialty key from a configured option set.
+ * Returns the chosen key string, or "" if canceled.
+ */
+async function promptForSpecialtyChoice({ title, label, options }) {
+  const opts = Array.isArray(options) ? options.filter(Boolean) : [];
+  if (!opts.length) return "";
+
+  const catalog = CONFIG["hwfwm-system"]?.specialtyCatalog ?? {};
+  const rows = opts
+    .map((key) => {
+      const name = catalog?.[key]?.name ?? key;
+      return `<option value="${key}">${Handlebars.escapeExpression(name)}</option>`;
+    })
+    .join("");
+
+  const content = `
+    <form class="hwfwm-choice">
+      <div class="form-group">
+        <label>${Handlebars.escapeExpression(label ?? "Choose one")}</label>
+        <select name="choice" style="width: 100%;">
+          ${rows}
+        </select>
+      </div>
+    </form>
+  `;
+
+  return await new Promise((resolve) => {
+    new Dialog({
+      title: title ?? "Choose",
+      content,
+      buttons: {
+        ok: {
+          label: "OK",
+          callback: (html) => {
+            const sel = html?.find?.('select[name="choice"]')?.val?.();
+            resolve(String(sel ?? ""));
+          }
+        },
+        cancel: {
+          label: "Cancel",
+          callback: () => resolve("")
+        }
+      },
+      default: "ok",
+      close: () => resolve("")
+    }).render(true);
+  });
+}
+
+/**
+ * Persist a chosen specialty for a background that has a choice rule.
+ * - Does not overwrite existing specialties
+ * - Stores a marker at system._flags.backgroundChoices.<backgroundKey> so we don't re-prompt
+ */
+async function handleBackgroundChoiceGrant(sheet, backgroundKey) {
+  const actor = sheet?.document;
+  if (!actor) return;
+
+  const bgKey = String(backgroundKey ?? "").trim();
+  if (!bgKey) return;
+
+  const rule = BACKGROUND_SPECIALTY_CHOICE?.[bgKey] ?? null;
+  if (!rule) return;
+
+  const choiceId = String(rule.id ?? "").trim();
+  if (!choiceId) return;
+
+  // If already chosen previously for this background, do nothing
+  const existingChoice =
+    actor.system?._flags?.backgroundChoices?.[bgKey] ??
+    actor.system?._flags?.backgroundChoice?.[bgKey]; // tolerate older key if you later rename
+
+  if (existingChoice) return;
+
+  const options = BACKGROUND_CHOICE_OPTIONS?.[choiceId] ?? [];
+  const label = rule.label ?? "Choose a Specialty";
+
+  const picked = await promptForSpecialtyChoice({
+    title: "Background Specialty",
+    label,
+    options
+  });
+
+  if (!picked) return;
+
+  const catalog = CONFIG["hwfwm-system"]?.specialtyCatalog ?? {};
+  if (!catalog?.[picked]) {
+    ui?.notifications?.warn?.(`Unknown specialty key: ${picked}`);
+    return;
+  }
+
+  const current = actor.system?.specialties ?? {};
+  const update = {};
+
+  // Add the chosen specialty if missing (do not overwrite)
+  if (!current?.[picked]) {
+    update[`system.specialties.${picked}`] = {
+      score: 0,
+      source: "background",
+      granted: true,
+      choiceId
+    };
+  }
+
+  // Record the choice so we do not re-prompt
+  update[`system._flags.backgroundChoices.${bgKey}`] = picked;
+
+  if (Object.keys(update).length) {
+    await actor.update(update);
   }
 }
 
@@ -115,9 +232,12 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
 
   const { signal } = controller;
 
-  // ✅ One-time sync on render/bind: if actor is missing any granted specialties, add them.
+  // ✅ One-time sync on render/bind:
+  // - add any fixed granted specialties
+  // - if background has a choice and none recorded yet, prompt once
   const initialBgKey = sheet.document?.system?.details?.backgroundKey ?? "";
   persistBackgroundGrantedSpecialties(sheet, initialBgKey);
+  handleBackgroundChoiceGrant(sheet, initialBgKey);
 
   // -----------------------
   // Tabs
@@ -175,11 +295,12 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
       const target = ev.target;
 
       // ------------------------------------------------
-      // Background change: persist granted specialties
+      // Background change: persist granted specialties + handle choice grant
       // ------------------------------------------------
       if (target instanceof HTMLSelectElement && target.name === "system.details.backgroundKey") {
         // Do NOT prevent default; let ApplicationV2 persist backgroundKey normally.
         await persistBackgroundGrantedSpecialties(sheet, target.value);
+        await handleBackgroundChoiceGrant(sheet, target.value);
         return;
       }
 
@@ -284,11 +405,7 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
 
       // Foundry window chrome uses data-action too.
       // Only intercept actions we own.
-      const allowed = new Set([
-        "add-misc-item",
-        "remove-misc-item",
-        "add-specialty"
-      ]);
+      const allowed = new Set(["add-misc-item", "remove-misc-item", "add-specialty"]);
       if (!allowed.has(action)) return;
 
       ev.preventDefault?.();
