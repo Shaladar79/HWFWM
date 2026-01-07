@@ -143,6 +143,44 @@ export const RACE_GRANTED_FEATURES = {
       description:
         "Placeholder. +4 to Speed attribute total (mechanics not wired yet; intended as a flat bonus to Speed)."
     }
+  ],
+
+  leonid: [
+    {
+      key: "ancestralStrength",
+      name: "Ancestral Strength",
+      grantKey: "race:leonid:ancestralStrength",
+      description:
+        "Placeholder. +3% Power (intended as an additive attributePct bonus to Power; mechanics not wired yet)."
+    },
+    {
+      key: "ancestralSwiftness",
+      name: "Ancestral Swiftness",
+      grantKey: "race:leonid:ancestralSwiftness",
+      description:
+        "Placeholder. +3% Speed (intended as an additive attributePct bonus to Speed; mechanics not wired yet)."
+    },
+    {
+      key: "tireless",
+      name: "Tireless",
+      grantKey: "race:leonid:tireless",
+      description:
+        "Placeholder. Reduce Stamina costs for abilities by 20% (mechanics not wired yet)."
+    },
+    {
+      key: "sprint",
+      name: "Sprint",
+      grantKey: "race:leonid:sprint",
+      description:
+        "Active (placeholder). Pay 10 Stamina to double your Pace for 1 round."
+    },
+    {
+      key: "leonidsRoar",
+      name: "Leonid's Roar",
+      grantKey: "race:leonid:leonidsRoar",
+      description:
+        "Boon (placeholder). Roar to increase nearby allies' Power and Speed by 2% per character rank (Normal 2%, Iron 4%, Bronze 6%, Silver 8%, Gold 10%, Diamond 12%)."
+    }
   ]
 };
 
@@ -151,7 +189,8 @@ export const RACE_GRANTED_FEATURES = {
  */
 export const RACE_GRANTED_APTITUDES = {
   human: ["specialAttack"],
-  elf: ["spell"]
+  elf: ["spell"],
+  leonid: ["boon"]
 };
 
 /**
