@@ -67,6 +67,21 @@
           />
         </div>
 
+        {{!-- Character creation lock (disappears once used) --}}
+        {{#unless system._flags.choicesLocked}}
+        <div class="hwfwm-header-field hwfwm-header-field--lock">
+          <button
+            type="button"
+            class="hwfwm-itembtn"
+            data-action="lock-choices"
+            title="Lock Race, Role, and Background to prevent further changes"
+            style="align-self: end;"
+          >
+            Lock Choices
+          </button>
+        </div>
+        {{/unless}}
+
       </div>
 
       <!-- Bottom line: Attribute Saves (labels aligned above compact totals) -->
