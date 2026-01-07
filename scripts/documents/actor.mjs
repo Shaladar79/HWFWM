@@ -5,7 +5,8 @@ import {
   RANK_TIER_VALUE,
   RANK_RESOURCE_MULTIPLIER,
   RANK_TRAUMA,
-  RANK_PACE_MOD
+  RANK_PACE_MOD,
+  RANK_BASE_RECOVERY // ✅ NEW import
 } from "../../config/ranks.mjs";
 
 import { RACE_ADJUSTMENTS } from "../../config/races.mjs";
@@ -43,7 +44,7 @@ export class HwfwmActor extends Actor {
         status: {
           pace: toNum(status.pace, 0),
 
-          // NEW: placeholder-ready surfaces for recovery + natural armor.
+          // placeholder-ready surfaces for recovery + natural armor.
           // These will remain 0 unless ROLE_BY_RANK provides them.
           manaRecovery: toNum(status.manaRecovery, 0),
           staminaRecovery: toNum(status.staminaRecovery, 0),
@@ -112,7 +113,7 @@ export class HwfwmActor extends Actor {
       stamina: toNum(raceAdjRaw.stamina, 0),
       pace: toNum(raceAdjRaw.pace, 0),
 
-      // NEW: optional, config-driven recovery + natural armor contributions
+      // optional, config-driven recovery + natural armor contributions
       manaRecovery: toNum(raceAdjRaw.manaRecovery, 0),
       staminaRecovery: toNum(raceAdjRaw.staminaRecovery, 0),
       lifeForceRecovery: toNum(raceAdjRaw.lifeForceRecovery, 0),
@@ -126,7 +127,7 @@ export class HwfwmActor extends Actor {
       mana: toNum(roleAdjRaw.mana, 0),
       stamina: toNum(roleAdjRaw.stamina, 0),
 
-      // NEW: optional, config-driven recovery + natural armor contributions
+      // optional, config-driven recovery + natural armor contributions
       manaRecovery: toNum(roleAdjRaw.manaRecovery, 0),
       staminaRecovery: toNum(roleAdjRaw.staminaRecovery, 0),
       lifeForceRecovery: toNum(roleAdjRaw.lifeForceRecovery, 0),
@@ -146,7 +147,7 @@ export class HwfwmActor extends Actor {
       mana: toNum(backgroundAdjRaw.mana, 0),
       stamina: toNum(backgroundAdjRaw.stamina, 0),
 
-      // NEW: optional, config-driven recovery + natural armor contributions
+      // optional, config-driven recovery + natural armor contributions
       manaRecovery: toNum(backgroundAdjRaw.manaRecovery, 0),
       staminaRecovery: toNum(backgroundAdjRaw.staminaRecovery, 0),
       lifeForceRecovery: toNum(backgroundAdjRaw.lifeForceRecovery, 0),
@@ -213,37 +214,45 @@ export class HwfwmActor extends Actor {
     system.resources.trauma.value = Math.min(toNum(system.resources.trauma.value, 0), system.resources.trauma.max);
 
     // -----------------------------
-    // 4b) Recovery rates + Natural Armor (NEW: derived, read-only surfaces)
+    // 4b) Recovery rates + Natural Armor (derived, read-only surfaces)
     // -----------------------------
-    // These fields are displayed in resources.hbs as read-only values:
+    // Displayed in resources.hbs as read-only values:
     //  - system.resources.mana.recovery
     //  - system.resources.stamina.recovery
     //  - system.resources.lifeForce.recovery
     //  - system.resources.naturalArmor
     //
-    // Wiring rules for now:
-    //  - Sum contributions from Race + Role + Background + Role-by-rank placeholders.
-    //  - Do not attempt balance; correctness/visibility only.
-    //  - If configs do not provide these keys yet, they safely evaluate to 0.
+    // Wiring rules:
+    //  - Start with rank baseline (RANK_BASE_RECOVERY)
+    //  - Add contributions from Race + Role + Background + Role-by-rank placeholders.
+    //  - No balance pass; correctness/visibility only.
 
     // Ensure nested keys exist
     system.resources.mana = system.resources.mana ?? { value: 0, max: 0 };
     system.resources.stamina = system.resources.stamina ?? { value: 0, max: 0 };
     system.resources.lifeForce = system.resources.lifeForce ?? { value: 0, max: 0 };
 
+    const baseRec = RANK_BASE_RECOVERY?.[derivedRankKey] ?? {};
+    const baseManaRec = toNum(baseRec.mana, 0);
+    const baseStaminaRec = toNum(baseRec.stamina, 0);
+    const baseLifeForceRec = toNum(baseRec.lifeForce, 0);
+
     const manaRec =
+      baseManaRec +
       raceAdj.manaRecovery +
       roleAdj.manaRecovery +
       backgroundAdj.manaRecovery +
       toNum(roleByRank?.status?.manaRecovery, 0);
 
     const staminaRec =
+      baseStaminaRec +
       raceAdj.staminaRecovery +
       roleAdj.staminaRecovery +
       backgroundAdj.staminaRecovery +
       toNum(roleByRank?.status?.staminaRecovery, 0);
 
     const lifeForceRec =
+      baseLifeForceRec +
       raceAdj.lifeForceRecovery +
       roleAdj.lifeForceRecovery +
       backgroundAdj.lifeForceRecovery +
