@@ -5,7 +5,7 @@ import { getFlatMiscCatalog } from "./treasures-misc.mjs";
 import {
   BACKGROUND_DESCRIPTIONS,
   BACKGROUND_GRANTED_SPECIALTIES
-} from "../../config/backgrounds.mjs";
+} from "../../../config/backgrounds.mjs"; // ✅ FIXED PATH
 
 /**
  * Build the actor sheet context.
@@ -161,10 +161,7 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
   const grantedByBackground = BACKGROUND_GRANTED_SPECIALTIES?.[bgKey] ?? [];
 
   // Union keys: manual entries + granted keys
-  const effectiveKeys = new Set([
-    ...Object.keys(manualSpecialties),
-    ...grantedByBackground
-  ]);
+  const effectiveKeys = new Set([...Object.keys(manualSpecialties), ...grantedByBackground]);
 
   const effectiveSpecialties = Array.from(effectiveKeys)
     .map((key) => {
