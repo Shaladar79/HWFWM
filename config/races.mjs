@@ -70,7 +70,7 @@ export const RACE_DESCRIPTIONS = {
 
 /**
  * Aptitudes (rules placeholder, not yet implemented in mechanics):
- * - Aptitudes grant a 10% reduction in mana OR stamina costs for Essence abilities of that aptitude type.
+ * - Aptitudes grant a 10% reduction in stamina or mana costs for Essence abilities of that aptitude type.
  *
  * Affinities (rules placeholder, not yet implemented in mechanics):
  * - Affinities grant:
@@ -181,6 +181,30 @@ export const RACE_GRANTED_FEATURES = {
       description:
         "Boon (placeholder). Roar to increase nearby allies' Power and Speed by 2% per character rank (Normal 2%, Iron 4%, Bronze 6%, Silver 8%, Gold 10%, Diamond 12%)."
     }
+  ],
+
+  celestine: [
+    {
+      key: "celestialBounty",
+      name: "Celestial Bounty",
+      grantKey: "race:celestine:celestialBounty",
+      description:
+        "Placeholder. Increase Mana recovery rate by 20% (recovery-rate mechanics not wired yet)."
+    },
+    {
+      key: "celestialSwiftness",
+      name: "Celestial Swiftness",
+      grantKey: "race:celestine:celestialSwiftness",
+      description:
+        "Placeholder. +4% Speed (intended as an additive attributePct bonus to Speed; mechanics not wired yet)."
+    },
+    {
+      key: "manaIntegrity",
+      name: "Mana Integrity",
+      grantKey: "race:celestine:manaIntegrity",
+      description:
+        "Placeholder. Reduce Mana costs for abilities by 15% (mechanics not wired yet)."
+    }
   ]
 };
 
@@ -190,14 +214,16 @@ export const RACE_GRANTED_FEATURES = {
 export const RACE_GRANTED_APTITUDES = {
   human: ["specialAttack"],
   elf: ["spell"],
-  leonid: ["boon"]
+  leonid: ["boon"],
+  celestine: ["specialAbility"]
 };
 
 /**
  * Race → granted Affinities (persisted to system.affinities).
  */
 export const RACE_GRANTED_AFFINITIES = {
-  elf: ["life", "nature", "magic"]
+  elf: ["life", "nature", "magic"],
+  celestine: ["holy", "astral"]
 };
 
 /**
@@ -208,5 +234,7 @@ export const RACE_GRANTED_AFFINITIES = {
  * - Affinities imply matching resistances; we grant them explicitly here for clarity.
  */
 export const RACE_GRANTED_RESISTANCES = {
-  elf: ["life", "nature", "magic"]
+  elf: ["life", "nature", "magic"],
+  celestine: ["holy", "astral"]
 };
+
