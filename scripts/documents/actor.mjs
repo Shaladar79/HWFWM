@@ -41,7 +41,14 @@ export class HwfwmActor extends Actor {
       return {
         node,
         status: {
-          pace: toNum(status.pace, 0)
+          pace: toNum(status.pace, 0),
+
+          // NEW: placeholder-ready surfaces for recovery + natural armor.
+          // These will remain 0 unless ROLE_BY_RANK provides them.
+          manaRecovery: toNum(status.manaRecovery, 0),
+          staminaRecovery: toNum(status.staminaRecovery, 0),
+          lifeForceRecovery: toNum(status.lifeForceRecovery, 0),
+          naturalArmor: toNum(status.naturalArmor, 0)
         }
       };
     };
@@ -103,7 +110,13 @@ export class HwfwmActor extends Actor {
       lifeForce: toNum(raceAdjRaw.lifeForce, 0),
       mana: toNum(raceAdjRaw.mana, 0),
       stamina: toNum(raceAdjRaw.stamina, 0),
-      pace: toNum(raceAdjRaw.pace, 0)
+      pace: toNum(raceAdjRaw.pace, 0),
+
+      // NEW: optional, config-driven recovery + natural armor contributions
+      manaRecovery: toNum(raceAdjRaw.manaRecovery, 0),
+      staminaRecovery: toNum(raceAdjRaw.staminaRecovery, 0),
+      lifeForceRecovery: toNum(raceAdjRaw.lifeForceRecovery, 0),
+      naturalArmor: toNum(raceAdjRaw.naturalArmor, 0)
     };
 
     const roleKey = String(system.details?.roleKey ?? "");
@@ -111,7 +124,13 @@ export class HwfwmActor extends Actor {
     const roleAdj = {
       lifeForce: toNum(roleAdjRaw.lifeForce, 0),
       mana: toNum(roleAdjRaw.mana, 0),
-      stamina: toNum(roleAdjRaw.stamina, 0)
+      stamina: toNum(roleAdjRaw.stamina, 0),
+
+      // NEW: optional, config-driven recovery + natural armor contributions
+      manaRecovery: toNum(roleAdjRaw.manaRecovery, 0),
+      staminaRecovery: toNum(roleAdjRaw.staminaRecovery, 0),
+      lifeForceRecovery: toNum(roleAdjRaw.lifeForceRecovery, 0),
+      naturalArmor: toNum(roleAdjRaw.naturalArmor, 0)
     };
 
     // Role-by-rank hook (clean placeholder surface)
@@ -125,7 +144,13 @@ export class HwfwmActor extends Actor {
     const backgroundAdj = {
       lifeForce: toNum(backgroundAdjRaw.lifeForce, 0),
       mana: toNum(backgroundAdjRaw.mana, 0),
-      stamina: toNum(backgroundAdjRaw.stamina, 0)
+      stamina: toNum(backgroundAdjRaw.stamina, 0),
+
+      // NEW: optional, config-driven recovery + natural armor contributions
+      manaRecovery: toNum(backgroundAdjRaw.manaRecovery, 0),
+      staminaRecovery: toNum(backgroundAdjRaw.staminaRecovery, 0),
+      lifeForceRecovery: toNum(backgroundAdjRaw.lifeForceRecovery, 0),
+      naturalArmor: toNum(backgroundAdjRaw.naturalArmor, 0)
       // pace: intentionally not supported for backgrounds per current decisions
     };
 
@@ -186,6 +211,63 @@ export class HwfwmActor extends Actor {
     system.resources.mana.value = Math.min(toNum(system.resources.mana.value, 0), manaMax);
     system.resources.stamina.value = Math.min(toNum(system.resources.stamina.value, 0), stamMax);
     system.resources.trauma.value = Math.min(toNum(system.resources.trauma.value, 0), system.resources.trauma.max);
+
+    // -----------------------------
+    // 4b) Recovery rates + Natural Armor (NEW: derived, read-only surfaces)
+    // -----------------------------
+    // These fields are displayed in resources.hbs as read-only values:
+    //  - system.resources.mana.recovery
+    //  - system.resources.stamina.recovery
+    //  - system.resources.lifeForce.recovery
+    //  - system.resources.naturalArmor
+    //
+    // Wiring rules for now:
+    //  - Sum contributions from Race + Role + Background + Role-by-rank placeholders.
+    //  - Do not attempt balance; correctness/visibility only.
+    //  - If configs do not provide these keys yet, they safely evaluate to 0.
+
+    // Ensure nested keys exist
+    system.resources.mana = system.resources.mana ?? { value: 0, max: 0 };
+    system.resources.stamina = system.resources.stamina ?? { value: 0, max: 0 };
+    system.resources.lifeForce = system.resources.lifeForce ?? { value: 0, max: 0 };
+
+    const manaRec =
+      raceAdj.manaRecovery +
+      roleAdj.manaRecovery +
+      backgroundAdj.manaRecovery +
+      toNum(roleByRank?.status?.manaRecovery, 0);
+
+    const staminaRec =
+      raceAdj.staminaRecovery +
+      roleAdj.staminaRecovery +
+      backgroundAdj.staminaRecovery +
+      toNum(roleByRank?.status?.staminaRecovery, 0);
+
+    const lifeForceRec =
+      raceAdj.lifeForceRecovery +
+      roleAdj.lifeForceRecovery +
+      backgroundAdj.lifeForceRecovery +
+      toNum(roleByRank?.status?.lifeForceRecovery, 0);
+
+    const naturalArmor =
+      raceAdj.naturalArmor +
+      roleAdj.naturalArmor +
+      backgroundAdj.naturalArmor +
+      toNum(roleByRank?.status?.naturalArmor, 0);
+
+    // Write derived read-only display values
+    system.resources.mana.recovery = Math.max(0, Math.round(manaRec));
+    system.resources.stamina.recovery = Math.max(0, Math.round(staminaRec));
+    system.resources.lifeForce.recovery = Math.max(0, Math.round(lifeForceRec));
+    system.resources.naturalArmor = Math.max(0, Math.round(naturalArmor));
+
+    // Expose computed totals for debug/verification if desired (non-authoritative)
+    system._derived.recovery = {
+      mana: system.resources.mana.recovery,
+      stamina: system.resources.stamina.recovery,
+      lifeForce: system.resources.lifeForce.recovery,
+      naturalArmor: system.resources.naturalArmor
+    };
 
     // -----------------------------
     // 5) Pace (race + rank + role-by-rank pace hook)
