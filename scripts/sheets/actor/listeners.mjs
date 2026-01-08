@@ -307,7 +307,12 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
         "remove-aptitude",
         "add-resistance",
         "remove-resistance",
-        "lock-choices"
+        "lock-choices",
+
+        // NEW: item list actions used by Traits > Features template
+        "open-item",
+        "delete-item",
+        "create-talent"
       ]);
 
       if (!allowed.has(action)) return;
@@ -354,6 +359,26 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
 
         case "lock-choices":
           return lockChoices(sheet);
+
+        case "open-item": {
+          const id = btn.dataset.itemId ?? btn.getAttribute("data-item-id");
+          const item = id ? sheet.document?.items?.get(id) : null;
+          if (item?.sheet) item.sheet.render(true);
+          return;
+        }
+
+        case "delete-item": {
+          const id = btn.dataset.itemId ?? btn.getAttribute("data-item-id");
+          const item = id ? sheet.document?.items?.get(id) : null;
+          if (item) await item.delete();
+          return;
+        }
+
+        case "create-talent":
+          // Creates a basic talent item. You can refine default fields later.
+          return sheet.document?.createEmbeddedDocuments?.("Item", [
+            { name: "New Talent", type: "talent" }
+          ]);
 
         default:
           return;
