@@ -3,7 +3,8 @@
 import {
   RACE_GRANTED_AFFINITIES,
   RACE_GRANTED_APTITUDES,
-  RACE_GRANTED_FEATURES
+  RACE_GRANTED_FEATURES,
+  RACE_GRANTED_RESISTANCES
 } from "../../../../config/races.mjs";
 
 /* -------------------------------------------- */
