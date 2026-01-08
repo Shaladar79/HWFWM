@@ -19,9 +19,17 @@
         <div class="hwfwm-field">
           <div class="hwfwm-label">Readied</div>
           <select name="system.readied">
-            <option value="no" {{#if (eq system.readied "no")}}selected{{/if}}>No</option>
-            <option value="yes" {{#if (eq system.readied "yes")}}selected{{/if}}>Yes</option>
+            {{#each readiedOptions as |o|}}
+              <option value="{{o.value}}" {{#if (eq o.value ../system.readied)}}selected{{/if}}>
+                {{o.label}}
+              </option>
+            {{/each}}
           </select>
+        </div>
+
+        <div class="hwfwm-field">
+          <div class="hwfwm-label">Use Effect (Placeholder)</div>
+          <textarea name="system.useEffect" rows="4" placeholder="Describe what happens when used (future wiring).">{{system.useEffect}}</textarea>
         </div>
 
         <div class="hwfwm-field">
