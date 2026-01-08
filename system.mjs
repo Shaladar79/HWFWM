@@ -2,6 +2,12 @@ import { HWFWM_CONFIG } from "./config/index.mjs";
 import { HwfwmActorSheet } from "./scripts/sheets/actor/actor-sheet.mjs";
 import { HwfwmActor } from "./scripts/documents/actor.mjs";
 
+// Item sheet classes
+import { HwfwmFeatureSheet } from "./scripts/sheets/items/feature-sheet.mjs";
+import { HwfwmTalentSheet } from "./scripts/sheets/items/talent-sheet.mjs";
+import { HwfwmEquipmentSheet } from "./scripts/sheets/items/equipment-sheet.mjs";
+import { HwfwmConsumableSheet } from "./scripts/sheets/items/consumable-sheet.mjs";
+
 // Essence Ability sheet class (imported)
 import { HwfwmEssenceAbilitySheet } from "./scripts/sheets/essence-ability-sheet.mjs";
 
@@ -51,6 +57,8 @@ Hooks.once("init", async () => {
     // Item sheets
     "systems/hwfwm-system/templates/item/feature-sheet.hbs",
     "systems/hwfwm-system/templates/item/talent-sheet.hbs",
+    "systems/hwfwm-system/templates/item/equipment-sheet.hbs",
+    "systems/hwfwm-system/templates/item/consumable-sheet.hbs",
     "systems/hwfwm-system/templates/item/essence-ability-sheet.hbs"
   ]);
 
@@ -65,38 +73,8 @@ Hooks.once("init", async () => {
   });
 
   // ---------------------------------------------------------
-  // Minimal Item Sheets (placeholder)
-  // Define inside init so globals are guaranteed available
+  // Item Sheets
   // ---------------------------------------------------------
-  class HwfwmFeatureSheet extends ItemSheet {
-    static get defaultOptions() {
-      return foundry.utils.mergeObject(super.defaultOptions, {
-        classes: ["hwfwm-system", "sheet", "item", "feature"],
-        width: 520,
-        height: 420
-      });
-    }
-
-    get template() {
-      return "systems/hwfwm-system/templates/item/feature-sheet.hbs";
-    }
-  }
-
-  class HwfwmTalentSheet extends ItemSheet {
-    static get defaultOptions() {
-      return foundry.utils.mergeObject(super.defaultOptions, {
-        classes: ["hwfwm-system", "sheet", "item", "talent"],
-        width: 520,
-        height: 420
-      });
-    }
-
-    get template() {
-      return "systems/hwfwm-system/templates/item/talent-sheet.hbs";
-    }
-  }
-
-  // Register Item sheets
   if (typeof Items !== "undefined") {
     Items.registerSheet("hwfwm-system", HwfwmFeatureSheet, {
       types: ["feature"],
@@ -108,6 +86,18 @@ Hooks.once("init", async () => {
       types: ["talent"],
       makeDefault: true,
       label: "HWFWM Talent Sheet"
+    });
+
+    Items.registerSheet("hwfwm-system", HwfwmEquipmentSheet, {
+      types: ["equipment"],
+      makeDefault: true,
+      label: "HWFWM Equipment Sheet"
+    });
+
+    Items.registerSheet("hwfwm-system", HwfwmConsumableSheet, {
+      types: ["consumable"],
+      makeDefault: true,
+      label: "HWFWM Consumable Sheet"
     });
 
     Items.registerSheet("hwfwm-system", HwfwmEssenceAbilitySheet, {
