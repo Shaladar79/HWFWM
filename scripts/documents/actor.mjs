@@ -28,16 +28,55 @@ export class HwfwmActor extends Actor {
       return Number.isFinite(n) ? n : fallback;
     };
 
-    const getRoleByRankNode = (roleKey, rankKey) => {
-      if (!roleKey || !rankKey) return null;
-      return ROLE_BY_RANK?.[roleKey]?.[rankKey] ?? null;
+    // ---------------------------------------------
+    // Resolve Race / Role / Background RAW nodes early
+    // (so attribute totals can include their mods)
+    // ---------------------------------------------
+    const raceKey = String(system.details?.raceKey ?? "outworlder");
+    const roleKey = String(system.details?.roleKey ?? "");
+    const backgroundKey = String(system.details?.backgroundKey ?? "");
+
+    const raceAdjRaw =
+      RACE_ADJUSTMENTS?.[raceKey] ?? RACE_ADJUSTMENTS?.outworlder ?? {};
+    const roleAdjRaw = ROLE_ADJUSTMENTS?.[roleKey] ?? {};
+    const backgroundAdjRaw = BACKGROUND_ADJUSTMENTS?.[backgroundKey] ?? {};
+
+    /**
+     * Flexible attribute-mod resolver.
+     * Supports these common shapes without requiring schema changes:
+     *  - adj.attributes.power
+     *  - adj.attributeMods.power
+     *  - adj.power
+     *  - adj.powerMod
+     */
+    const getAttrAdj = (adjRaw, attrKey) => {
+      if (!adjRaw || !attrKey) return 0;
+
+      const fromAttributes = adjRaw?.attributes?.[attrKey];
+      if (fromAttributes !== undefined) return toNum(fromAttributes, 0);
+
+      const fromAttributeMods = adjRaw?.attributeMods?.[attrKey];
+      if (fromAttributeMods !== undefined) return toNum(fromAttributeMods, 0);
+
+      const direct = adjRaw?.[attrKey];
+      if (direct !== undefined) return toNum(direct, 0);
+
+      const suffixed = adjRaw?.[`${attrKey}Mod`];
+      if (suffixed !== undefined) return toNum(suffixed, 0);
+
+      return 0;
+    };
+
+    const getRoleByRankNode = (rKey, rankKey) => {
+      if (!rKey || !rankKey) return null;
+      return ROLE_BY_RANK?.[rKey]?.[rankKey] ?? null;
     };
 
     // Placeholder-ready resolver:
     // Today: only uses node.status.pace
     // Later: extend to other status fields (reaction, shielding, etc.) and/or attributePct unlocks
-    const resolveRoleByRankBonuses = (roleKey, rankKey) => {
-      const node = getRoleByRankNode(roleKey, rankKey);
+    const resolveRoleByRankBonuses = (rKey, rankKey) => {
+      const node = getRoleByRankNode(rKey, rankKey);
       const status = node?.status ?? {};
       return {
         node,
@@ -56,6 +95,7 @@ export class HwfwmActor extends Actor {
 
     // -----------------------------
     // 1) Attributes derived math
+    //    (NOW includes Race/Role/Background attribute adjustments)
     // -----------------------------
     const NUM_TO_TOTAL = 2;
     const attrs = ["power", "speed", "spirit", "recovery"];
@@ -65,9 +105,31 @@ export class HwfwmActor extends Actor {
       const rankKey = String(node.rankKey ?? "normal");
       const base = toNum(RANK_BASE_ATTRIBUTES?.[rankKey], 0);
       const num = toNum(node.num, 0);
-      const mod = toNum(node.mod, 0);
+
+      // Manual mod entered on the sheet
+      const manualMod = toNum(node.mod, 0);
+
+      // Derived mods from config (read-only, deterministic)
+      const raceMod = getAttrAdj(raceAdjRaw, a);
+      const roleMod = getAttrAdj(roleAdjRaw, a);
+      const backgroundMod = getAttrAdj(backgroundAdjRaw, a);
+
+      const derivedModTotal = raceMod + roleMod + backgroundMod;
+
       node.base = base;
-      node.total = base + (num * NUM_TO_TOTAL) + mod;
+
+      // Preserve node.mod as the user-editable/manual value.
+      // Add derived breakdown for visibility/debugging without persisting new schema.
+      node._derived = node._derived ?? {};
+      node._derived.modBreakdown = {
+        manual: manualMod,
+        race: raceMod,
+        role: roleMod,
+        background: backgroundMod,
+        derivedTotal: derivedModTotal
+      };
+
+      node.total = base + (num * NUM_TO_TOTAL) + manualMod + derivedModTotal;
     }
 
     // -----------------------------
@@ -103,10 +165,8 @@ export class HwfwmActor extends Actor {
     system._derived.rankTierTotal = tierTotal;
 
     // -----------------------------
-    // 3) Resolve adjustments
+    // 3) Resolve adjustments (numeric resource deltas)
     // -----------------------------
-    const raceKey = String(system.details?.raceKey ?? "outworlder");
-    const raceAdjRaw = RACE_ADJUSTMENTS?.[raceKey] ?? RACE_ADJUSTMENTS?.outworlder ?? {};
     const raceAdj = {
       lifeForce: toNum(raceAdjRaw.lifeForce, 0),
       mana: toNum(raceAdjRaw.mana, 0),
@@ -120,8 +180,6 @@ export class HwfwmActor extends Actor {
       naturalArmor: toNum(raceAdjRaw.naturalArmor, 0)
     };
 
-    const roleKey = String(system.details?.roleKey ?? "");
-    const roleAdjRaw = ROLE_ADJUSTMENTS?.[roleKey] ?? {};
     const roleAdj = {
       lifeForce: toNum(roleAdjRaw.lifeForce, 0),
       mana: toNum(roleAdjRaw.mana, 0),
@@ -140,8 +198,6 @@ export class HwfwmActor extends Actor {
     const rolePaceBonus = roleByRank.status.pace;
 
     // Background baseline adjustments (no by-rank behavior)
-    const backgroundKey = String(system.details?.backgroundKey ?? "");
-    const backgroundAdjRaw = BACKGROUND_ADJUSTMENTS?.[backgroundKey] ?? {};
     const backgroundAdj = {
       lifeForce: toNum(backgroundAdjRaw.lifeForce, 0),
       mana: toNum(backgroundAdjRaw.mana, 0),
