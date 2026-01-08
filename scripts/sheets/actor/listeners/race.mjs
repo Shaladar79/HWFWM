@@ -14,6 +14,15 @@ import {
 const HARD_REPLACE_RACE_FEATURES = true;
 
 /**
+ * Namespace used for Foundry flags.
+ * (Must be stable and match your system id conventions.)
+ */
+const FLAG_NS = "hwfwm-system";
+const ACTOR_FLAG_RACE_STAMP = "raceGrantStamp";
+const ITEM_FLAG_GRANT_SOURCE = "grantSource";
+const ITEM_FLAG_GRANT_KEY = "grantKey";
+
+/**
  * Per-actor single-flight lock to prevent overlapping calls from re-render cascades.
  * actorId -> Promise
  */
@@ -47,23 +56,17 @@ async function cleanupRaceGrantedEnhancements(actor) {
 
   const aff = actor.system?.affinities ?? {};
   for (const [k, v] of Object.entries(aff)) {
-    if (v?.source === "race" && v?.granted === true) {
-      update[`system.affinities.-=${k}`] = null;
-    }
+    if (v?.source === "race" && v?.granted === true) update[`system.affinities.-=${k}`] = null;
   }
 
   const apt = actor.system?.aptitudes ?? {};
   for (const [k, v] of Object.entries(apt)) {
-    if (v?.source === "race" && v?.granted === true) {
-      update[`system.aptitudes.-=${k}`] = null;
-    }
+    if (v?.source === "race" && v?.granted === true) update[`system.aptitudes.-=${k}`] = null;
   }
 
   const res = actor.system?.resistances ?? {};
   for (const [k, v] of Object.entries(res)) {
-    if (v?.source === "race" && v?.granted === true) {
-      update[`system.resistances.-=${k}`] = null;
-    }
+    if (v?.source === "race" && v?.granted === true) update[`system.resistances.-=${k}`] = null;
   }
 
   if (Object.keys(update).length) await actor.update(update);
@@ -77,15 +80,9 @@ async function applyRaceGrantedEnhancements(actor, raceKey) {
   const aptitudeCatalog = CONFIG["hwfwm-system"]?.aptitudeCatalog ?? {};
   const resistanceCatalog = CONFIG["hwfwm-system"]?.resistanceCatalog ?? {};
 
-  const grantedAff = Array.isArray(RACE_GRANTED_AFFINITIES?.[rKey])
-    ? RACE_GRANTED_AFFINITIES[rKey]
-    : [];
-  const grantedApt = Array.isArray(RACE_GRANTED_APTITUDES?.[rKey])
-    ? RACE_GRANTED_APTITUDES[rKey]
-    : [];
-  const grantedRes = Array.isArray(RACE_GRANTED_RESISTANCES?.[rKey])
-    ? RACE_GRANTED_RESISTANCES[rKey]
-    : [];
+  const grantedAff = Array.isArray(RACE_GRANTED_AFFINITIES?.[rKey]) ? RACE_GRANTED_AFFINITIES[rKey] : [];
+  const grantedApt = Array.isArray(RACE_GRANTED_APTITUDES?.[rKey]) ? RACE_GRANTED_APTITUDES[rKey] : [];
+  const grantedRes = Array.isArray(RACE_GRANTED_RESISTANCES?.[rKey]) ? RACE_GRANTED_RESISTANCES[rKey] : [];
 
   const currentAff = actor.system?.affinities ?? {};
   const currentApt = actor.system?.aptitudes ?? {};
@@ -127,30 +124,39 @@ async function applyRaceGrantedEnhancements(actor, raceKey) {
 }
 
 /* -------------------------------------------- */
-/* Feature Items                                 */
+/* Feature Items (race-granted)                  */
 /* -------------------------------------------- */
 
+function isRaceGrantedFeatureItem(item) {
+  if (item?.type !== "feature") return false;
+
+  // New reliable marker
+  const flagSource = item.getFlag?.(FLAG_NS, ITEM_FLAG_GRANT_SOURCE);
+  if (flagSource === "race") return true;
+
+  // Backward compatible markers
+  const src = toKey(item?.system?.source);
+  if (src === "race") return true;
+
+  const gk = toKey(item?.system?.grantKey);
+  if (gk.startsWith("race:")) return true;
+
+  return false;
+}
+
 async function cleanupRaceGrantedFeatureItems(actor) {
-  const items = Array.from(actor.items ?? []).filter((it) => it?.type === "feature");
+  const featureItems = Array.from(actor.items ?? []).filter((it) => it?.type === "feature");
 
   if (HARD_REPLACE_RACE_FEATURES) {
-    // Delete anything explicitly tagged race OR in our "race:" namespace (legacy-safe).
-    const toDelete = items
-      .filter((it) => {
-        const src = toKey(it?.system?.source);
-        const gk = toKey(it?.system?.grantKey);
-        return src === "race" || gk.startsWith("race:");
-      })
-      .map((it) => it.id);
-
+    // Delete anything race-tagged by ANY of our markers.
+    const toDelete = featureItems.filter(isRaceGrantedFeatureItem).map((it) => it.id);
     if (toDelete.length) await actor.deleteEmbeddedDocuments("Item", toDelete);
     return;
   }
 
-  // Conservative mode: only delete items we can prove we own.
-  const toDelete = items
-    .filter((it) => toKey(it?.system?.source) === "race")
-    .filter((it) => toKey(it?.system?.grantKey).startsWith("race:"))
+  // Conservative mode: only delete items we can prove we created via flags.
+  const toDelete = featureItems
+    .filter((it) => it.getFlag?.(FLAG_NS, ITEM_FLAG_GRANT_SOURCE) === "race")
     .map((it) => it.id);
 
   if (toDelete.length) await actor.deleteEmbeddedDocuments("Item", toDelete);
@@ -163,30 +169,34 @@ async function applyRaceGrantedFeatureItems(actor, raceKey) {
   const defs = Array.isArray(RACE_GRANTED_FEATURES?.[rKey]) ? RACE_GRANTED_FEATURES[rKey] : [];
   if (!defs.length) return;
 
-  // In hard-replace mode, create deterministically; no de-dupe needed.
-  if (HARD_REPLACE_RACE_FEATURES) {
-    const toCreate = defs
-      .map((f) => {
-        const name = toKey(f?.name);
-        if (!name) return null;
+  // In hard-replace mode, we recreate the set deterministically each time.
+  const toCreate = defs
+    .map((f) => {
+      const name = toKey(f?.name);
+      if (!name) return null;
 
-        return {
-          name,
-          type: "feature",
-          system: {
-            source: "race",
-            grantKey: buildRaceFeatureGrantKey(rKey, f),
-            notes: toKey(f?.description) || ""
+      const grantKey = buildRaceFeatureGrantKey(rKey, f);
+
+      return {
+        name,
+        type: "feature",
+        system: {
+          // Keep these for UI/debug, but do not rely on them for cleanup.
+          source: "race",
+          grantKey,
+          notes: toKey(f?.description) || ""
+        },
+        flags: {
+          [FLAG_NS]: {
+            [ITEM_FLAG_GRANT_SOURCE]: "race",
+            [ITEM_FLAG_GRANT_KEY]: grantKey
           }
-        };
-      })
-      .filter(Boolean);
+        }
+      };
+    })
+    .filter(Boolean);
 
-    if (toCreate.length) await actor.createEmbeddedDocuments("Item", toCreate);
-    return;
-  }
-
-  // (Conservative mode logic could go here if you ever turn hard replace off.)
+  if (toCreate.length) await actor.createEmbeddedDocuments("Item", toCreate);
 }
 
 /* -------------------------------------------- */
@@ -211,8 +221,8 @@ export async function replaceRaceGrants(sheet, raceKey) {
     const liveRace = toKey(actor.system?.details?.raceKey);
     if (liveRace && liveRace !== rKey) return;
 
-    // Skip if already completed for this race.
-    const stamp = toKey(actor.system?._flags?.raceGrantStamp);
+    // Skip if already completed for this race (stored in Foundry flags, not system data).
+    const stamp = toKey(actor.getFlag?.(FLAG_NS, ACTOR_FLAG_RACE_STAMP));
     if (stamp === rKey) return;
 
     await cleanupRaceGrantedEnhancements(actor);
@@ -221,8 +231,8 @@ export async function replaceRaceGrants(sheet, raceKey) {
     await applyRaceGrantedEnhancements(actor, rKey);
     await applyRaceGrantedFeatureItems(actor, rKey);
 
-    // Mark complete at the end (critical).
-    await actor.update({ "system._flags.raceGrantStamp": rKey });
+    // Mark complete (critical): use flags so it persists regardless of template schema.
+    await actor.setFlag?.(FLAG_NS, ACTOR_FLAG_RACE_STAMP, rKey);
   })();
 
   _raceSyncLocks.set(actorId, task);
@@ -235,4 +245,3 @@ export async function replaceRaceGrants(sheet, raceKey) {
     if (_raceSyncLocks.get(actorId) === task) _raceSyncLocks.delete(actorId);
   }
 }
-
