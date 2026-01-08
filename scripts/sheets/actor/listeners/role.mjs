@@ -1,83 +1,86 @@
 // scripts/sheets/actor/listeners/role.mjs
+//
+// Role specialty grants (replace-on-change).
+// Keeps manual/background specialties intact, but ensures role grants are present
+// and stale role grants are removed when the role changes.
 
 import { ROLE_GRANTED_SPECIALTIES } from "../../../../config/roles.mjs";
 
-/* -------------------------------------------- */
-/* Helpers                                      */
-/* -------------------------------------------- */
+/**
+ * Per-actor single-flight lock to prevent overlapping calls from re-render cascades.
+ * actorId -> Promise
+ */
+const _roleSyncLocks = new Map();
 
 const toKey = (v) => String(v ?? "").trim();
 
 /**
- * Replace role-granted specialties on the Actor.
- *
- * Behavior:
- * - Adds missing specialties from ROLE_GRANTED_SPECIALTIES[roleKey]
- * - Does NOT overwrite any existing specialty
- * - If the role changes, it removes ONLY prior role-granted specialties
- *   that still have score === 0 (so you don’t lose progression)
- * - Uses a stamp to prevent render-cascade duplication loops
+ * Replace role-granted specialties:
+ *  - Remove prior role-granted specialty entries (source="role" && granted===true)
+ *  - Add missing specialties for the current role (without overwriting existing entries)
+ *  - Stamp completion in system._flags.roleGrantStamp
  */
-export async function replaceRoleGrantedSpecialties(sheet, roleKey) {
-  try {
-    const actor = sheet?.document;
-    if (!actor) return;
+export async function replaceRoleSpecialtyGrants(sheet, roleKey) {
+  const actor = sheet?.document;
+  if (!actor) return;
 
-    const rKey = toKey(roleKey);
-    if (!rKey) return;
+  const rKey = toKey(roleKey);
+  if (!rKey) return;
 
-    // Prevent repeated sync loops for the same role
+  const actorId = actor.id;
+
+  // Wait for any in-flight sync to complete.
+  const inflight = _roleSyncLocks.get(actorId);
+  if (inflight) await inflight.catch(() => {});
+
+  const task = (async () => {
+    // Skip stale calls if actor already changed again.
+    const liveRole = toKey(actor.system?.details?.roleKey);
+    if (liveRole && liveRole !== rKey) return;
+
+    // Skip if already completed for this role.
     const stamp = toKey(actor.system?._flags?.roleGrantStamp);
     if (stamp === rKey) return;
 
-    const catalog = CONFIG["hwfwm-system"]?.specialtyCatalog ?? {};
-    const desired = Array.isArray(ROLE_GRANTED_SPECIALTIES?.[rKey])
-      ? ROLE_GRANTED_SPECIALTIES[rKey].map(toKey).filter(Boolean)
-      : [];
-
-    // --- Cleanup: remove old role grants (score 0 only) ---
     const current = actor.system?.specialties ?? {};
     const update = {};
 
+    // Cleanup: remove ONLY role-granted specialties
     for (const [k, v] of Object.entries(current)) {
-      const src = toKey(v?.source);
-      const granted = v?.granted === true;
-      const score = Number(v?.score ?? 0);
-
-      // Remove only "role" granted entries with no progression
-      if (src === "role" && granted && score === 0) {
+      if (v?.source === "role" && v?.granted === true) {
         update[`system.specialties.-=${k}`] = null;
       }
     }
 
-    // Apply cleanup first (if needed)
-    if (Object.keys(update).length) {
-      await actor.update(update);
-    }
+    // Apply: add missing role specialties (do not overwrite existing keys)
+    const grants = Array.isArray(ROLE_GRANTED_SPECIALTIES?.[rKey]) ? ROLE_GRANTED_SPECIALTIES[rKey] : [];
+    for (const raw of grants) {
+      const key = toKey(raw);
+      if (!key) continue;
 
-    // Refresh after cleanup
-    const after = actor.system?.specialties ?? {};
-    const addUpdate = {};
+      // If a specialty already exists (manual/background/etc), do not overwrite
+      if (current?.[key]) continue;
 
-    for (const key of desired) {
-      // Must exist in catalog to be selectable/displayable
-      if (!catalog?.[key]) continue;
-
-      // Never overwrite existing
-      if (after?.[key]) continue;
-
-      addUpdate[`system.specialties.${key}`] = {
+      update[`system.specialties.${key}`] = {
         score: 0,
         source: "role",
         granted: true
       };
     }
 
-    // Mark completion stamp + add entries
-    addUpdate["system._flags.roleGrantStamp"] = rKey;
+    // Mark complete at the end (critical for re-render safety).
+    update["system._flags.roleGrantStamp"] = rKey;
 
-    await actor.update(addUpdate);
+    if (Object.keys(update).length) await actor.update(update);
+  })();
+
+  _roleSyncLocks.set(actorId, task);
+
+  try {
+    await task;
   } catch (err) {
-    console.warn("HWFWM | replaceRoleGrantedSpecialties failed", err);
+    console.warn("HWFWM | replaceRoleSpecialtyGrants failed", err);
+  } finally {
+    if (_roleSyncLocks.get(actorId) === task) _roleSyncLocks.delete(actorId);
   }
 }
