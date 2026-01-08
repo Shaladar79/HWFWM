@@ -73,21 +73,24 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
   const initialRoleKey = details.roleKey ?? "";
 
   // Background: one-way add + optional choice prompt
-  persistBackgroundGrantedSpecialties(sheet, initialBgKey);
-  handleBackgroundChoiceGrant(sheet, initialBgKey);
+  // Fire-and-forget (do not block render); safe-catch prevents unhandled rejections.
+  if (initialBgKey) {
+    persistBackgroundGrantedSpecialties(sheet, initialBgKey).catch(() => {});
+    handleBackgroundChoiceGrant(sheet, initialBgKey).catch(() => {});
+  }
 
   // Race: IMPORTANT - do NOT re-run every bind/render.
   // Only run if we have a raceKey AND the completed stamp doesn't match.
   const raceStamp = sheet.document?.system?._flags?.raceGrantStamp ?? "";
   if (initialRaceKey && raceStamp !== initialRaceKey) {
-    replaceRaceGrants(sheet, initialRaceKey);
+    replaceRaceGrants(sheet, initialRaceKey).catch(() => {});
   }
 
   // Role: do NOT re-run every bind/render.
   // Only run if we have a roleKey AND the completed stamp doesn't match.
   const roleStamp = sheet.document?.system?._flags?.roleGrantStamp ?? "";
   if (initialRoleKey && roleStamp !== initialRoleKey) {
-    replaceRoleGrantedSpecialties(sheet, initialRoleKey);
+    replaceRoleGrantedSpecialties(sheet, initialRoleKey).catch(() => {});
   }
 
   /* ----------------------- */
