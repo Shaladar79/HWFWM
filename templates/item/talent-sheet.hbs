@@ -1,12 +1,222 @@
-<form class="hwfwm-item-sheet">
+<form class="hwfwm-item-sheet" autocomplete="off">
   <header class="hwfwm-sheet__header">
-    <input class="hwfwm-sheet__name" name="name" type="text" value="{{item.name}}" placeholder="Talent Name" />
+    <input
+      class="hwfwm-sheet__name"
+      name="name"
+      type="text"
+      value="{{item.name}}"
+      placeholder="Talent Name"
+    />
   </header>
 
   <section class="hwfwm-sheet__body" style="padding: 12px;">
+
+    <!-- CORE -->
     <div class="hwfwm-card">
-      <div class="hwfwm-card__title">Details</div>
-      <div class="hwfwm-muted">Placeholder talent sheet. We will add fields later.</div>
+      <div class="hwfwm-card__title">Core</div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div>
+          <label class="hwfwm-label">Enabled</label>
+          <label style="display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" name="system.enabled" {{#if system.enabled}}checked{{/if}} />
+            <span class="hwfwm-muted">Applies when enabled</span>
+          </label>
+        </div>
+
+        <div>
+          <label class="hwfwm-label">Source</label>
+          <select name="system.source">
+            {{#each talentSources as |o|}}
+              <option value="{{o.value}}" {{#if (eq o.value ../system.source)}}selected{{/if}}>
+                {{o.label}}
+              </option>
+            {{/each}}
+          </select>
+        </div>
+
+        <div>
+          <label class="hwfwm-label">Stack Mode</label>
+          <select name="system.stackMode">
+            {{#each stackModes as |o|}}
+              <option value="{{o.value}}" {{#if (eq o.value ../system.stackMode)}}selected{{/if}}>
+                {{o.label}}
+              </option>
+            {{/each}}
+          </select>
+        </div>
+
+        <div>
+          <label class="hwfwm-label">Category</label>
+          <input type="text" name="system.category" value="{{system.category}}" placeholder="e.g. Defense, Mobility" />
+        </div>
+
+        <div style="grid-column: 1 / span 2;">
+          <label class="hwfwm-label">Tags</label>
+          <input type="text" name="system.tags" value="{{system.tags}}" placeholder="comma, separated, tags" />
+        </div>
+      </div>
     </div>
+
+    <!-- ADJUSTMENTS -->
+    <div class="hwfwm-card" style="margin-top: 12px;">
+      <div class="hwfwm-card__title">Adjustments</div>
+      <div class="hwfwm-muted" style="margin-bottom: 8px;">
+        Data-only placeholders. These will be applied by the actor engine later.
+      </div>
+
+      <!-- Attribute adjustments -->
+      <div class="hwfwm-card__title" style="font-size: 0.95em; margin-top: 6px;">Attributes</div>
+      <div style="display:grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 8px; align-items:center;">
+        <div class="hwfwm-muted"><strong>Attribute</strong></div>
+        <div class="hwfwm-muted"><strong>% Delta</strong></div>
+        <div class="hwfwm-muted"><strong>Flat Delta</strong></div>
+
+        {{#each attributesList as |a|}}
+          <div>{{a.label}}</div>
+          <input
+            type="number"
+            name="system.adjustments.attributes.{{a.value}}.pct"
+            value="{{lookup (lookup ../system.adjustments.attributes a.value) 'pct'}}"
+            step="1"
+            placeholder="0"
+          />
+          <input
+            type="number"
+            name="system.adjustments.attributes.{{a.value}}.flat"
+            value="{{lookup (lookup ../system.adjustments.attributes a.value) 'flat'}}"
+            step="1"
+            placeholder="0"
+          />
+        {{/each}}
+      </div>
+
+      <!-- Resource adjustments -->
+      <div class="hwfwm-card__title" style="font-size: 0.95em; margin-top: 14px;">Resources / Status</div>
+      <div style="display:grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 8px; align-items:center;">
+        <div class="hwfwm-muted"><strong>Resource</strong></div>
+        <div class="hwfwm-muted"><strong>Max Delta</strong></div>
+        <div class="hwfwm-muted"><strong>Value Delta</strong></div>
+
+        {{#each resourcesList as |r|}}
+          <div>{{r.label}}</div>
+          <input
+            type="number"
+            name="system.adjustments.resources.{{r.value}}.max"
+            value="{{lookup (lookup ../system.adjustments.resources r.value) 'max'}}"
+            step="1"
+            placeholder="0"
+          />
+          <input
+            type="number"
+            name="system.adjustments.resources.{{r.value}}.value"
+            value="{{lookup (lookup ../system.adjustments.resources r.value) 'value'}}"
+            step="1"
+            placeholder="0"
+          />
+        {{/each}}
+      </div>
+
+      <!-- Quick singles -->
+      <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 14px;">
+        <div>
+          <label class="hwfwm-label">Defense (flat)</label>
+          <input type="number" name="system.adjustments.defense.flat" value="{{system.adjustments.defense.flat}}" step="1" placeholder="0" />
+        </div>
+        <div>
+          <label class="hwfwm-label">Pace (flat)</label>
+          <input type="number" name="system.adjustments.pace.flat" value="{{system.adjustments.pace.flat}}" step="1" placeholder="0" />
+        </div>
+        <div>
+          <label class="hwfwm-label">Natural Armor (flat)</label>
+          <input type="number" name="system.adjustments.naturalArmor.flat" value="{{system.adjustments.naturalArmor.flat}}" step="1" placeholder="0" />
+        </div>
+      </div>
+    </div>
+
+    <!-- GRANTS -->
+    <div class="hwfwm-card" style="margin-top: 12px;">
+      <div class="hwfwm-card__title">Grants</div>
+      <div class="hwfwm-muted" style="margin-bottom: 8px;">
+        Add keys that the actor can interpret later (specialty keys, affinity keys, etc.).
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <!-- Specialties -->
+        <div>
+          <div class="hwfwm-card__title" style="font-size: 0.95em;">Specialties</div>
+          {{#each system.grants.specialties as |g i|}}
+            <input
+              type="text"
+              name="system.grants.specialties.{{i}}.key"
+              value="{{g.key}}"
+              placeholder="specialty key"
+              style="margin-bottom:6px;"
+            />
+          {{/each}}
+        </div>
+
+        <!-- Affinities -->
+        <div>
+          <div class="hwfwm-card__title" style="font-size: 0.95em;">Affinities</div>
+          {{#each system.grants.affinities as |g i|}}
+            <input
+              type="text"
+              name="system.grants.affinities.{{i}}.key"
+              value="{{g.key}}"
+              placeholder="affinity key"
+              style="margin-bottom:6px;"
+            />
+          {{/each}}
+        </div>
+
+        <!-- Aptitudes -->
+        <div>
+          <div class="hwfwm-card__title" style="font-size: 0.95em;">Aptitudes</div>
+          {{#each system.grants.aptitudes as |g i|}}
+            <input
+              type="text"
+              name="system.grants.aptitudes.{{i}}.key"
+              value="{{g.key}}"
+              placeholder="aptitude key"
+              style="margin-bottom:6px;"
+            />
+          {{/each}}
+        </div>
+
+        <!-- Resistances -->
+        <div>
+          <div class="hwfwm-card__title" style="font-size: 0.95em;">Resistances</div>
+          {{#each system.grants.resistances as |g i|}}
+            <input
+              type="text"
+              name="system.grants.resistances.{{i}}.key"
+              value="{{g.key}}"
+              placeholder="resistance key"
+              style="margin-bottom:6px;"
+            />
+          {{/each}}
+        </div>
+      </div>
+
+      <div class="hwfwm-muted" style="margin-top: 10px;">
+        Note: “Add row” buttons will be wired up after the baseline sheets are stable.
+        For now, you can seed rows in the item data (or compendium entries) and edit them here.
+      </div>
+    </div>
+
+    <!-- DESCRIPTION -->
+    <div class="hwfwm-card" style="margin-top: 12px;">
+      <div class="hwfwm-card__title">Description</div>
+
+      {{editor
+        system.description
+        target="system.description"
+        button=true
+        owner=owner
+        editable=editable
+      }}
+    </div>
+
   </section>
 </form>
