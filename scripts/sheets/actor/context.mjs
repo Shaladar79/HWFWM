@@ -167,6 +167,10 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
     .map((it) => ({ id: it.id, name: it.name, source: it.system?.source ?? "" }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
+  // NEW: subset views for Traits → Features tab (do NOT remove from grantedFeatures)
+  context.raceFeatures = context.grantedFeatures.filter((it) => String(it?.source ?? "") === "race");
+  context.roleFeatures = context.grantedFeatures.filter((it) => String(it?.source ?? "") === "role");
+
   context.talents = items
     .filter((it) => it?.type === "talent")
     .map((it) => ({ id: it.id, name: it.name, talentType: it.system?.talentType ?? "" }))
