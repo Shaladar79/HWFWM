@@ -1,12 +1,106 @@
-<form class="hwfwm-item-sheet">
+<form class="hwfwm-item-sheet" autocomplete="off">
   <header class="hwfwm-sheet__header">
-    <input class="hwfwm-sheet__name" name="name" type="text" value="{{item.name}}" placeholder="Feature Name" />
+    <input
+      class="hwfwm-sheet__name"
+      name="name"
+      type="text"
+      value="{{item.name}}"
+      placeholder="Feature Name"
+    />
   </header>
 
   <section class="hwfwm-sheet__body" style="padding: 12px;">
+    <!-- DETAILS -->
     <div class="hwfwm-card">
       <div class="hwfwm-card__title">Details</div>
-      <div class="hwfwm-muted">Placeholder feature sheet. We will add fields later.</div>
+
+      <div class="hwfwm-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div>
+          <label class="hwfwm-label">Source</label>
+          <select name="system.source">
+            {{#each featureSources as |o|}}
+              <option value="{{o.value}}" {{#if (eq o.value ../system.source)}}selected{{/if}}>
+                {{o.label}}
+              </option>
+            {{/each}}
+          </select>
+        </div>
+
+        <div>
+          <label class="hwfwm-label">Activation</label>
+          <select name="system.activation">
+            {{#each activationTypes as |o|}}
+              <option value="{{o.value}}" {{#if (eq o.value ../system.activation)}}selected{{/if}}>
+                {{o.label}}
+              </option>
+            {{/each}}
+          </select>
+        </div>
+
+        <div>
+          <label class="hwfwm-label">Category</label>
+          <select name="system.category">
+            {{#each featureCategories as |o|}}
+              <option value="{{o.value}}" {{#if (eq o.value ../system.category)}}selected{{/if}}>
+                {{o.label}}
+              </option>
+            {{/each}}
+          </select>
+        </div>
+
+        <div>
+          <label class="hwfwm-label">Tags</label>
+          <input
+            type="text"
+            name="system.tags"
+            value="{{system.tags}}"
+            placeholder="comma, separated, tags"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- DESCRIPTION -->
+    <div class="hwfwm-card" style="margin-top: 12px;">
+      <div class="hwfwm-card__title">Description</div>
+
+      {{editor
+        system.description
+        target="system.description"
+        button=true
+        owner=owner
+        editable=editable
+      }}
+    </div>
+
+    <!-- FUTURE HOOKS (placeholders only) -->
+    <div class="hwfwm-card" style="margin-top: 12px;">
+      <div class="hwfwm-card__title">Future Hooks</div>
+      <div class="hwfwm-muted" style="margin-bottom: 8px;">
+        Placeholders for later mechanics wiring (mods/effects). Safe to ignore for now.
+      </div>
+
+      <div class="hwfwm-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div>
+          <label class="hwfwm-label">Mods Key</label>
+          <input
+            type="text"
+            name="system.hooks.modsKey"
+            value="{{system.hooks.modsKey}}"
+            placeholder="e.g. defense+1, fireResist, etc."
+          />
+        </div>
+
+        <div>
+          <label class="hwfwm-label">Effects Key</label>
+          <input
+            type="text"
+            name="system.hooks.effectsKey"
+            value="{{system.hooks.effectsKey}}"
+            placeholder="future effects reference"
+          />
+        </div>
+      </div>
     </div>
   </section>
 </form>
