@@ -6,8 +6,11 @@ import { openAddMiscDialog, removeMiscByKey, updateMiscField } from "./treasures
 
 // Split modules (new)
 import {
+  // legacy calls still used in a couple places
   persistBackgroundGrantedSpecialties,
-  handleBackgroundChoiceGrant
+  handleBackgroundChoiceGrant,
+  // ✅ NEW: replace (cleanup old → grant new → prompt choice)
+  replaceBackgroundSpecialties
 } from "./listeners/background.mjs";
 
 import {
@@ -72,7 +75,10 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
   const initialRaceKey = details.raceKey ?? "";
   const initialRoleKey = details.roleKey ?? "";
 
-  // Background: one-way add + optional choice prompt
+  // Track last-known background on the sheet instance so we can cleanly remove old grants on change.
+  sheet._lastBackgroundKey = sheet._lastBackgroundKey ?? initialBgKey;
+
+  // Background: initial apply (no cleanup on first bind; just ensure it's present + choice prompted if needed)
   persistBackgroundGrantedSpecialties(sheet, initialBgKey);
   handleBackgroundChoiceGrant(sheet, initialBgKey);
 
@@ -149,8 +155,12 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
 
       // Background change
       if (target instanceof HTMLSelectElement && target.name === "system.details.backgroundKey") {
-        await persistBackgroundGrantedSpecialties(sheet, target.value);
-        await handleBackgroundChoiceGrant(sheet, target.value);
+        const newKey = target.value ?? "";
+        const oldKey = sheet._lastBackgroundKey ?? "";
+
+        await replaceBackgroundSpecialties(sheet, newKey, oldKey);
+
+        sheet._lastBackgroundKey = newKey;
         return;
       }
 
