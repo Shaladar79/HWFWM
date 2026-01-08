@@ -80,8 +80,12 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
   persistBackgroundGrantedSpecialties(sheet, initialBgKey);
   handleBackgroundChoiceGrant(sheet, initialBgKey);
 
-  // Race: replace grants (cleanup + apply)
-  replaceRaceGrants(sheet, initialRaceKey);
+  // Race: IMPORTANT - do NOT re-run every bind/render.
+  // Only run if we have a raceKey AND the completed stamp doesn't match.
+  const raceStamp = sheet.document?.system?._flags?.raceGrantStamp ?? "";
+  if (initialRaceKey && raceStamp !== initialRaceKey) {
+    replaceRaceGrants(sheet, initialRaceKey);
+  }
 
   /* ----------------------- */
   /* Tabs                    */
@@ -147,7 +151,7 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
         return;
       }
 
-      // Race change
+      // Race change (always replace on explicit change)
       if (target instanceof HTMLSelectElement && target.name === "system.details.raceKey") {
         await replaceRaceGrants(sheet, target.value);
         return;
@@ -312,3 +316,4 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
 export function bindListeners(args) {
   return bindActorSheetListeners(args);
 }
+
