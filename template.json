@@ -184,6 +184,7 @@
       "system": {
         "quantity": 1,
         "readied": "no",
+        "useEffect": "",
         "notes": ""
       }
     },
