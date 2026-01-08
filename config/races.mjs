@@ -219,6 +219,23 @@ export const RACE_GRANTED_AFFINITIES = {
 };
 
 /* -------------------------------------------- */
+/* Race → Granted Resistances                    */
+/* -------------------------------------------- */
+/**
+ * IMPORTANT:
+ * - Keys here MUST exist in CONFIG["hwfwm-system"].resistanceCatalog
+ * - Leave empty until your resistanceCatalog keys are finalized
+ */
+export const RACE_GRANTED_RESISTANCES = {
+   outworlder: ["astral"],
+  elf: ["life", "nature", "magic"],
+  celestine: ["holy", "astral"],
+  runic: ["magic"],
+  smoulder: ["earth", "fire"],
+  draconian: ["magic"]
+};
+
+/* -------------------------------------------- */
 /* Race → Granted Features (Abilities)           */
 /* -------------------------------------------- */
 
