@@ -28,15 +28,19 @@ export const BACKGROUND_ORDER = [
 /**
  * Baseline background adjustments (applied before rank multiplier)
  * Shape mirrors races/roles: { lifeForce, mana, stamina }
+ *
+ * Added hook keys (declarative):
+ * - manaRecovery / staminaRecovery / lifeForceRecovery
+ * - naturalArmor
  */
 export const BACKGROUND_ADJUSTMENTS = {
-  commoner: { lifeForce: 4, mana: 2, stamina: 2 },
-  criminal: { lifeForce: 3, mana: 2, stamina: 3 },
-  artisan: { lifeForce: 2, mana: 3, stamina: 3 },
-  noble: { lifeForce: 2, mana: 4, stamina: 2 },
-  scholar: { lifeForce: 2, mana: 5, stamina: 1 },
-  soldier: { lifeForce: 5, mana: 1, stamina: 2 },
-  merchant: { lifeForce: 3, mana: 1, stamina: 4 }
+  commoner: { lifeForce: 4, mana: 2, stamina: 2, manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0 },
+  criminal: { lifeForce: 3, mana: 2, stamina: 3, manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0 },
+  artisan:  { lifeForce: 2, mana: 3, stamina: 3, manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0 },
+  noble:    { lifeForce: 2, mana: 4, stamina: 2, manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0 },
+  scholar:  { lifeForce: 2, mana: 5, stamina: 1, manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0 },
+  soldier:  { lifeForce: 5, mana: 1, stamina: 2, manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0 },
+  merchant: { lifeForce: 3, mana: 1, stamina: 4, manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0 }
 };
 
 /**
