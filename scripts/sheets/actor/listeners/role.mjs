@@ -10,6 +10,12 @@ const _roleSyncLocks = new Map();
 
 const toKey = (v) => String(v ?? "").trim();
 
+/**
+ * Replace role-granted specialties:
+ * - Removes ONLY specialties with { source: "role", granted: true }
+ * - Adds ROLE_GRANTED_SPECIALTIES[roleKey] if missing
+ * - Writes system._flags.roleGrantStamp = roleKey when complete
+ */
 export async function replaceRoleGrantedSpecialties(sheet, roleKey) {
   const actor = sheet?.document;
   if (!actor) return;
@@ -35,7 +41,7 @@ export async function replaceRoleGrantedSpecialties(sheet, roleKey) {
     const current = actor.system?.specialties ?? {};
     const update = {};
 
-    // Track what we are removing so we can re-add in the same pass
+    // Track what we are removing so we can re-add in the same update
     const willRemove = new Set();
 
     // Cleanup: remove ONLY role-granted specialties
@@ -55,6 +61,7 @@ export async function replaceRoleGrantedSpecialties(sheet, roleKey) {
       const key = toKey(raw);
       if (!key) continue;
 
+      // If it exists AND we are not removing it this pass, skip
       const exists = Boolean(current?.[key]) && !willRemove.has(key);
       if (exists) continue;
 
@@ -81,4 +88,3 @@ export async function replaceRoleGrantedSpecialties(sheet, roleKey) {
     if (_roleSyncLocks.get(actorId) === task) _roleSyncLocks.delete(actorId);
   }
 }
-
