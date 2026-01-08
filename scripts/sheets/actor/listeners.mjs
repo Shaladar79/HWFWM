@@ -6,10 +6,8 @@ import { openAddMiscDialog, removeMiscByKey, updateMiscField } from "./treasures
 
 // Split modules (new)
 import {
-  // legacy calls still used in a couple places
   persistBackgroundGrantedSpecialties,
   handleBackgroundChoiceGrant,
-  // ✅ NEW: replace (cleanup old → grant new → prompt choice)
   replaceBackgroundSpecialties
 } from "./listeners/background.mjs";
 
@@ -75,12 +73,25 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
   const initialRaceKey = details.raceKey ?? "";
   const initialRoleKey = details.roleKey ?? "";
 
-  // Track last-known background on the sheet instance so we can cleanly remove old grants on change.
-  sheet._lastBackgroundKey = sheet._lastBackgroundKey ?? initialBgKey;
+  // ------------------------------------------------------------
+  // Background: stamp-based initial sync (mirrors race/role pattern)
+  // ------------------------------------------------------------
+  const bgStamp = sheet.document?.system?._flags?.backgroundGrantStamp ?? "";
 
-  // Background: initial apply (no cleanup on first bind; just ensure it's present + choice prompted if needed)
-  persistBackgroundGrantedSpecialties(sheet, initialBgKey);
-  handleBackgroundChoiceGrant(sheet, initialBgKey);
+  // If stamp differs, reconcile from old->new deterministically.
+  // Otherwise, just ensure grants exist + prompt choice if needed.
+  if (initialBgKey && bgStamp && bgStamp !== initialBgKey) {
+    replaceBackgroundSpecialties(sheet, initialBgKey, bgStamp).then(() =>
+      sheet.document?.update?.({ "system._flags.backgroundGrantStamp": initialBgKey }).catch(() => {})
+    );
+  } else {
+    persistBackgroundGrantedSpecialties(sheet, initialBgKey);
+    handleBackgroundChoiceGrant(sheet, initialBgKey);
+
+    if (initialBgKey && bgStamp !== initialBgKey) {
+      sheet.document?.update?.({ "system._flags.backgroundGrantStamp": initialBgKey }).catch(() => {});
+    }
+  }
 
   // Race: IMPORTANT - do NOT re-run every bind/render.
   // Only run if we have a raceKey AND the completed stamp doesn't match.
@@ -145,6 +156,40 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
   });
 
   /* ----------------------- */
+  /* Change handler (CAPTURE) */
+  /* ----------------------- */
+  // We intercept background changes early so we can capture the OLD key before submitOnChange mutates the actor.
+  root.addEventListener(
+    "change",
+    async (ev) => {
+      const target = ev.target;
+
+      if (target instanceof HTMLSelectElement && target.name === "system.details.backgroundKey") {
+        ev.preventDefault?.();
+        ev.stopPropagation?.();
+        ev.stopImmediatePropagation?.();
+
+        const actor = sheet?.document;
+        if (!actor) return;
+
+        const newKey = String(target.value ?? "").trim();
+        const oldKey = String(actor.system?.details?.backgroundKey ?? "").trim();
+
+        // Persist the new backgroundKey ourselves (since we stopped propagation)
+        await actor.update({
+          "system.details.backgroundKey": newKey,
+          "system._flags.backgroundGrantStamp": newKey
+        });
+
+        // Cleanup old grants and apply new ones
+        await replaceBackgroundSpecialties(sheet, newKey, oldKey);
+        return;
+      }
+    },
+    { signal, capture: true }
+  );
+
+  /* ----------------------- */
   /* Change handler          */
   /* ----------------------- */
   // IMPORTANT: capture false so Foundry’s submitOnChange remains intact for normal fields.
@@ -152,17 +197,6 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
     "change",
     async (ev) => {
       const target = ev.target;
-
-      // Background change
-      if (target instanceof HTMLSelectElement && target.name === "system.details.backgroundKey") {
-        const newKey = target.value ?? "";
-        const oldKey = sheet._lastBackgroundKey ?? "";
-
-        await replaceBackgroundSpecialties(sheet, newKey, oldKey);
-
-        sheet._lastBackgroundKey = newKey;
-        return;
-      }
 
       // Race change (always replace on explicit change)
       if (target instanceof HTMLSelectElement && target.name === "system.details.raceKey") {
