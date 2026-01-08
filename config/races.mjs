@@ -37,18 +37,62 @@ export const RACE_ORDER = [
 ];
 
 /* -------------------------------------------- */
-/* Baseline Resource / Pace Adjustments          */
+/* Baseline Resource / Pace / Attribute Adjustments */
 /* -------------------------------------------- */
+/**
+ * NOTE:
+ * - These are flat additive adjustments (not % multipliers).
+ * - Attribute adjustments are declared under `attributeMods` and are applied
+ *   by the derived-data engine (actor.mjs).
+ *
+ * Keys under attributeMods must match the system attribute keys:
+ *  - power, speed, spirit, recovery
+ */
 
 export const RACE_ADJUSTMENTS = {
-  outworlder: { lifeForce: 5, mana: 5, stamina: 5, pace: 5, manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0 },
-  celestine: { lifeForce: 5, mana: 5, stamina: 3, pace: 6, manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0 },
-  draconian: { lifeForce: 7, mana: 6, stamina: 3, pace: 4, manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 2 },
-  elf:       { lifeForce: 4, mana: 9, stamina: 1, pace: 6, manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0 },
-  human:     { lifeForce: 5, mana: 5, stamina: 5, pace: 5, manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0 },
-  leonid:    { lifeForce: 5, mana: 3, stamina: 6, pace: 6, manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0 },
-  runic:     { lifeForce: 7, mana: 8, stamina: 1, pace: 5, manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0 },
-  smoulder:  { lifeForce: 8, mana: 1, stamina: 7, pace: 4, manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 2 }
+  outworlder: {
+    lifeForce: 5, mana: 5, stamina: 5, pace: 5,
+    manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0
+  },
+
+  celestine: {
+    lifeForce: 5, mana: 5, stamina: 3, pace: 6,
+    manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0,
+    attributeMods: { speed: 4 } // Celestial Swiftness: +4 Speed
+  },
+
+  draconian: {
+    lifeForce: 7, mana: 6, stamina: 3, pace: 4,
+    manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 2,
+    attributeMods: { power: 3, spirit: 2 } // Draconic Might: +3 Power; Draconic Power: +2 Spirit
+  },
+
+  elf: {
+    lifeForce: 4, mana: 9, stamina: 1, pace: 6,
+    manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0,
+    attributeMods: { speed: 4 } // Grace: +4 Speed
+  },
+
+  human: {
+    lifeForce: 5, mana: 5, stamina: 5, pace: 5,
+    manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0
+  },
+
+  leonid: {
+    lifeForce: 5, mana: 3, stamina: 6, pace: 6,
+    manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0,
+    attributeMods: { power: 3, speed: 3 } // Ancestral Strength/Swiftness: +3 Power, +3 Speed
+  },
+
+  runic: {
+    lifeForce: 7, mana: 8, stamina: 1, pace: 5,
+    manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0
+  },
+
+  smoulder: {
+    lifeForce: 8, mana: 1, stamina: 7, pace: 4,
+    manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 2
+  }
 };
 
 
@@ -227,7 +271,7 @@ export const RACE_GRANTED_AFFINITIES = {
  * - Leave empty until your resistanceCatalog keys are finalized
  */
 export const RACE_GRANTED_RESISTANCES = {
-   outworlder: ["astral"],
+  outworlder: ["astral"],
   elf: ["life", "nature", "magic"],
   celestine: ["holy", "astral"],
   runic: ["magic"],
