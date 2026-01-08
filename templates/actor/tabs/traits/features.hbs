@@ -1,6 +1,60 @@
 <div class="hwfwm-traits-features">
 
-  <!-- Granted Features -->
+  <!-- Racial Abilities (subset view; items also remain in Granted Features below) -->
+  <div class="hwfwm-card">
+    <div class="hwfwm-card__title">Racial Abilities</div>
+
+    <div class="hwfwm-itemlist">
+
+      <div class="hwfwm-itemlist__head">
+        <div>Name</div>
+        <div></div>
+      </div>
+
+      {{#each raceFeatures as |it|}}
+      <div class="hwfwm-itemlist__row">
+        <div class="hwfwm-itemlist__name">{{it.name}}</div>
+        <div class="hwfwm-itemlist__actions">
+          <button type="button" class="hwfwm-itembtn" data-action="open-item" data-item-id="{{it.id}}">Open</button>
+        </div>
+      </div>
+      {{/each}}
+
+      {{#unless raceFeatures.length}}
+        <div class="hwfwm-muted">No racial abilities yet.</div>
+      {{/unless}}
+
+    </div>
+  </div>
+
+  <!-- Role Abilities (subset view; items also remain in Granted Features below) -->
+  <div class="hwfwm-card">
+    <div class="hwfwm-card__title">Role Abilities</div>
+
+    <div class="hwfwm-itemlist">
+
+      <div class="hwfwm-itemlist__head">
+        <div>Name</div>
+        <div></div>
+      </div>
+
+      {{#each roleFeatures as |it|}}
+      <div class="hwfwm-itemlist__row">
+        <div class="hwfwm-itemlist__name">{{it.name}}</div>
+        <div class="hwfwm-itemlist__actions">
+          <button type="button" class="hwfwm-itembtn" data-action="open-item" data-item-id="{{it.id}}">Open</button>
+        </div>
+      </div>
+      {{/each}}
+
+      {{#unless roleFeatures.length}}
+        <div class="hwfwm-muted">No role abilities yet.</div>
+      {{/unless}}
+
+    </div>
+  </div>
+
+  <!-- Granted Features (UNCHANGED: still shows ALL granted features) -->
   <div class="hwfwm-card">
     <div class="hwfwm-card__title">Granted Features</div>
 
