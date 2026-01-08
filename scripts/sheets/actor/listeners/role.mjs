@@ -35,14 +35,18 @@ export async function replaceRoleGrantedSpecialties(sheet, roleKey) {
     const current = actor.system?.specialties ?? {};
     const update = {};
 
+    // Track what we are removing so we can re-add in the same pass
+    const willRemove = new Set();
+
     // Cleanup: remove ONLY role-granted specialties
     for (const [k, v] of Object.entries(current)) {
       if (v?.source === "role" && v?.granted === true) {
+        willRemove.add(k);
         update[`system.specialties.-=${k}`] = null;
       }
     }
 
-    // Apply: add missing role specialties (do not overwrite existing keys)
+    // Apply: add role specialties (do not overwrite non-role sources)
     const grants = Array.isArray(ROLE_GRANTED_SPECIALTIES?.[rKey])
       ? ROLE_GRANTED_SPECIALTIES[rKey]
       : [];
@@ -51,8 +55,8 @@ export async function replaceRoleGrantedSpecialties(sheet, roleKey) {
       const key = toKey(raw);
       if (!key) continue;
 
-      // If already present (manual/background/etc), do not overwrite
-      if (current?.[key]) continue;
+      const exists = Boolean(current?.[key]) && !willRemove.has(key);
+      if (exists) continue;
 
       update[`system.specialties.${key}`] = {
         score: 0,
@@ -64,7 +68,7 @@ export async function replaceRoleGrantedSpecialties(sheet, roleKey) {
     // Mark complete at end
     update["system._flags.roleGrantStamp"] = rKey;
 
-    if (Object.keys(update).length) await actor.update(update);
+    await actor.update(update);
   })();
 
   _roleSyncLocks.set(actorId, task);
