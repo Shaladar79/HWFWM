@@ -75,4 +75,291 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
   // ---------------------------------------------------------------------------
   // Prefer authoritative derived rank from actor.prepareDerivedData().
   // Fallback to local computation if not available.
-  const d
+  const derivedFromActorKey = sys?._derived?.rankKey ?? null;
+  const derivedFromActorLabel = sys?._derived?.rankLabel ?? null;
+
+  if (derivedFromActorKey) {
+    const derivedRankKey = String(derivedFromActorKey);
+    const derivedRankLabel = String(
+      derivedFromActorLabel ?? (ranks?.[derivedRankKey] ?? derivedRankKey)
+    );
+    const derivedRankTotal = Number(sys?._derived?.rankTierTotal ?? 0);
+
+    context.derivedRankTotal = derivedRankTotal;
+    context.derivedRankKey = derivedRankKey;
+    context.derivedRankLabel = derivedRankLabel;
+  } else {
+    // Tier values per rankKey: normal 0, iron 1, bronze 2, silver 3, gold 4, diamond 5
+    // This should live in config eventually; until then we default here.
+    const rankTierValues =
+      cfg.rankTierValues ??
+      {
+        normal: 0,
+        iron: 1,
+        bronze: 2,
+        silver: 3,
+        gold: 4,
+        diamond: 5
+      };
+
+    function deriveRankKeyFromTierTotal(total) {
+      const t = Number(total) || 0;
+      if (t >= 20) return "diamond";
+      if (t >= 16) return "gold";
+      if (t >= 12) return "silver";
+      if (t >= 8) return "bronze";
+      if (t >= 4) return "iron";
+      return "normal";
+    }
+
+    // NOW LOCKED: We only read from the actual actor schema:
+    // system.attributes.<attr>.rankKey
+    const attrRankKeys = {
+      power: sys.attributes?.power?.rankKey ?? "normal",
+      speed: sys.attributes?.speed?.rankKey ?? "normal",
+      spirit: sys.attributes?.spirit?.rankKey ?? "normal",
+      recovery: sys.attributes?.recovery?.rankKey ?? "normal"
+    };
+
+    const derivedRankTotal =
+      (rankTierValues[attrRankKeys.power] ?? 0) +
+      (rankTierValues[attrRankKeys.speed] ?? 0) +
+      (rankTierValues[attrRankKeys.spirit] ?? 0) +
+      (rankTierValues[attrRankKeys.recovery] ?? 0);
+
+    const derivedRankKey = deriveRankKeyFromTierTotal(derivedRankTotal);
+    const derivedRankLabel = ranks?.[derivedRankKey] ?? derivedRankKey;
+
+    // Expose to templates (header)
+    context.derivedRankTotal = derivedRankTotal;
+    context.derivedRankKey = derivedRankKey;
+    context.derivedRankLabel = derivedRankLabel;
+
+    // Optional debugging
+    context._attrRankKeys = attrRankKeys;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Overview: Rank label + description (read-only)
+  // ---------------------------------------------------------------------------
+  const rankDescriptions = cfg.rankDescriptions ?? {};
+  context.overviewRankLabel = context.derivedRankLabel;
+
+  // Fall back to a safe placeholder if we haven't authored the text yet
+  context.overviewRankDescription =
+    rankDescriptions?.[context.derivedRankKey] ?? "Rank description not yet defined.";
+
+  // ---------------------------------------------------------------------------
+  // Overview: Background description (read-only)
+  // ---------------------------------------------------------------------------
+  const bgKey = context.details?.backgroundKey ?? "";
+  context.overviewBackgroundLabel = backgrounds?.[bgKey] ?? (bgKey || "—");
+  context.overviewBackgroundDescription =
+    BACKGROUND_DESCRIPTIONS?.[bgKey] ?? (bgKey ? "Background description not yet defined." : "—");
+
+  // Items
+  const items = Array.from(sheet.document?.items ?? []);
+  const grantedSources = new Set(["race", "role", "background", "rank"]);
+
+  context.grantedFeatures = items
+    .filter((it) => it?.type === "feature")
+    .filter((it) => grantedSources.has(it?.system?.source))
+    .map((it) => ({ id: it.id, name: it.name, source: it.system?.source ?? "" }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  context.talents = items
+    .filter((it) => it?.type === "talent")
+    .map((it) => ({ id: it.id, name: it.name, talentType: it.system?.talentType ?? "" }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  // UI state holder
+  context.system._ui = context.system._ui ?? {};
+  context.system._ui.addSpecialtyKey = context.system._ui.addSpecialtyKey ?? "";
+  context.system._ui.addAffinityKey = context.system._ui.addAffinityKey ?? "";
+  context.system._ui.addResistanceKey = context.system._ui.addResistanceKey ?? "";
+  context.system._ui.addAptitudeKey = context.system._ui.addAptitudeKey ?? "";
+  context.system._ui.addMiscItemKey = context.system._ui.addMiscItemKey ?? "";
+
+  // Subtab persistence
+  const storedEssenceTab = context.system._ui.essenceSubTab ?? "power";
+  if (!sheet._activeSubTabs.essence) sheet._activeSubTabs.essence = storedEssenceTab;
+  context.system._ui.essenceSubTab = sheet._activeSubTabs.essence ?? storedEssenceTab ?? "power";
+
+  const storedTreasuresTab = context.system._ui.treasuresSubTab ?? "equipment";
+  if (!sheet._activeSubTabs.treasures) sheet._activeSubTabs.treasures = storedTreasuresTab;
+  context.system._ui.treasuresSubTab =
+    sheet._activeSubTabs.treasures ?? storedTreasuresTab ?? "equipment";
+
+  // catalogs
+  context.specialtyCatalog = cfg.specialtyCatalog ?? {};
+  context.affinityCatalog = cfg.affinityCatalog ?? {};
+  context.resistanceCatalog = cfg.resistanceCatalog ?? {};
+  context.aptitudeCatalog = cfg.aptitudeCatalog ?? {};
+  context.essenceCatalog = cfg.essenceCatalog ?? {};
+  context.confluenceEssenceCatalog = cfg.confluenceEssenceCatalog ?? {};
+
+  // ---------------------------------------------------------------------------
+  // Traits: Effective Specialties (manual + granted by background)
+  // ---------------------------------------------------------------------------
+  const manualSpecialties = sys.specialties ?? {};
+  const grantedByBackground = BACKGROUND_GRANTED_SPECIALTIES?.[bgKey] ?? [];
+
+  // Union keys: manual entries + granted keys
+  const effectiveKeys = new Set([...Object.keys(manualSpecialties), ...grantedByBackground]);
+
+  const effectiveSpecialties = Array.from(effectiveKeys)
+    .map((key) => {
+      const meta = context.specialtyCatalog?.[key] ?? null;
+      const owned = manualSpecialties?.[key] ?? null;
+      const isGranted = grantedByBackground.includes(key);
+
+      return {
+        key,
+        // meta (reference)
+        name: meta?.name ?? key,
+        attribute: meta?.attribute ?? "",
+        description: meta?.description ?? "",
+        // actor-owned progression
+        score: Number(owned?.score ?? 0),
+        // provenance
+        isGranted,
+        source: owned?.source ?? (isGranted ? "background" : "manual")
+      };
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  context.effectiveSpecialties = effectiveSpecialties;
+
+  // ---------------------------------------------------------------------------
+  // Enhancements: Race-granted Affinities + Aptitudes (DERIVED-ONLY, VISIBILITY)
+  //
+  // Your template renders:
+  //   {{#each system.affinities}} ...
+  //   {{#each system.aptitudes}} ...
+  //
+  // but nothing persists race grants into actor.system.* yet.
+  // So we union race grants into context.system.* at render time only.
+  // ---------------------------------------------------------------------------
+  const raceKey = String(context.details?.raceKey ?? "").trim();
+
+  // Ensure collections exist so #each does not silently noop
+  sys.affinities = sys.affinities ?? {};
+  sys.aptitudes = sys.aptitudes ?? {};
+  sys.resistances = sys.resistances ?? {};
+
+  const ownedAffinities = sys.affinities ?? {};
+  const ownedAptitudes = sys.aptitudes ?? {};
+  const ownedResistances = sys.resistances ?? {};
+
+  const raceAffinityKeys = Array.isArray(RACE_GRANTED_AFFINITIES?.[raceKey])
+    ? RACE_GRANTED_AFFINITIES[raceKey]
+    : [];
+
+  const raceAptitudeKeys = Array.isArray(RACE_GRANTED_APTITUDES?.[raceKey])
+    ? RACE_GRANTED_APTITUDES[raceKey]
+    : [];
+
+  // Build merged affinities (owned wins)
+  {
+    const keys = new Set([...Object.keys(ownedAffinities), ...raceAffinityKeys]);
+    const merged = {};
+
+    for (const key of keys) {
+      if (!key) continue;
+
+      // Owned entry takes precedence
+      if (ownedAffinities?.[key]) {
+        merged[key] = ownedAffinities[key];
+        continue;
+      }
+
+      const meta = context.affinityCatalog?.[key] ?? null;
+      merged[key] = {
+        key,
+        name: meta?.name ?? key,
+        source: "race",
+        granted: true,
+        _derivedOnly: true
+      };
+    }
+
+    context.system.affinities = merged;
+  }
+
+  // Build merged aptitudes (owned wins)
+  {
+    const keys = new Set([...Object.keys(ownedAptitudes), ...raceAptitudeKeys]);
+    const merged = {};
+
+    for (const key of keys) {
+      if (!key) continue;
+
+      if (ownedAptitudes?.[key]) {
+        merged[key] = ownedAptitudes[key];
+        continue;
+      }
+
+      const meta = context.aptitudeCatalog?.[key] ?? null;
+      merged[key] = {
+        key,
+        name: meta?.name ?? key,
+        source: "race",
+        granted: true,
+        _derivedOnly: true
+      };
+    }
+
+    context.system.aptitudes = merged;
+  }
+
+  // Resistances: unchanged (owned only) until you define grant rules/math
+  context.system.resistances = ownedResistances;
+
+  // IMPORTANT: always provide a FLAT misc catalog
+  context.miscItemCatalog = getFlatMiscCatalog();
+
+  // Essence UI
+  context.essenceUI = computeEssenceUI(sheet, context.system);
+
+  // Treasures: items
+  const equipment = items
+    .filter((it) => it?.type === "equipment")
+    .map((it) => ({
+      id: it.id,
+      name: it.name,
+      category: it.system?.category ?? "misc",
+      equipped: (it.system?.equipped ?? "no").toString(),
+      notes: it.system?.notes ?? ""
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const consumables = items
+    .filter((it) => it?.type === "consumable")
+    .map((it) => ({
+      id: it.id,
+      name: it.name,
+      quantity: Number(it.system?.quantity ?? 0),
+      readied: (it.system?.readied ?? "no").toString(),
+      notes: it.system?.notes ?? ""
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  context.allEquipment = equipment;
+  context.equippedEquipment = equipment.filter((it) => it.equipped === "yes");
+
+  context.allConsumables = consumables;
+  context.readiedConsumables = consumables.filter((it) => it.readied === "yes");
+
+  // Misc actor-data
+  const misc = context.system?.treasures?.miscItems ?? {};
+  const miscEntries = Object.entries(misc).map(([key, data]) => ({
+    key,
+    name: data?.name ?? key,
+    quantity: Number(data?.quantity ?? 1),
+    notes: data?.notes ?? ""
+  }));
+  miscEntries.sort((a, b) => a.name.localeCompare(b.name));
+  context.allMiscItems = miscEntries;
+
+  return context;
+}
