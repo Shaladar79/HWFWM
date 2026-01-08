@@ -89,6 +89,14 @@
     "feature": {
       "system": {
         "source": "",
+        "activation": "passive",
+        "category": "",
+        "tags": "",
+        "description": "",
+        "hooks": {
+          "modsKey": "",
+          "effectsKey": ""
+        },
         "notes": ""
       }
     },
@@ -133,3 +141,4 @@
     }
   }
 }
+
