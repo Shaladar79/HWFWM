@@ -32,15 +32,19 @@ export const ROLE_ORDER = [
 /**
  * Baseline role adjustments (applied BEFORE rank multiplier).
  * These stack with race + background in the same phase.
+ *
+ * Added hook keys (declarative):
+ * - manaRecovery / staminaRecovery / lifeForceRecovery
+ * - naturalArmor
  */
 export const ROLE_ADJUSTMENTS = {
-  brawler:    { lifeForce: 7,  mana: 5,  stamina: 8 },
-  defender:   { lifeForce: 13, mana: 2,  stamina: 5 },
-  guardian:   { lifeForce: 8,  mana: 4,  stamina: 8 },
-  skirmisher: { lifeForce: 5,  mana: 7,  stamina: 8 },
-  healer:     { lifeForce: 2,  mana: 12, stamina: 6 },
-  striker:    { lifeForce: 4,  mana: 6,  stamina: 10 },
-  arcanist:   { lifeForce: 1,  mana: 10, stamina: 2 }
+  brawler:    { lifeForce: 7,  mana: 5,  stamina: 8,  manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0 },
+  defender:   { lifeForce: 13, mana: 2,  stamina: 5,  manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0 },
+  guardian:   { lifeForce: 8,  mana: 4,  stamina: 8,  manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0 },
+  skirmisher: { lifeForce: 5,  mana: 7,  stamina: 8,  manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0 },
+  healer:     { lifeForce: 2,  mana: 12, stamina: 6,  manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0 },
+  striker:    { lifeForce: 4,  mana: 6,  stamina: 10, manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0 },
+  arcanist:   { lifeForce: 1,  mana: 10, stamina: 2,  manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0 }
 };
 
 /**
@@ -63,10 +67,15 @@ export const ROLE_GRANTED_SPECIALTIES = {
 /**
  * Role upgrades by rank.
  * Placeholder surface only — no mechanical enforcement yet.
+ *
+ * Added optional node.status surface (declarative):
+ * - pace (already anticipated)
+ * - manaRecovery / staminaRecovery / lifeForceRecovery
+ * - naturalArmor
  */
 export const ROLE_BY_RANK = {
   brawler: {
-    normal:  { attributePct: { power: 2 } },
+    normal:  { attributePct: { power: 2 }, status: { pace: 0, manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0 } },
     iron:    {},
     bronze:  {},
     silver:  {},
@@ -75,7 +84,7 @@ export const ROLE_BY_RANK = {
   },
 
   defender: {
-    normal:  { attributePct: { power: 2 } },
+    normal:  { attributePct: { power: 2 }, status: { pace: 0, manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0 } },
     iron:    {},
     bronze:  {},
     silver:  {},
@@ -84,7 +93,7 @@ export const ROLE_BY_RANK = {
   },
 
   guardian: {
-    normal:  { attributePct: { speed: 2 } },
+    normal:  { attributePct: { speed: 2 }, status: { pace: 0, manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0 } },
     iron:    {},
     bronze:  {},
     silver:  {},
@@ -93,7 +102,7 @@ export const ROLE_BY_RANK = {
   },
 
   skirmisher: {
-    normal:  { attributePct: { speed: 2 } },
+    normal:  { attributePct: { speed: 2 }, status: { pace: 0, manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0 } },
     iron:    {},
     bronze:  {},
     silver:  {},
@@ -102,7 +111,7 @@ export const ROLE_BY_RANK = {
   },
 
   healer: {
-    normal:  { attributePct: { recovery: 2 } },
+    normal:  { attributePct: { recovery: 2 }, status: { pace: 0, manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0 } },
     iron:    {},
     bronze:  {},
     silver:  {},
@@ -111,7 +120,7 @@ export const ROLE_BY_RANK = {
   },
 
   striker: {
-    normal:  { attributePct: { speed: 2 } },
+    normal:  { attributePct: { speed: 2 }, status: { pace: 0, manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0 } },
     iron:    {},
     bronze:  {},
     silver:  {},
@@ -120,7 +129,7 @@ export const ROLE_BY_RANK = {
   },
 
   arcanist: {
-    normal:  { attributePct: { spirit: 2 } },
+    normal:  { attributePct: { spirit: 2 }, status: { pace: 0, manaRecovery: 0, staminaRecovery: 0, lifeForceRecovery: 0, naturalArmor: 0 } },
     iron:    {},
     bronze:  {},
     silver:  {},
