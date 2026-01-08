@@ -73,13 +73,19 @@ export class HwfwmActor extends Actor {
     };
 
     // Placeholder-ready resolver:
-    // Today: only uses node.status.pace
-    // Later: extend to other status fields (reaction, shielding, etc.) and/or attributePct unlocks
+    // Today: uses node.status.* and ALSO exposes node.attributePct (applied after derived rank is known)
     const resolveRoleByRankBonuses = (rKey, rankKey) => {
       const node = getRoleByRankNode(rKey, rankKey);
       const status = node?.status ?? {};
+      const attributePct = node?.attributePct ?? {};
       return {
         node,
+        attributePct: {
+          power: toNum(attributePct.power, 0),
+          speed: toNum(attributePct.speed, 0),
+          spirit: toNum(attributePct.spirit, 0),
+          recovery: toNum(attributePct.recovery, 0)
+        },
         status: {
           pace: toNum(status.pace, 0),
 
@@ -95,7 +101,7 @@ export class HwfwmActor extends Actor {
 
     // -----------------------------
     // 1) Attributes derived math
-    //    (NOW includes Race/Role/Background attribute adjustments)
+    //    (Includes Race/Role/Background attribute adjustments)
     // -----------------------------
     const NUM_TO_TOTAL = 2;
     const attrs = ["power", "speed", "spirit", "recovery"];
@@ -126,6 +132,7 @@ export class HwfwmActor extends Actor {
         race: raceMod,
         role: roleMod,
         background: backgroundMod,
+        roleByRankPct: 0, // will be applied after derived rank is computed
         derivedTotal: derivedModTotal
       };
 
@@ -165,6 +172,28 @@ export class HwfwmActor extends Actor {
     system._derived.rankTierTotal = tierTotal;
 
     // -----------------------------
+    // 2b) Apply ROLE_BY_RANK attributePct (direct additive %)
+    // -----------------------------
+    const roleByRank = resolveRoleByRankBonuses(roleKey, derivedRankKey);
+    system._derived.roleByRank = roleByRank?.node ?? null; // exposed for UI/debugging if desired
+
+    for (const a of attrs) {
+      const node = system.attributes?.[a];
+      if (!node) continue;
+
+      const bonus = toNum(roleByRank?.attributePct?.[a], 0);
+      if (!bonus) continue;
+
+      node.total = toNum(node.total, 0) + bonus;
+
+      node._derived = node._derived ?? {};
+      node._derived.modBreakdown = node._derived.modBreakdown ?? {};
+      node._derived.modBreakdown.roleByRankPct = bonus;
+
+      // Keep derivedTotal as "race/role/background only"; roleByRankPct is separate on purpose.
+    }
+
+    // -----------------------------
     // 3) Resolve adjustments (numeric resource deltas)
     // -----------------------------
     const raceAdj = {
@@ -192,9 +221,6 @@ export class HwfwmActor extends Actor {
       naturalArmor: toNum(roleAdjRaw.naturalArmor, 0)
     };
 
-    // Role-by-rank hook (clean placeholder surface)
-    const roleByRank = resolveRoleByRankBonuses(roleKey, derivedRankKey);
-    system._derived.roleByRank = roleByRank?.node ?? null; // exposed for UI/debugging if desired
     const rolePaceBonus = roleByRank.status.pace;
 
     // Background baseline adjustments (no by-rank behavior)
@@ -272,17 +298,6 @@ export class HwfwmActor extends Actor {
     // -----------------------------
     // 4b) Recovery rates + Natural Armor (derived, read-only surfaces)
     // -----------------------------
-    // Displayed in resources.hbs as read-only values:
-    //  - system.resources.mana.recovery
-    //  - system.resources.stamina.recovery
-    //  - system.resources.lifeForce.recovery
-    //  - system.resources.naturalArmor
-    //
-    // Wiring rules:
-    //  - Start with rank baseline (RANK_BASE_RECOVERY)
-    //  - Add contributions from Race + Role + Background + Role-by-rank placeholders.
-    //  - No balance pass; correctness/visibility only.
-
     // Ensure nested keys exist
     system.resources.mana = system.resources.mana ?? { value: 0, max: 0 };
     system.resources.stamina = system.resources.stamina ?? { value: 0, max: 0 };
@@ -345,3 +360,4 @@ export class HwfwmActor extends Actor {
     void backgroundKey;
   }
 }
+
