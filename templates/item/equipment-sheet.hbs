@@ -7,16 +7,20 @@
   </header>
 
   <section class="hwfwm-item-body">
+
+    <!-- CORE -->
     <div class="hwfwm-card">
       <div class="hwfwm-card__title">Equipment</div>
 
       <div class="hwfwm-grid">
         <div class="hwfwm-field">
-          <div class="hwfwm-label">Category</div>
-          <select name="system.category">
-            <option value="weapon" {{#if (eq system.category "weapon")}}selected{{/if}}>Weapon</option>
-            <option value="armor" {{#if (eq system.category "armor")}}selected{{/if}}>Armor</option>
-            <option value="misc" {{#if (eq system.category "misc")}}selected{{/if}}>Misc</option>
+          <div class="hwfwm-label">Type</div>
+          <select name="system.type">
+            {{#each equipmentTypes as |t|}}
+              <option value="{{t.value}}" {{#if (eq t.value ../_ui.type)}}selected{{/if}}>
+                {{t.label}}
+              </option>
+            {{/each}}
           </select>
         </div>
 
@@ -27,13 +31,76 @@
             <option value="yes" {{#if (eq system.equipped "yes")}}selected{{/if}}>Yes</option>
           </select>
         </div>
+      </div>
+    </div>
+
+    <!-- WEAPON -->
+    {{#if _ui.isWeapon}}
+    <div class="hwfwm-card">
+      <div class="hwfwm-card__title">Weapon (Placeholder)</div>
+
+      <div class="hwfwm-grid">
+        <div class="hwfwm-field">
+          <div class="hwfwm-label">Damage</div>
+          <input type="text" name="system.weapon.damage" placeholder="e.g. 1d8 + STR" />
+        </div>
 
         <div class="hwfwm-field">
-          <div class="hwfwm-label">Notes</div>
-          <textarea name="system.notes" rows="6">{{system.notes}}</textarea>
+          <div class="hwfwm-label">Reach / Range</div>
+          <input type="text" name="system.weapon.range" placeholder="melee / 5m / 20m" />
+        </div>
+
+        <div class="hwfwm-field">
+          <div class="hwfwm-label">Weapon Notes</div>
+          <textarea name="system.weapon.notes" rows="4"></textarea>
         </div>
       </div>
     </div>
+    {{/if}}
+
+    <!-- ARMOR -->
+    {{#if _ui.isArmor}}
+    <div class="hwfwm-card">
+      <div class="hwfwm-card__title">Armor (Placeholder)</div>
+
+      <div class="hwfwm-grid">
+        <div class="hwfwm-field">
+          <div class="hwfwm-label">Armor Value</div>
+          <input type="number" name="system.armor.value" placeholder="0" />
+        </div>
+
+        <div class="hwfwm-field">
+          <div class="hwfwm-label">Shielding</div>
+          <input type="number" name="system.armor.shielding" placeholder="0" />
+        </div>
+
+        <div class="hwfwm-field">
+          <div class="hwfwm-label">Armor Notes</div>
+          <textarea name="system.armor.notes" rows="4"></textarea>
+        </div>
+      </div>
+    </div>
+    {{/if}}
+
+    <!-- MISC -->
+    {{#if _ui.isMisc}}
+    <div class="hwfwm-card">
+      <div class="hwfwm-card__title">Misc Item (Placeholder)</div>
+
+      <div class="hwfwm-grid">
+        <div class="hwfwm-field">
+          <div class="hwfwm-label">Description / Notes</div>
+          <textarea name="system.misc.notes" rows="6"></textarea>
+        </div>
+      </div>
+    </div>
+    {{/if}}
+
+    <!-- NOTES -->
+    <div class="hwfwm-card">
+      <div class="hwfwm-card__title">General Notes</div>
+      <textarea name="system.notes" rows="6">{{system.notes}}</textarea>
+    </div>
+
   </section>
 </form>
-
