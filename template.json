@@ -17,14 +17,15 @@
         },
 
         "resources": {
-          "lifeForce": { "value": 0, "max": 0 },
+          "lifeForce": { "value": 0, "max": 0, "recovery": 0 },
           "trauma": { "value": 0, "max": 0 },
-          "mana": { "value": 0, "max": 0 },
-          "stamina": { "value": 0, "max": 0 },
+          "mana": { "value": 0, "max": 0, "recovery": 0 },
+          "stamina": { "value": 0, "max": 0, "recovery": 0 },
           "pace": { "value": 0 },
           "reaction": { "value": 0 },
           "shielding": { "value": 0 },
-          "armor": { "value": 0, "max": 0 }
+          "armor": { "value": 0, "max": 0 },
+          "naturalArmor": 0
         },
 
         "defense": { "base": 0, "mod": 0, "total": 0 },
