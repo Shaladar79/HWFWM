@@ -36,21 +36,26 @@ export function openAddMiscDialog(sheet) {
     { value: "Other", label: "Other" }
   ];
 
+  const toStr = (v) => String(v ?? "").trim();
+
   const rowsForGroup = (groupName) =>
     Object.entries(catalog)
-      .filter(([, v]) => (v?.group ?? "") === groupName)
+      .filter(([, v]) => toStr(v?.group) === toStr(groupName))
       .map(([k, v]) => ({ key: k, name: v?.name ?? k }))
       .sort((a, b) => a.name.localeCompare(b.name));
 
   const buildOptions = (groupName) => {
     const rows = rowsForGroup(groupName);
     if (!rows.length) return `<option value="">— None Available —</option>`;
+
     return [
       `<option value="">— Select —</option>`,
-      ...rows.map(
-        (r) =>
-          `<option value="${foundry.utils.escapeHTML(r.key)}">${foundry.utils.escapeHTML(r.name)}</option>`
-      )
+      ...rows.map((r) => {
+        const safeKey = foundry.utils.escapeHTML(r.key);
+        const safeName = foundry.utils.escapeHTML(r.name);
+        // CRITICAL: option value is the *catalog key*, not the group/type
+        return `<option value="${safeKey}">${safeName}</option>`;
+      })
     ].join("");
   };
 
@@ -61,12 +66,11 @@ export function openAddMiscDialog(sheet) {
       <div class="form-group">
         <label>Type</label>
         <select name="miscType">
-          ${TYPE_OPTIONS.map(
-            (o) =>
-              `<option value="${foundry.utils.escapeHTML(o.value)}" ${
-                o.value === defaultGroup ? "selected" : ""
-              }>${foundry.utils.escapeHTML(o.label)}</option>`
-          ).join("")}
+          ${TYPE_OPTIONS.map((o) => {
+            const safeVal = foundry.utils.escapeHTML(o.value);
+            const safeLbl = foundry.utils.escapeHTML(o.label);
+            return `<option value="${safeVal}" ${o.value === defaultGroup ? "selected" : ""}>${safeLbl}</option>`;
+          }).join("")}
         </select>
       </div>
 
@@ -85,7 +89,7 @@ export function openAddMiscDialog(sheet) {
   `;
 
   const onRender = (html) => {
-    const form = html[0]?.querySelector?.("form.hwfwm-misc-dialog");
+    const form = html?.[0]?.querySelector?.("form.hwfwm-misc-dialog");
     if (!form) return;
 
     const typeSel = form.querySelector('select[name="miscType"]');
@@ -93,7 +97,7 @@ export function openAddMiscDialog(sheet) {
     if (!typeSel || !itemSel) return;
 
     const refreshItems = () => {
-      const groupName = (typeSel.value ?? "").trim();
+      const groupName = toStr(typeSel.value);
       itemSel.innerHTML = buildOptions(groupName);
     };
 
@@ -110,19 +114,25 @@ export function openAddMiscDialog(sheet) {
         add: {
           label: "Add",
           callback: async (html) => {
-            const form = html[0]?.querySelector?.("form.hwfwm-misc-dialog");
+            const form = html?.[0]?.querySelector?.("form.hwfwm-misc-dialog");
             if (!form) return;
 
-            // CRITICAL: store the selected ITEM KEY (miscKey), not the type
-            const key = (form.querySelector('select[name="miscKey"]')?.value ?? "").trim();
+            // CRITICAL: read the selected ITEM KEY (miscKey), not the type (miscType)
+            const key = toStr(form.querySelector('select[name="miscKey"]')?.value);
             const qtyRaw = form.querySelector('input[name="miscQty"]')?.value ?? "1";
-            const qty = Math.max(0, Number(qtyRaw));
+            const qtyNum = Number(qtyRaw);
+            const qty = Number.isFinite(qtyNum) ? Math.max(0, qtyNum) : 0;
 
-            if (!key || !Number.isFinite(qty) || qty <= 0) return;
+            // If nothing selected, do nothing
+            if (!key || qty <= 0) return;
 
+            // Safety: if key isn't a catalog entry, warn and stop.
+            // This catches the exact bug you're seeing (key becomes "Sundries", etc.)
             const entry = catalog[key];
             if (!entry) {
-              ui.notifications?.warn(`Misc item not found for key: ${key}`);
+              ui?.notifications?.warn?.(
+                `Misc item selection is not a valid item key: "${key}". (This usually means the dialog is reading the Type instead of the Item.)`
+              );
               return;
             }
 
