@@ -7,9 +7,8 @@ import {
   BACKGROUND_GRANTED_SPECIALTIES,
   BACKGROUND_SPECIALTY_CHOICE,
   BACKGROUND_CHOICE_OPTIONS
-} from "../../../config/backgrounds.mjs"; // ✅ expand imports
+} from "../../../config/backgrounds.mjs";
 
-// ✅ NEW: race grants + race feature definitions
 import {
   RACE_GRANTED_AFFINITIES,
   RACE_GRANTED_APTITUDES,
@@ -28,12 +27,10 @@ function safeCatalogName(catalog, key, fallbackPrefix = "") {
   return fallbackPrefix ? `${fallbackPrefix}${key}` : String(key);
 }
 
-/**
- * Persist background-granted specialties onto the Actor (one-way add).
- * - Adds missing specialty keys to system.specialties
- * - NEVER overwrites an existing entry
- * - Does NOT remove specialties if background later changes (safe behavior for now)
- */
+/* -------------------------------------------- */
+/* Background: specialties                       */
+/* -------------------------------------------- */
+
 async function persistBackgroundGrantedSpecialties(sheet, backgroundKey) {
   try {
     const actor = sheet?.document;
@@ -54,8 +51,6 @@ async function persistBackgroundGrantedSpecialties(sheet, backgroundKey) {
     for (const key of granted) {
       const k = toKey(key);
       if (!k) continue;
-
-      // If it already exists, do not overwrite
       if (current?.[k]) continue;
 
       update[`system.specialties.${k}`] = {
@@ -65,18 +60,12 @@ async function persistBackgroundGrantedSpecialties(sheet, backgroundKey) {
       };
     }
 
-    if (Object.keys(update).length) {
-      await actor.update(update);
-    }
+    if (Object.keys(update).length) await actor.update(update);
   } catch (err) {
     console.warn("HWFWM | persistBackgroundGrantedSpecialties failed", err);
   }
 }
 
-/**
- * Present a simple dialog to choose a specialty key from a configured option set.
- * Returns the chosen key string, or "" if canceled.
- */
 async function promptForSpecialtyChoice({ title, label, options }) {
   const opts = Array.isArray(options) ? options.map(toKey).filter(Boolean) : [];
   if (!opts.length) return "";
@@ -112,10 +101,7 @@ async function promptForSpecialtyChoice({ title, label, options }) {
             resolve(String(sel ?? ""));
           }
         },
-        cancel: {
-          label: "Cancel",
-          callback: () => resolve("")
-        }
+        cancel: { label: "Cancel", callback: () => resolve("") }
       },
       default: "ok",
       close: () => resolve("")
@@ -123,11 +109,6 @@ async function promptForSpecialtyChoice({ title, label, options }) {
   });
 }
 
-/**
- * Persist a chosen specialty for a background that has a choice rule.
- * - Does not overwrite existing specialties
- * - Stores a marker at system._flags.backgroundChoices.<backgroundKey> so we don't re-prompt
- */
 async function handleBackgroundChoiceGrant(sheet, backgroundKey) {
   const actor = sheet?.document;
   if (!actor) return;
@@ -141,10 +122,9 @@ async function handleBackgroundChoiceGrant(sheet, backgroundKey) {
   const choiceId = toKey(rule.id);
   if (!choiceId) return;
 
-  // If already chosen previously for this background, do nothing
   const existingChoice =
     actor.system?._flags?.backgroundChoices?.[bgKey] ??
-    actor.system?._flags?.backgroundChoice?.[bgKey]; // tolerate older key
+    actor.system?._flags?.backgroundChoice?.[bgKey];
 
   if (existingChoice) return;
 
@@ -168,7 +148,6 @@ async function handleBackgroundChoiceGrant(sheet, backgroundKey) {
   const current = actor.system?.specialties ?? {};
   const update = {};
 
-  // Add the chosen specialty if missing (do not overwrite)
   if (!current?.[picked]) {
     update[`system.specialties.${picked}`] = {
       score: 0,
@@ -178,18 +157,11 @@ async function handleBackgroundChoiceGrant(sheet, backgroundKey) {
     };
   }
 
-  // Record the choice so we do not re-prompt
   update[`system._flags.backgroundChoices.${bgKey}`] = picked;
 
-  if (Object.keys(update).length) {
-    await actor.update(update);
-  }
+  if (Object.keys(update).length) await actor.update(update);
 }
 
-/**
- * Add a selected specialty (manual pick) to the actor.
- * Reads the pick from system._ui.addSpecialtyKey.
- */
 async function addSelectedSpecialty(sheet) {
   const actor = sheet?.document;
   if (!actor) return;
@@ -197,7 +169,6 @@ async function addSelectedSpecialty(sheet) {
   const selectedKey = toKey(actor.system?._ui?.addSpecialtyKey);
   if (!selectedKey) return;
 
-  // Validate against catalog (optional but recommended)
   const catalog = CONFIG["hwfwm-system"]?.specialtyCatalog ?? {};
   if (!catalog?.[selectedKey]) {
     ui?.notifications?.warn?.(`Unknown specialty key: ${selectedKey}`);
@@ -206,25 +177,18 @@ async function addSelectedSpecialty(sheet) {
 
   const current = actor.system?.specialties ?? {};
   if (current?.[selectedKey]) {
-    // Already has it; just clear the dropdown to reduce friction
     await actor.update({ "system._ui.addSpecialtyKey": "" });
     return;
   }
 
-  const update = {
-    [`system.specialties.${selectedKey}`]: {
-      score: 0,
-      source: "manual",
-      granted: false
-    },
+  await actor.update({
+    [`system.specialties.${selectedKey}`]: { score: 0, source: "manual", granted: false },
     "system._ui.addSpecialtyKey": ""
-  };
-
-  await actor.update(update);
+  });
 }
 
 /* -------------------------------------------- */
-/* NEW: Affinities / Aptitudes / Resistances     */
+/* Manual: affinities / aptitudes / resistances  */
 /* -------------------------------------------- */
 
 async function addSelectedAffinity(sheet) {
@@ -247,17 +211,10 @@ async function addSelectedAffinity(sheet) {
   }
 
   const name = safeCatalogName(catalog, selectedKey, "Affinity: ");
-  const update = {
-    [`system.affinities.${selectedKey}`]: {
-      key: selectedKey,
-      name,
-      source: "manual",
-      granted: false
-    },
+  await actor.update({
+    [`system.affinities.${selectedKey}`]: { key: selectedKey, name, source: "manual", granted: false },
     "system._ui.addAffinityKey": ""
-  };
-
-  await actor.update(update);
+  });
 }
 
 async function removeAffinity(sheet, key) {
@@ -293,17 +250,10 @@ async function addSelectedAptitude(sheet) {
   }
 
   const name = safeCatalogName(catalog, selectedKey, "Aptitude: ");
-  const update = {
-    [`system.aptitudes.${selectedKey}`]: {
-      key: selectedKey,
-      name,
-      source: "manual",
-      granted: false
-    },
+  await actor.update({
+    [`system.aptitudes.${selectedKey}`]: { key: selectedKey, name, source: "manual", granted: false },
     "system._ui.addAptitudeKey": ""
-  };
-
-  await actor.update(update);
+  });
 }
 
 async function removeAptitude(sheet, key) {
@@ -339,17 +289,10 @@ async function addSelectedResistance(sheet) {
   }
 
   const name = safeCatalogName(catalog, selectedKey, "Resistance: ");
-  const update = {
-    [`system.resistances.${selectedKey}`]: {
-      key: selectedKey,
-      name,
-      source: "manual",
-      granted: false
-    },
+  await actor.update({
+    [`system.resistances.${selectedKey}`]: { key: selectedKey, name, source: "manual", granted: false },
     "system._ui.addResistanceKey": ""
-  };
-
-  await actor.update(update);
+  });
 }
 
 async function removeResistance(sheet, key) {
@@ -366,80 +309,181 @@ async function removeResistance(sheet, key) {
 }
 
 /* -------------------------------------------- */
-/* NEW: Race one-way grants                      */
+/* Race: REPLACE grants (cleanup + reapply)      */
 /* -------------------------------------------- */
 
-/**
- * One-way persist: race-granted affinities + aptitudes into actor.system.*.
- * - Adds missing keys
- * - Never overwrites
- * - Never removes on race change (safe for now)
- */
-async function persistRaceGrantedEnhancements(sheet, raceKey) {
-  try {
-    const actor = sheet?.document;
-    if (!actor) return;
+function buildRaceFeatureGrantKey(raceKey, featureDef) {
+  const r = toKey(raceKey);
+  const gk = toKey(featureDef?.grantKey);
+  if (gk) return gk;
 
-    const rKey = toKey(raceKey);
-    if (!rKey) return;
+  // deterministic fallback: stable across renders
+  const local = toKey(featureDef?.key) || toKey(featureDef?.name).toLowerCase().replace(/\s+/g, "");
+  return `race:${r}:${local}`;
+}
 
-    const affinityCatalog = CONFIG["hwfwm-system"]?.affinityCatalog ?? {};
-    const aptitudeCatalog = CONFIG["hwfwm-system"]?.aptitudeCatalog ?? {};
+async function cleanupRaceGrantedEnhancements(actor) {
+  // Remove only entries that are marked as race-granted
+  const update = {};
 
-    const grantedAff = Array.isArray(RACE_GRANTED_AFFINITIES?.[rKey]) ? RACE_GRANTED_AFFINITIES[rKey] : [];
-    const grantedApt = Array.isArray(RACE_GRANTED_APTITUDES?.[rKey]) ? RACE_GRANTED_APTITUDES[rKey] : [];
-
-    const currentAff = actor.system?.affinities ?? {};
-    const currentApt = actor.system?.aptitudes ?? {};
-
-    const update = {};
-
-    for (const raw of grantedAff) {
-      const key = toKey(raw);
-      if (!key) continue;
-      if (currentAff?.[key]) continue;
-
-      const name = safeCatalogName(affinityCatalog, key, "Affinity: ");
-      update[`system.affinities.${key}`] = {
-        key,
-        name,
-        source: "race",
-        granted: true
-      };
+  const aff = actor.system?.affinities ?? {};
+  for (const [k, v] of Object.entries(aff)) {
+    if (v?.source === "race" || v?.granted === true) {
+      // be conservative: only remove if it looks like our race grant record
+      if ((v?.source === "race") && (v?.granted === true)) {
+        update[`system.affinities.-=${k}`] = null;
+      }
     }
-
-    for (const raw of grantedApt) {
-      const key = toKey(raw);
-      if (!key) continue;
-      if (currentApt?.[key]) continue;
-
-      const name = safeCatalogName(aptitudeCatalog, key, "Aptitude: ");
-      update[`system.aptitudes.${key}`] = {
-        key,
-        name,
-        source: "race",
-        granted: true
-      };
-    }
-
-    if (Object.keys(update).length) {
-      await actor.update(update);
-    }
-  } catch (err) {
-    console.warn("HWFWM | persistRaceGrantedEnhancements failed", err);
   }
+
+  const apt = actor.system?.aptitudes ?? {};
+  for (const [k, v] of Object.entries(apt)) {
+    if ((v?.source === "race") && (v?.granted === true)) {
+      update[`system.aptitudes.-=${k}`] = null;
+    }
+  }
+
+  if (Object.keys(update).length) await actor.update(update);
+}
+
+async function applyRaceGrantedEnhancements(actor, raceKey) {
+  const rKey = toKey(raceKey);
+  if (!rKey) return;
+
+  const affinityCatalog = CONFIG["hwfwm-system"]?.affinityCatalog ?? {};
+  const aptitudeCatalog = CONFIG["hwfwm-system"]?.aptitudeCatalog ?? {};
+
+  const grantedAff = Array.isArray(RACE_GRANTED_AFFINITIES?.[rKey]) ? RACE_GRANTED_AFFINITIES[rKey] : [];
+  const grantedApt = Array.isArray(RACE_GRANTED_APTITUDES?.[rKey]) ? RACE_GRANTED_APTITUDES[rKey] : [];
+
+  const currentAff = actor.system?.affinities ?? {};
+  const currentApt = actor.system?.aptitudes ?? {};
+
+  const update = {};
+
+  for (const raw of grantedAff) {
+    const key = toKey(raw);
+    if (!key) continue;
+    if (currentAff?.[key]) continue;
+
+    const name = safeCatalogName(affinityCatalog, key, "Affinity: ");
+    update[`system.affinities.${key}`] = { key, name, source: "race", granted: true };
+  }
+
+  for (const raw of grantedApt) {
+    const key = toKey(raw);
+    if (!key) continue;
+    if (currentApt?.[key]) continue;
+
+    const name = safeCatalogName(aptitudeCatalog, key, "Aptitude: ");
+    update[`system.aptitudes.${key}`] = { key, name, source: "race", granted: true };
+  }
+
+  if (Object.keys(update).length) await actor.update(update);
+}
+
+async function cleanupRaceGrantedFeatureItems(actor) {
+  // Delete only feature Items that are clearly race-created by our system
+  const toDelete = Array.from(actor.items ?? [])
+    .filter((it) => it?.type === "feature")
+    .filter((it) => it?.system?.source === "race")
+    .filter((it) => {
+      const gk = toKey(it?.system?.grantKey);
+      return gk.startsWith("race:");
+    })
+    .map((it) => it.id);
+
+  if (toDelete.length) await actor.deleteEmbeddedDocuments("Item", toDelete);
+}
+
+async function applyRaceGrantedFeatureItems(actor, raceKey) {
+  const rKey = toKey(raceKey);
+  if (!rKey) return;
+
+  const defs = Array.isArray(RACE_GRANTED_FEATURES?.[rKey]) ? RACE_GRANTED_FEATURES[rKey] : [];
+  if (!defs.length) return;
+
+  // Build desired grantKey set
+  const desired = defs
+    .map((d) => buildRaceFeatureGrantKey(rKey, d))
+    .map(toKey)
+    .filter(Boolean);
+
+  const desiredSet = new Set(desired);
+
+  // Existing race feature items
+  const existing = Array.from(actor.items ?? [])
+    .filter((it) => it?.type === "feature")
+    .filter((it) => it?.system?.source === "race");
+
+  // De-dupe existing by grantKey (keep first, delete extras)
+  const seen = new Set();
+  const dupIds = [];
+  for (const it of existing) {
+    const gk = toKey(it?.system?.grantKey);
+    if (!gk) continue;
+    if (seen.has(gk)) dupIds.push(it.id);
+    else seen.add(gk);
+  }
+  if (dupIds.length) await actor.deleteEmbeddedDocuments("Item", dupIds);
+
+  // Refresh existing after possible deletes
+  const existing2 = Array.from(actor.items ?? [])
+    .filter((it) => it?.type === "feature")
+    .filter((it) => it?.system?.source === "race");
+
+  const existingGrantKeys = new Set(
+    existing2.map((it) => toKey(it?.system?.grantKey)).filter(Boolean)
+  );
+
+  // Create missing
+  const toCreate = [];
+  for (const f of defs) {
+    const name = toKey(f?.name);
+    if (!name) continue;
+
+    const grantKey = buildRaceFeatureGrantKey(rKey, f);
+    if (existingGrantKeys.has(grantKey)) continue;
+
+    toCreate.push({
+      name,
+      type: "feature",
+      system: {
+        source: "race",
+        grantKey,
+        notes: toKey(f?.description) || ""
+      }
+    });
+  }
+
+  if (toCreate.length) await actor.createEmbeddedDocuments("Item", toCreate);
+
+  // Final safety: delete any race feature items that are not in desired set
+  const final = Array.from(actor.items ?? [])
+    .filter((it) => it?.type === "feature")
+    .filter((it) => it?.system?.source === "race");
+
+  const staleIds = final
+    .filter((it) => {
+      const gk = toKey(it?.system?.grantKey);
+      // only manage our namespace
+      if (!gk.startsWith("race:")) return false;
+      return !desiredSet.has(gk);
+    })
+    .map((it) => it.id);
+
+  if (staleIds.length) await actor.deleteEmbeddedDocuments("Item", staleIds);
 }
 
 /**
- * One-way persist: race-granted FEATURES into embedded Item documents (type "feature").
- * This is required because your context renders grantedFeatures from Items, not from config.
+ * Replace race grants:
+ *  - Remove prior race-granted affinities/aptitudes (only those marked source="race" and granted=true)
+ *  - Remove prior race-granted feature items (only those with source="race" and grantKey starting with "race:")
+ *  - Apply new race grants
  *
- * Safe rules:
- * - Only creates missing items
- * - Uses system.source="race" and a stable system.grantKey for de-dupe
- * - Never deletes items on race change (safe for now)
+ * This prevents “old race stuff lingering” and stops runaway duplication.
  */
-async function persistRaceGrantedFeatures(sheet, raceKey) {
+async function replaceRaceGrants(sheet, raceKey) {
   try {
     const actor = sheet?.document;
     if (!actor) return;
@@ -447,52 +491,28 @@ async function persistRaceGrantedFeatures(sheet, raceKey) {
     const rKey = toKey(raceKey);
     if (!rKey) return;
 
-    const defs = Array.isArray(RACE_GRANTED_FEATURES?.[rKey]) ? RACE_GRANTED_FEATURES[rKey] : [];
-    if (!defs.length) return;
+    // Guard against repeated calls during the same update cascade
+    const last = actor.system?._flags?.lastRaceGrantSync ?? "";
+    if (last === rKey) return;
 
-    // De-dupe against existing items by system.grantKey (preferred), then by name fallback
-    const existing = Array.from(actor.items ?? []).filter((it) => it?.type === "feature");
-    const existingGrantKeys = new Set(existing.map((it) => toKey(it.system?.grantKey)).filter(Boolean));
-    const existingNames = new Set(existing.map((it) => toKey(it.name)).filter(Boolean));
+    // Mark immediately to prevent multi-fire duplication loops
+    await actor.update({ "system._flags.lastRaceGrantSync": rKey });
 
-    const toCreate = [];
+    // Cleanup then apply
+    await cleanupRaceGrantedEnhancements(actor);
+    await cleanupRaceGrantedFeatureItems(actor);
 
-    for (const f of defs) {
-      const name = toKey(f?.name);
-      const grantKey = toKey(f?.grantKey);
-      if (!name) continue;
-
-      if (grantKey && existingGrantKeys.has(grantKey)) continue;
-      if (!grantKey && existingNames.has(name)) continue;
-
-      toCreate.push({
-        name,
-        type: "feature",
-        system: {
-          source: "race",
-          grantKey: grantKey || `race:${rKey}:${toKey(f?.key) || name.toLowerCase().replace(/\s+/g, "")}`,
-          notes: toKey(f?.description) || ""
-        }
-      });
-    }
-
-    if (toCreate.length) {
-      await actor.createEmbeddedDocuments("Item", toCreate);
-    }
+    await applyRaceGrantedEnhancements(actor, rKey);
+    await applyRaceGrantedFeatureItems(actor, rKey);
   } catch (err) {
-    console.warn("HWFWM | persistRaceGrantedFeatures failed", err);
+    console.warn("HWFWM | replaceRaceGrants failed", err);
   }
 }
 
 /* -------------------------------------------- */
-/* Existing: One-way lock                         */
+/* Lock choices                                  */
 /* -------------------------------------------- */
 
-/**
- * One-way lock to finalize character creation selections (race/role/background).
- * - Sets system._flags.choicesLocked = true
- * - Does not attempt to disable UI here; templates should render disabled based on the flag
- */
 async function lockChoices(sheet) {
   try {
     const actor = sheet?.document;
@@ -511,24 +531,10 @@ async function lockChoices(sheet) {
 /* Binder                                        */
 /* -------------------------------------------- */
 
-/**
- * Bind all DOM listeners for the actor sheet.
- *
- * Supports BOTH signatures:
- *  - bindActorSheetListeners(sheet, root, controller)
- *  - bindActorSheetListeners({ sheet, root, controller })
- */
 export function bindActorSheetListeners(arg1, arg2, arg3) {
-  // Normalize arguments into { sheet, root, controller }
   let sheet, root, controller;
 
-  if (
-    arg1 &&
-    typeof arg1 === "object" &&
-    "sheet" in arg1 &&
-    "root" in arg1 &&
-    "controller" in arg1
-  ) {
+  if (arg1 && typeof arg1 === "object" && "sheet" in arg1 && "root" in arg1 && "controller" in arg1) {
     ({ sheet, root, controller } = arg1);
   } else {
     sheet = arg1;
@@ -540,9 +546,7 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
 
   const { signal } = controller;
 
-  // ✅ One-time sync on render/bind:
-  // - add any fixed granted specialties
-  // - if background has a choice and none recorded yet, prompt once
+  // One-time sync on render/bind
   const initialDetails = sheet.document?.system?.details ?? {};
   const initialBgKey = initialDetails?.backgroundKey ?? "";
   const initialRaceKey = initialDetails?.raceKey ?? "";
@@ -550,13 +554,11 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
   persistBackgroundGrantedSpecialties(sheet, initialBgKey);
   handleBackgroundChoiceGrant(sheet, initialBgKey);
 
-  // ✅ One-time sync: race enhancements + race features
-  persistRaceGrantedEnhancements(sheet, initialRaceKey);
-  persistRaceGrantedFeatures(sheet, initialRaceKey);
+  // IMPORTANT: Use replace behavior (not one-way add)
+  // Also: this is safe because it only manages entries/items marked as race-granted.
+  replaceRaceGrants(sheet, initialRaceKey);
 
-  // -----------------------
   // Tabs
-  // -----------------------
   activateTabGroup(sheet, root, {
     group: "primary",
     navSelector: '.hwfwm-tabs[data-group="primary"]',
@@ -596,43 +598,29 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
     setPersisted: (t) => {
       sheet._activeSubTabs.treasures = t;
       const current = sheet.document?.system?._ui?.treasuresSubTab ?? "equipment";
-      if (current !== t)
-        sheet.document?.update?.({ "system._ui.treasuresSubTab": t }).catch(() => {});
+      if (current !== t) sheet.document?.update?.({ "system._ui.treasuresSubTab": t }).catch(() => {});
     },
     signal
   });
 
-  // -----------------------
-  // Change handler (IMPORTANT: do NOT capture)
-  // -----------------------
+  // Change handler (do NOT capture)
   root.addEventListener(
     "change",
     async (ev) => {
       const target = ev.target;
 
-      // ------------------------------------------------
-      // Background change: persist granted specialties + handle choice grant
-      // ------------------------------------------------
       if (target instanceof HTMLSelectElement && target.name === "system.details.backgroundKey") {
-        // Do NOT prevent default; let ApplicationV2 persist backgroundKey normally.
         await persistBackgroundGrantedSpecialties(sheet, target.value);
         await handleBackgroundChoiceGrant(sheet, target.value);
         return;
       }
 
-      // ------------------------------------------------
-      // Race change: persist race-granted enhancements + features (one-way add)
-      // ------------------------------------------------
       if (target instanceof HTMLSelectElement && target.name === "system.details.raceKey") {
-        // Do NOT prevent default; let ApplicationV2 persist raceKey normally.
-        await persistRaceGrantedEnhancements(sheet, target.value);
-        await persistRaceGrantedFeatures(sheet, target.value);
+        // Replace race grants on change
+        await replaceRaceGrants(sheet, target.value);
         return;
       }
 
-      // ------------------------------------------------
-      // Items inline edits (embedded Item documents)
-      // ------------------------------------------------
       if (
         (target instanceof HTMLInputElement || target instanceof HTMLSelectElement) &&
         target.dataset?.itemId &&
@@ -654,13 +642,11 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
           value = Number.isFinite(n) ? n : 0;
         }
 
-        // Auto-delete consumables qty 0
         if (field === "system.quantity" && typeof value === "number" && value <= 0) {
           await item.delete();
           return;
         }
 
-        // Name is a top-level field
         if (field === "name") {
           await item.update({ name: String(value ?? "") });
           return;
@@ -670,9 +656,6 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
         return;
       }
 
-      // ------------------------------------------------
-      // Misc inline edits (actor system data, not Items)
-      // ------------------------------------------------
       if (
         (target instanceof HTMLInputElement || target instanceof HTMLSelectElement) &&
         target.dataset?.miscKey &&
@@ -695,9 +678,6 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
         return;
       }
 
-      // ------------------------------------------------
-      // Essence enforcement (ONLY intercept if it handled)
-      // ------------------------------------------------
       if (target instanceof HTMLSelectElement) {
         const handled = await handleEssenceSelectChange(sheet, target);
         if (handled) {
@@ -708,19 +688,12 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
         }
       }
 
-      // ------------------------------------------------
-      // IMPORTANT:
-      // For all normal actor fields (name="system...."), do NOTHING here.
-      // Let Foundry's ApplicationV2 form handler receive the event and
-      // persist changes (submitOnChange).
-      // ------------------------------------------------
+      // Let Foundry handle standard submitOnChange actor fields.
     },
     { signal, capture: false }
   );
 
-  // -----------------------
   // Click handler (delegated)
-  // -----------------------
   root.addEventListener(
     "click",
     async (ev) => {
@@ -729,15 +702,11 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
 
       const action = actionBtn.dataset.action;
 
-      // Foundry window chrome uses data-action too.
-      // Only intercept actions we own.
       const allowed = new Set([
         "add-misc-item",
         "remove-misc-item",
         "add-specialty",
         "lock-choices",
-
-        // ✅ NEW: enhancements actions
         "add-affinity",
         "remove-affinity",
         "add-aptitude",
@@ -752,67 +721,39 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
       ev.stopPropagation?.();
       ev.stopImmediatePropagation?.();
 
-      if (action === "add-misc-item") {
-        openAddMiscDialog(sheet);
-        return;
-      }
+      if (action === "add-misc-item") return openAddMiscDialog(sheet);
 
       if (action === "remove-misc-item") {
         const key = actionBtn.dataset.key ?? actionBtn.getAttribute("data-key");
-        await removeMiscByKey(sheet, key);
-        return;
+        return removeMiscByKey(sheet, key);
       }
 
-      if (action === "add-specialty") {
-        await addSelectedSpecialty(sheet);
-        return;
-      }
+      if (action === "add-specialty") return addSelectedSpecialty(sheet);
 
-      if (action === "add-affinity") {
-        await addSelectedAffinity(sheet);
-        return;
-      }
-
+      if (action === "add-affinity") return addSelectedAffinity(sheet);
       if (action === "remove-affinity") {
         const key = actionBtn.dataset.key ?? actionBtn.getAttribute("data-key");
-        await removeAffinity(sheet, key);
-        return;
+        return removeAffinity(sheet, key);
       }
 
-      if (action === "add-aptitude") {
-        await addSelectedAptitude(sheet);
-        return;
-      }
-
+      if (action === "add-aptitude") return addSelectedAptitude(sheet);
       if (action === "remove-aptitude") {
         const key = actionBtn.dataset.key ?? actionBtn.getAttribute("data-key");
-        await removeAptitude(sheet, key);
-        return;
+        return removeAptitude(sheet, key);
       }
 
-      if (action === "add-resistance") {
-        await addSelectedResistance(sheet);
-        return;
-      }
-
+      if (action === "add-resistance") return addSelectedResistance(sheet);
       if (action === "remove-resistance") {
         const key = actionBtn.dataset.key ?? actionBtn.getAttribute("data-key");
-        await removeResistance(sheet, key);
-        return;
+        return removeResistance(sheet, key);
       }
 
-      if (action === "lock-choices") {
-        await lockChoices(sheet);
-        return;
-      }
+      if (action === "lock-choices") return lockChoices(sheet);
     },
     { signal, capture: true }
   );
 }
 
-/**
- * Optional alias so actor-sheet.mjs can call either name safely.
- */
 export function bindListeners(args) {
   return bindActorSheetListeners(args);
 }
