@@ -1,8 +1,4 @@
 // scripts/sheets/actor/listeners/role.mjs
-//
-// Role specialty grants (replace-on-change).
-// Keeps manual/background specialties intact, but ensures role grants are present
-// and stale role grants are removed when the role changes.
 
 import { ROLE_GRANTED_SPECIALTIES } from "../../../../config/roles.mjs";
 
@@ -14,13 +10,7 @@ const _roleSyncLocks = new Map();
 
 const toKey = (v) => String(v ?? "").trim();
 
-/**
- * Replace role-granted specialties:
- *  - Remove prior role-granted specialty entries (source="role" && granted===true)
- *  - Add missing specialties for the current role (without overwriting existing entries)
- *  - Stamp completion in system._flags.roleGrantStamp
- */
-export async function replaceRoleSpecialtyGrants(sheet, roleKey) {
+export async function replaceRoleGrantedSpecialties(sheet, roleKey) {
   const actor = sheet?.document;
   if (!actor) return;
 
@@ -34,7 +24,7 @@ export async function replaceRoleSpecialtyGrants(sheet, roleKey) {
   if (inflight) await inflight.catch(() => {});
 
   const task = (async () => {
-    // Skip stale calls if actor already changed again.
+    // Skip stale calls if actor already changed role again.
     const liveRole = toKey(actor.system?.details?.roleKey);
     if (liveRole && liveRole !== rKey) return;
 
@@ -53,12 +43,15 @@ export async function replaceRoleSpecialtyGrants(sheet, roleKey) {
     }
 
     // Apply: add missing role specialties (do not overwrite existing keys)
-    const grants = Array.isArray(ROLE_GRANTED_SPECIALTIES?.[rKey]) ? ROLE_GRANTED_SPECIALTIES[rKey] : [];
+    const grants = Array.isArray(ROLE_GRANTED_SPECIALTIES?.[rKey])
+      ? ROLE_GRANTED_SPECIALTIES[rKey]
+      : [];
+
     for (const raw of grants) {
       const key = toKey(raw);
       if (!key) continue;
 
-      // If a specialty already exists (manual/background/etc), do not overwrite
+      // If already present (manual/background/etc), do not overwrite
       if (current?.[key]) continue;
 
       update[`system.specialties.${key}`] = {
@@ -68,7 +61,7 @@ export async function replaceRoleSpecialtyGrants(sheet, roleKey) {
       };
     }
 
-    // Mark complete at the end (critical for re-render safety).
+    // Mark complete at end
     update["system._flags.roleGrantStamp"] = rKey;
 
     if (Object.keys(update).length) await actor.update(update);
@@ -79,8 +72,9 @@ export async function replaceRoleSpecialtyGrants(sheet, roleKey) {
   try {
     await task;
   } catch (err) {
-    console.warn("HWFWM | replaceRoleSpecialtyGrants failed", err);
+    console.warn("HWFWM | replaceRoleGrantedSpecialties failed", err);
   } finally {
     if (_roleSyncLocks.get(actorId) === task) _roleSyncLocks.delete(actorId);
   }
 }
+
