@@ -43,64 +43,106 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
   };
 
   // ---------------------------------------------------------------------------
+  // Ensure required nested paths exist for templates (prevents silent undefined)
+  // ---------------------------------------------------------------------------
+  const sys = context.system ?? {};
+  sys.resources = sys.resources ?? {};
+  sys.resources.mana = sys.resources.mana ?? { value: 0, max: 0 };
+  sys.resources.stamina = sys.resources.stamina ?? { value: 0, max: 0 };
+  sys.resources.lifeForce = sys.resources.lifeForce ?? { value: 0, max: 0 };
+
+  // NEW: read-only derived display fields (may be set by actor.mjs; default to 0)
+  sys.resources.mana.recovery = Number.isFinite(Number(sys.resources.mana.recovery))
+    ? Number(sys.resources.mana.recovery)
+    : 0;
+  sys.resources.stamina.recovery = Number.isFinite(Number(sys.resources.stamina.recovery))
+    ? Number(sys.resources.stamina.recovery)
+    : 0;
+  sys.resources.lifeForce.recovery = Number.isFinite(Number(sys.resources.lifeForce.recovery))
+    ? Number(sys.resources.lifeForce.recovery)
+    : 0;
+  sys.resources.naturalArmor = Number.isFinite(Number(sys.resources.naturalArmor))
+    ? Number(sys.resources.naturalArmor)
+    : 0;
+
+  context.system = sys;
+
+  // ---------------------------------------------------------------------------
   // DERIVED RANK (Header)
   // ---------------------------------------------------------------------------
-  // Tier values per rankKey: normal 0, iron 1, bronze 2, silver 3, gold 4, diamond 5
-  // This should live in config eventually; until then we default here.
-  const rankTierValues =
-    cfg.rankTierValues ??
-    {
-      normal: 0,
-      iron: 1,
-      bronze: 2,
-      silver: 3,
-      gold: 4,
-      diamond: 5
+  // Prefer authoritative derived rank from actor.prepareDerivedData().
+  // Fallback to local computation if not available.
+  const derivedFromActorKey = sys?._derived?.rankKey ?? null;
+  const derivedFromActorLabel = sys?._derived?.rankLabel ?? null;
+
+  if (derivedFromActorKey) {
+    const derivedRankKey = String(derivedFromActorKey);
+    const derivedRankLabel = String(derivedFromActorLabel ?? (ranks?.[derivedRankKey] ?? derivedRankKey));
+    const derivedRankTotal = Number(sys?._derived?.rankTierTotal ?? 0);
+
+    context.derivedRankTotal = derivedRankTotal;
+    context.derivedRankKey = derivedRankKey;
+    context.derivedRankLabel = derivedRankLabel;
+  } else {
+    // Tier values per rankKey: normal 0, iron 1, bronze 2, silver 3, gold 4, diamond 5
+    // This should live in config eventually; until then we default here.
+    const rankTierValues =
+      cfg.rankTierValues ??
+      {
+        normal: 0,
+        iron: 1,
+        bronze: 2,
+        silver: 3,
+        gold: 4,
+        diamond: 5
+      };
+
+    function deriveRankKeyFromTierTotal(total) {
+      const t = Number(total) || 0;
+      if (t >= 20) return "diamond";
+      if (t >= 16) return "gold";
+      if (t >= 12) return "silver";
+      if (t >= 8) return "bronze";
+      if (t >= 4) return "iron";
+      return "normal";
+    }
+
+    // NOW LOCKED: We only read from the actual actor schema:
+    // system.attributes.<attr>.rankKey
+    const attrRankKeys = {
+      power: sys.attributes?.power?.rankKey ?? "normal",
+      speed: sys.attributes?.speed?.rankKey ?? "normal",
+      spirit: sys.attributes?.spirit?.rankKey ?? "normal",
+      recovery: sys.attributes?.recovery?.rankKey ?? "normal"
     };
 
-  function deriveRankKeyFromTierTotal(total) {
-    const t = Number(total) || 0;
-    if (t >= 20) return "diamond";
-    if (t >= 16) return "gold";
-    if (t >= 12) return "silver";
-    if (t >= 8) return "bronze";
-    if (t >= 4) return "iron";
-    return "normal";
+    const derivedRankTotal =
+      (rankTierValues[attrRankKeys.power] ?? 0) +
+      (rankTierValues[attrRankKeys.speed] ?? 0) +
+      (rankTierValues[attrRankKeys.spirit] ?? 0) +
+      (rankTierValues[attrRankKeys.recovery] ?? 0);
+
+    const derivedRankKey = deriveRankKeyFromTierTotal(derivedRankTotal);
+    const derivedRankLabel = ranks?.[derivedRankKey] ?? derivedRankKey;
+
+    // Expose to templates (header)
+    context.derivedRankTotal = derivedRankTotal;
+    context.derivedRankKey = derivedRankKey;
+    context.derivedRankLabel = derivedRankLabel;
+
+    // Optional debugging
+    context._attrRankKeys = attrRankKeys;
   }
-
-  // NOW LOCKED: We only read from the actual actor schema:
-  // system.attributes.<attr>.rankKey
-  const sys = context.system ?? {};
-  const attrRankKeys = {
-    power: sys.attributes?.power?.rankKey ?? "normal",
-    speed: sys.attributes?.speed?.rankKey ?? "normal",
-    spirit: sys.attributes?.spirit?.rankKey ?? "normal",
-    recovery: sys.attributes?.recovery?.rankKey ?? "normal"
-  };
-
-  const derivedRankTotal =
-    (rankTierValues[attrRankKeys.power] ?? 0) +
-    (rankTierValues[attrRankKeys.speed] ?? 0) +
-    (rankTierValues[attrRankKeys.spirit] ?? 0) +
-    (rankTierValues[attrRankKeys.recovery] ?? 0);
-
-  const derivedRankKey = deriveRankKeyFromTierTotal(derivedRankTotal);
-  const derivedRankLabel = ranks?.[derivedRankKey] ?? derivedRankKey;
-
-  // Expose to templates (header)
-  context.derivedRankTotal = derivedRankTotal;
-  context.derivedRankKey = derivedRankKey;
-  context.derivedRankLabel = derivedRankLabel;
 
   // ---------------------------------------------------------------------------
   // Overview: Rank label + description (read-only)
   // ---------------------------------------------------------------------------
   const rankDescriptions = cfg.rankDescriptions ?? {};
-  context.overviewRankLabel = derivedRankLabel;
+  context.overviewRankLabel = context.derivedRankLabel;
 
   // Fall back to a safe placeholder if we haven't authored the text yet
   context.overviewRankDescription =
-    rankDescriptions?.[derivedRankKey] ?? "Rank description not yet defined.";
+    rankDescriptions?.[context.derivedRankKey] ?? "Rank description not yet defined.";
 
   // ---------------------------------------------------------------------------
   // Overview: Background description (read-only)
@@ -109,9 +151,6 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
   context.overviewBackgroundLabel = backgrounds?.[bgKey] ?? (bgKey || "—");
   context.overviewBackgroundDescription =
     BACKGROUND_DESCRIPTIONS?.[bgKey] ?? (bgKey ? "Background description not yet defined." : "—");
-
-  // Optional debugging
-  context._attrRankKeys = attrRankKeys;
 
   // Items
   const items = Array.from(sheet.document?.items ?? []);
@@ -234,3 +273,4 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
 
   return context;
 }
+
