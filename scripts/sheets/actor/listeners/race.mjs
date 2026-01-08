@@ -11,8 +11,8 @@ import {
 /* Toggle: recommended cleanup behavior          */
 /* -------------------------------------------- */
 
-// If true: deletes ALL feature Items where system.source === "race" before applying new race.
-// Most reliable fix for duplicate/stale race features from older formats.
+// If true: deletes ALL feature Items that are race-granted before applying new race.
+// This is the most reliable fix for duplicate/stale race features from older formats.
 const HARD_REPLACE_RACE_FEATURES = true;
 
 /* -------------------------------------------- */
@@ -35,12 +35,11 @@ function buildRaceFeatureGrantKey(raceKey, featureDef) {
   const local =
     toKey(featureDef?.key) ||
     toKey(featureDef?.name).toLowerCase().replace(/\s+/g, "");
-
   return `race:${r}:${local}`;
 }
 
 /* -------------------------------------------- */
-/* Race: affinities + aptitudes + resistances   */
+/* Race: affinities + aptitudes + resistances    */
 /* -------------------------------------------- */
 
 async function cleanupRaceGrantedEnhancements(actor) {
@@ -74,15 +73,19 @@ async function applyRaceGrantedEnhancements(actor, raceKey) {
   const rKey = toKey(raceKey);
   if (!rKey) return;
 
-  const cfg = CONFIG["hwfwm-system"] ?? {};
+  const affinityCatalog = CONFIG["hwfwm-system"]?.affinityCatalog ?? {};
+  const aptitudeCatalog = CONFIG["hwfwm-system"]?.aptitudeCatalog ?? {};
+  const resistanceCatalog = CONFIG["hwfwm-system"]?.resistanceCatalog ?? {};
 
-  const affinityCatalog = cfg.affinityCatalog ?? {};
-  const aptitudeCatalog = cfg.aptitudeCatalog ?? {};
-  const resistanceCatalog = cfg.resistanceCatalog ?? {};
-
-  const grantedAff = Array.isArray(RACE_GRANTED_AFFINITIES?.[rKey]) ? RACE_GRANTED_AFFINITIES[rKey] : [];
-  const grantedApt = Array.isArray(RACE_GRANTED_APTITUDES?.[rKey]) ? RACE_GRANTED_APTITUDES[rKey] : [];
-  const grantedRes = Array.isArray(RACE_GRANTED_RESISTANCES?.[rKey]) ? RACE_GRANTED_RESISTANCES[rKey] : [];
+  const grantedAff = Array.isArray(RACE_GRANTED_AFFINITIES?.[rKey])
+    ? RACE_GRANTED_AFFINITIES[rKey]
+    : [];
+  const grantedApt = Array.isArray(RACE_GRANTED_APTITUDES?.[rKey])
+    ? RACE_GRANTED_APTITUDES[rKey]
+    : [];
+  const grantedRes = Array.isArray(RACE_GRANTED_RESISTANCES?.[rKey])
+    ? RACE_GRANTED_RESISTANCES[rKey]
+    : [];
 
   const currentAff = actor.system?.affinities ?? {};
   const currentApt = actor.system?.aptitudes ?? {};
@@ -93,8 +96,8 @@ async function applyRaceGrantedEnhancements(actor, raceKey) {
   for (const raw of grantedAff) {
     const key = toKey(raw);
     if (!key) continue;
+    if (!affinityCatalog?.[key]) continue; // must exist
     if (currentAff?.[key]) continue;
-    if (!affinityCatalog?.[key]) continue;
 
     const name = safeCatalogName(affinityCatalog, key, "Affinity: ");
     update[`system.affinities.${key}`] = { key, name, source: "race", granted: true };
@@ -103,8 +106,8 @@ async function applyRaceGrantedEnhancements(actor, raceKey) {
   for (const raw of grantedApt) {
     const key = toKey(raw);
     if (!key) continue;
+    if (!aptitudeCatalog?.[key]) continue; // must exist
     if (currentApt?.[key]) continue;
-    if (!aptitudeCatalog?.[key]) continue;
 
     const name = safeCatalogName(aptitudeCatalog, key, "Aptitude: ");
     update[`system.aptitudes.${key}`] = { key, name, source: "race", granted: true };
@@ -113,8 +116,8 @@ async function applyRaceGrantedEnhancements(actor, raceKey) {
   for (const raw of grantedRes) {
     const key = toKey(raw);
     if (!key) continue;
+    if (!resistanceCatalog?.[key]) continue; // must exist
     if (currentRes?.[key]) continue;
-    if (!resistanceCatalog?.[key]) continue;
 
     const name = safeCatalogName(resistanceCatalog, key, "Resistance: ");
     update[`system.resistances.${key}`] = { key, name, source: "race", granted: true };
@@ -131,15 +134,24 @@ async function cleanupRaceGrantedFeatureItems(actor) {
   const items = Array.from(actor.items ?? []).filter((it) => it?.type === "feature");
 
   if (HARD_REPLACE_RACE_FEATURES) {
-    // Delete everything tagged as race.
-    const toDelete = items.filter((it) => it?.system?.source === "race").map((it) => it.id);
+    // Aggressive cleanup for testability:
+    // - Delete anything explicitly tagged as race
+    // - ALSO delete any feature with grantKey in the "race:" namespace (legacy-safe)
+    const toDelete = items
+      .filter((it) => {
+        const src = toKey(it?.system?.source);
+        const gk = toKey(it?.system?.grantKey);
+        return src === "race" || gk.startsWith("race:");
+      })
+      .map((it) => it.id);
+
     if (toDelete.length) await actor.deleteEmbeddedDocuments("Item", toDelete);
     return;
   }
 
-  // Legacy-safe mode: only delete items we can prove are ours ("race:" namespace)
+  // Conservative mode: only delete items we can prove are in our namespace
   const toDelete = items
-    .filter((it) => it?.system?.source === "race")
+    .filter((it) => toKey(it?.system?.source) === "race")
     .filter((it) => toKey(it?.system?.grantKey).startsWith("race:"))
     .map((it) => it.id);
 
@@ -150,15 +162,24 @@ async function applyRaceGrantedFeatureItems(actor, raceKey) {
   const rKey = toKey(raceKey);
   if (!rKey) return;
 
-  const defs = Array.isArray(RACE_GRANTED_FEATURES?.[rKey]) ? RACE_GRANTED_FEATURES[rKey] : [];
+  const defs = Array.isArray(RACE_GRANTED_FEATURES?.[rKey])
+    ? RACE_GRANTED_FEATURES[rKey]
+    : [];
   if (!defs.length) return;
+
+  const desiredGrantKeys = defs
+    .map((d) => buildRaceFeatureGrantKey(rKey, d))
+    .map(toKey)
+    .filter(Boolean);
+
+  const desiredSet = new Set(desiredGrantKeys);
 
   // Existing race feature items
   const existing = Array.from(actor.items ?? [])
     .filter((it) => it?.type === "feature")
-    .filter((it) => it?.system?.source === "race");
+    .filter((it) => toKey(it?.system?.source) === "race");
 
-  // De-dupe existing by grantKey (keep first, delete extras)
+  // De-dupe existing by grantKey
   const seen = new Set();
   const dupIds = [];
   for (const it of existing) {
@@ -171,9 +192,11 @@ async function applyRaceGrantedFeatureItems(actor, raceKey) {
 
   const existing2 = Array.from(actor.items ?? [])
     .filter((it) => it?.type === "feature")
-    .filter((it) => it?.system?.source === "race");
+    .filter((it) => toKey(it?.system?.source) === "race");
 
-  const existingGrantKeys = new Set(existing2.map((it) => toKey(it?.system?.grantKey)).filter(Boolean));
+  const existingGrantKeys = new Set(
+    existing2.map((it) => toKey(it?.system?.grantKey)).filter(Boolean)
+  );
 
   const toCreate = [];
   for (const f of defs) {
@@ -195,6 +218,23 @@ async function applyRaceGrantedFeatureItems(actor, raceKey) {
   }
 
   if (toCreate.length) await actor.createEmbeddedDocuments("Item", toCreate);
+
+  // In conservative mode, remove stale items not in desired set
+  if (!HARD_REPLACE_RACE_FEATURES) {
+    const final = Array.from(actor.items ?? [])
+      .filter((it) => it?.type === "feature")
+      .filter((it) => toKey(it?.system?.source) === "race");
+
+    const staleIds = final
+      .filter((it) => {
+        const gk = toKey(it?.system?.grantKey);
+        if (!gk.startsWith("race:")) return false;
+        return !desiredSet.has(gk);
+      })
+      .map((it) => it.id);
+
+    if (staleIds.length) await actor.deleteEmbeddedDocuments("Item", staleIds);
+  }
 }
 
 /* -------------------------------------------- */
@@ -202,29 +242,25 @@ async function applyRaceGrantedFeatureItems(actor, raceKey) {
 /* -------------------------------------------- */
 
 export async function replaceRaceGrants(sheet, raceKey) {
-  const actor = sheet?.document;
-  if (!actor) return;
-
-  const rKey = toKey(raceKey);
-  if (!rKey) return;
-
-  // Reliable guard against duplicate cascades.
-  // This is better than a stored flag because it blocks re-entrant calls immediately.
-  if (sheet._raceGrantSyncing) return;
-  sheet._raceGrantSyncing = true;
-
   try {
+    const actor = sheet?.document;
+    if (!actor) return;
+
+    const rKey = toKey(raceKey);
+    if (!rKey) return;
+
+    const last = actor.system?._flags?.lastRaceGrantSync ?? "";
+    if (last === rKey) return;
+
+    // Mark early to stop multi-fire loops
+    await actor.update({ "system._flags.lastRaceGrantSync": rKey });
+
     await cleanupRaceGrantedEnhancements(actor);
     await cleanupRaceGrantedFeatureItems(actor);
 
     await applyRaceGrantedEnhancements(actor, rKey);
     await applyRaceGrantedFeatureItems(actor, rKey);
-
-    // Optional: remember last applied race for debugging/UI (not used as a guard)
-    await actor.update({ "system._flags.lastRaceGrantSync": rKey });
   } catch (err) {
     console.warn("HWFWM | replaceRaceGrants failed", err);
-  } finally {
-    sheet._raceGrantSyncing = false;
   }
 }
