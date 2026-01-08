@@ -21,6 +21,7 @@ import {
 } from "./listeners/traits.mjs";
 
 import { replaceRaceGrants } from "./listeners/race.mjs";
+import { replaceRoleGrantedSpecialties } from "./listeners/role.mjs";
 
 /* -------------------------------------------- */
 /* Lock choices                                  */
@@ -53,13 +54,7 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
   let sheet, root, controller;
 
   // Normalize args
-  if (
-    arg1 &&
-    typeof arg1 === "object" &&
-    arg1.sheet &&
-    arg1.root &&
-    arg1.controller
-  ) {
+  if (arg1 && typeof arg1 === "object" && arg1.sheet && arg1.root && arg1.controller) {
     ({ sheet, root, controller } = arg1);
   } else {
     sheet = arg1;
@@ -75,6 +70,7 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
   const details = sheet.document?.system?.details ?? {};
   const initialBgKey = details.backgroundKey ?? "";
   const initialRaceKey = details.raceKey ?? "";
+  const initialRoleKey = details.roleKey ?? "";
 
   // Background: one-way add + optional choice prompt
   persistBackgroundGrantedSpecialties(sheet, initialBgKey);
@@ -85,6 +81,13 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
   const raceStamp = sheet.document?.system?._flags?.raceGrantStamp ?? "";
   if (initialRaceKey && raceStamp !== initialRaceKey) {
     replaceRaceGrants(sheet, initialRaceKey);
+  }
+
+  // Role: do NOT re-run every bind/render.
+  // Only run if we have a roleKey AND the completed stamp doesn't match.
+  const roleStamp = sheet.document?.system?._flags?.roleGrantStamp ?? "";
+  if (initialRoleKey && roleStamp !== initialRoleKey) {
+    replaceRoleGrantedSpecialties(sheet, initialRoleKey);
   }
 
   /* ----------------------- */
@@ -154,6 +157,12 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
       // Race change (always replace on explicit change)
       if (target instanceof HTMLSelectElement && target.name === "system.details.raceKey") {
         await replaceRaceGrants(sheet, target.value);
+        return;
+      }
+
+      // Role change (always replace on explicit change)
+      if (target instanceof HTMLSelectElement && target.name === "system.details.roleKey") {
+        await replaceRoleGrantedSpecialties(sheet, target.value);
         return;
       }
 
@@ -316,4 +325,3 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
 export function bindListeners(args) {
   return bindActorSheetListeners(args);
 }
-
