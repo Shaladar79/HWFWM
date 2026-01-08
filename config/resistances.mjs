@@ -10,7 +10,12 @@ export const HWFWM_RESISTANCES = {
   ice: { name: "Ice" },
   lightning: { name: "Lightning" },
   earth: { name: "Earth" },
+
   life: { name: "Life" },
   nature: { name: "Nature" },
-  astral: { name: "Astral" }
+  astral: { name: "Astral" },
+
+  // Added to match RACE_GRANTED_RESISTANCES in config/races.mjs
+  magic: { name: "Magic" },
+  holy: { name: "Holy" }
 };
