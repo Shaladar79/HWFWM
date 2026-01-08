@@ -94,7 +94,7 @@ async function promptForSpecialtyChoice({ title, label, options }) {
         },
         cancel: {
           label: "Cancel",
-          callback: () => resolve("");
+          callback: () => resolve("")
         }
       },
       default: "ok",
@@ -462,4 +462,3 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
 export function bindListeners(args) {
   return bindActorSheetListeners(args);
 }
-
