@@ -157,8 +157,25 @@
 
     "equipment": {
       "system": {
-        "category": "weapon",
+        "type": "weapon",
         "equipped": "no",
+
+        "weapon": {
+          "damage": "",
+          "range": "",
+          "notes": ""
+        },
+
+        "armor": {
+          "value": 0,
+          "shielding": 0,
+          "notes": ""
+        },
+
+        "misc": {
+          "notes": ""
+        },
+
         "notes": ""
       }
     },
