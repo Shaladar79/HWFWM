@@ -7,6 +7,7 @@ import { HwfwmFeatureSheet } from "./scripts/sheets/items/feature-sheet.mjs";
 import { HwfwmTalentSheet } from "./scripts/sheets/items/talent-sheet.mjs";
 import { HwfwmEquipmentSheet } from "./scripts/sheets/items/equipment-sheet.mjs";
 import { HwfwmConsumableSheet } from "./scripts/sheets/items/consumable-sheet.mjs";
+import { HwfwmMiscItemSheet } from "./scripts/sheets/items/miscitem-sheet.mjs";
 
 // Essence Ability sheet class (imported)
 import { HwfwmEssenceAbilitySheet } from "./scripts/sheets/essence-ability-sheet.mjs";
@@ -59,6 +60,7 @@ Hooks.once("init", async () => {
     "systems/hwfwm-system/templates/item/talent-sheet.hbs",
     "systems/hwfwm-system/templates/item/equipment-sheet.hbs",
     "systems/hwfwm-system/templates/item/consumable-sheet.hbs",
+    "systems/hwfwm-system/templates/item/miscitem-sheet.hbs",
     "systems/hwfwm-system/templates/item/essence-ability-sheet.hbs"
   ]);
 
@@ -98,6 +100,12 @@ Hooks.once("init", async () => {
       types: ["consumable"],
       makeDefault: true,
       label: "HWFWM Consumable Sheet"
+    });
+
+    Items.registerSheet("hwfwm-system", HwfwmMiscItemSheet, {
+      types: ["miscItem"],
+      makeDefault: true,
+      label: "HWFWM Misc Item Sheet"
     });
 
     Items.registerSheet("hwfwm-system", HwfwmEssenceAbilitySheet, {
