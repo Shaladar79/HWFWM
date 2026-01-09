@@ -147,6 +147,20 @@
       }
     },
 
+    "ability": {
+      "system": {
+        "abilityType": "racial",
+        "category": "",
+        "tags": "",
+        "description": "",
+        "hooks": {
+          "modsKey": "",
+          "effectsKey": ""
+        },
+        "notes": ""
+      }
+    },
+
     "essenceAbility": {
       "system": {
         "boundAttribute": "",
