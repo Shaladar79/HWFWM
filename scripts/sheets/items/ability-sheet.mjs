@@ -5,7 +5,7 @@
  * - Ability is a generic item type that can represent:
  *   - racial abilities
  *   - role abilities
- *   - essence abilities (distinct from essenceAbility item type, which is bound/structured)
+ *   - essence abilities
  * - Minimal, stable UI scaffolding; mechanics wiring comes later.
  */
 export class HwfwmAbilitySheet extends ItemSheet {
@@ -14,7 +14,11 @@ export class HwfwmAbilitySheet extends ItemSheet {
       classes: ["hwfwm-system", "sheet", "item", "ability"],
       width: 620,
       height: 580,
-      resizable: true
+      resizable: true,
+
+      // IMPORTANT: ensure form fields persist to the Item document
+      submitOnChange: true,
+      closeOnSubmit: false
     });
   }
 
