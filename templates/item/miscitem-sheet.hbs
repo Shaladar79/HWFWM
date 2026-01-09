@@ -1,0 +1,55 @@
+<form class="hwfwm-item-sheet hwfwm-item-sheet--miscitem" autocomplete="off">
+  <header class="hwfwm-item-header">
+    <div class="hwfwm-item-title">
+      <label>Name</label>
+      <input type="text" name="name" value="{{item.name}}" />
+    </div>
+  </header>
+
+  <section class="hwfwm-item-body">
+    <div class="hwfwm-card">
+      <div class="hwfwm-card__title">Misc Item</div>
+
+      <div class="hwfwm-grid">
+        {{!-- Optional dropdown if a misc catalog exists --}}
+        {{#if miscCatalog}}
+          <div class="hwfwm-field">
+            <div class="hwfwm-label">Pick From Catalog</div>
+            <select name="system.catalogKey">
+              <option value="">— Select —</option>
+              {{#each miscCatalog as |m key|}}
+                <option value="{{key}}" {{#if (eq key ../system.catalogKey)}}selected{{/if}}>
+                  {{m.name}}
+                </option>
+              {{/each}}
+            </select>
+            <div class="hwfwm-muted" style="margin-top:4px;">
+              Selecting a catalog entry stores its key.
+            </div>
+          </div>
+        {{/if}}
+
+        {{!-- Always-available manual key field --}}
+        <div class="hwfwm-field">
+          <div class="hwfwm-label">Catalog Key</div>
+          <input
+            type="text"
+            name="system.catalogKey"
+            value="{{system.catalogKey}}"
+            placeholder="e.g. sundries.rope"
+          />
+        </div>
+
+        <div class="hwfwm-field">
+          <div class="hwfwm-label">Quantity</div>
+          <input type="number" name="system.quantity" value="{{system.quantity}}" min="0" step="1" />
+        </div>
+
+        <div class="hwfwm-field">
+          <div class="hwfwm-label">Notes</div>
+          <textarea name="system.notes" rows="6">{{system.notes}}</textarea>
+        </div>
+      </div>
+    </div>
+  </section>
+</form>
