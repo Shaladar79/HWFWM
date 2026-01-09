@@ -1,47 +1,53 @@
 // scripts/sheets/items/equipment-sheet.mjs
 
+const { HandlebarsApplicationMixin } = foundry.applications.api;
+
 /**
- * HWFWM Equipment Item Sheet (placeholder baseline)
+ * HWFWM Equipment Item Sheet (V13 Sheet V2)
  * - Supports a "type" dropdown: weapon | armor | misc
  * - Template conditionally displays placeholder sections based on type
  * - No mechanics wiring yet (stats are placeholders only)
  */
-export class HwfwmEquipmentSheet extends ItemSheet {
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      classes: ["hwfwm-system", "sheet", "item", "equipment"],
-      width: 640,
-      height: 620,
-      resizable: true,
-
-      // IMPORTANT: ensure form fields persist to the Item document
+export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
+  foundry.applications.sheets.ItemSheetV2
+) {
+  static DEFAULT_OPTIONS = foundry.utils.mergeObject(super.DEFAULT_OPTIONS, {
+    classes: ["hwfwm-system", "sheet", "item", "equipment"],
+    position: { width: 640, height: 620 },
+    form: {
       submitOnChange: true,
       closeOnSubmit: false
-    });
-  }
+    }
+  });
 
-  get template() {
-    return "systems/hwfwm-system/templates/item/equipment-sheet.hbs";
-  }
+  static PARTS = {
+    form: {
+      template: "systems/hwfwm-system/templates/item/equipment-sheet.hbs"
+    }
+  };
 
   /** @override */
-  async getData(options = {}) {
-    const data = await super.getData(options);
+  async _prepareContext(options) {
+    const context = await super._prepareContext(options);
 
-    data.equipmentTypes = [
+    // Normalize common aliases so templates can use {{item}} and {{system}}
+    context.item = this.document;
+    context.system = this.document.system;
+
+    context.equipmentTypes = [
       { value: "weapon", label: "Weapon" },
       { value: "armor", label: "Armor" },
       { value: "misc", label: "Misc" }
     ];
 
-    const type = (data.system?.type ?? data.system?.category ?? "weapon").toString();
-    data._ui = {
+    const type = (context.system?.type ?? context.system?.category ?? "weapon").toString();
+    context._ui = {
       type,
       isWeapon: type === "weapon",
       isArmor: type === "armor",
       isMisc: type === "misc"
     };
 
-    return data;
+    return context;
   }
 }
