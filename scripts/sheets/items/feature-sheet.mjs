@@ -1,36 +1,41 @@
 // scripts/sheets/items/feature-sheet.mjs
 
-/**
- * HWFWM Feature Item Sheet (baseline)
- * - Minimal, stable form sheet for Feature items
- * - No mechanics hooks beyond exposing options to the template
- */
-export class HwfwmFeatureSheet extends ItemSheet {
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      classes: ["hwfwm-system", "sheet", "item", "feature"],
-      width: 560,
-      height: 520,
-      resizable: true,
+const { HandlebarsApplicationMixin } = foundry.applications.api;
 
-      // IMPORTANT: ensure form fields persist to the Item document
+/**
+ * HWFWM Feature Item Sheet (V13 Sheet V2)
+ * - Uses ItemSheetV2 + HandlebarsApplicationMixin
+ * - Uses DocumentSheetV2 form handling so fields persist correctly
+ */
+export class HwfwmFeatureSheet extends HandlebarsApplicationMixin(
+  foundry.applications.sheets.ItemSheetV2
+) {
+  static DEFAULT_OPTIONS = foundry.utils.mergeObject(super.DEFAULT_OPTIONS, {
+    classes: ["hwfwm-system", "sheet", "item", "feature"],
+    position: { width: 560, height: 520 },
+    form: {
       submitOnChange: true,
       closeOnSubmit: false
+    }
+  });
 
-      // If you later add internal tabs inside the item sheet, add tabs[] here.
-    });
-  }
-
-  get template() {
-    return "systems/hwfwm-system/templates/item/feature-sheet.hbs";
-  }
+  static PARTS = {
+    form: {
+      template: "systems/hwfwm-system/templates/item/feature-sheet.hbs"
+    }
+  };
 
   /** @override */
-  async getData(options = {}) {
-    const data = await super.getData(options);
+  async _prepareContext(options) {
+    const context = await super._prepareContext(options);
+
+    // Normalize common aliases so templates can use {{item}} and {{system}}
+    // (many v1 templates were written that way)
+    context.item = this.document;
+    context.system = this.document.system;
 
     // Provide stable option lists for template dropdowns
-    data.featureSources = [
+    context.featureSources = [
       { value: "manual", label: "Manual" },
       { value: "race", label: "Race" },
       { value: "role", label: "Role" },
@@ -39,13 +44,12 @@ export class HwfwmFeatureSheet extends ItemSheet {
       { value: "system", label: "System" }
     ];
 
-    data.activationTypes = [
+    context.activationTypes = [
       { value: "passive", label: "Passive" },
       { value: "active", label: "Active" }
     ];
 
-    // Optional: light “category” scaffold (safe even if template ignores it)
-    data.featureCategories = [
+    context.featureCategories = [
       { value: "", label: "—" },
       { value: "racial", label: "Racial" },
       { value: "role", label: "Role" },
@@ -53,6 +57,6 @@ export class HwfwmFeatureSheet extends ItemSheet {
       { value: "general", label: "General" }
     ];
 
-    return data;
+    return context;
   }
 }
