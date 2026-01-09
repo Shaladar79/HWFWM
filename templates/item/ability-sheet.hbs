@@ -1,0 +1,67 @@
+<form class="hwfwm-item-sheet hwfwm-item-sheet--ability" autocomplete="off">
+  <header class="hwfwm-item-header">
+    <div class="hwfwm-item-title">
+      <label>Name</label>
+      <input type="text" name="name" value="{{item.name}}" />
+    </div>
+  </header>
+
+  <section class="hwfwm-item-body">
+    <div class="hwfwm-card">
+      <div class="hwfwm-card__title">Ability</div>
+
+      <div class="hwfwm-grid">
+        <div class="hwfwm-field">
+          <div class="hwfwm-label">Ability Type</div>
+          <select name="system.abilityType">
+            {{#each abilityTypeOptions as |o|}}
+              <option value="{{o.value}}" {{#if (eq o.value ../system.abilityType)}}selected{{/if}}>
+                {{o.label}}
+              </option>
+            {{/each}}
+          </select>
+        </div>
+
+        <div class="hwfwm-field">
+          <div class="hwfwm-label">Category</div>
+          <input type="text" name="system.category" value="{{system.category}}" placeholder="Optional grouping" />
+        </div>
+
+        <div class="hwfwm-field">
+          <div class="hwfwm-label">Tags</div>
+          <input type="text" name="system.tags" value="{{system.tags}}" placeholder="comma-separated" />
+        </div>
+
+        <div class="hwfwm-field">
+          <div class="hwfwm-label">Description</div>
+          <textarea name="system.description" rows="8" placeholder="Ability description...">{{system.description}}</textarea>
+        </div>
+
+        <div class="hwfwm-field">
+          <div class="hwfwm-label">Notes</div>
+          <textarea name="system.notes" rows="5">{{system.notes}}</textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="hwfwm-card">
+      <div class="hwfwm-card__title">Hooks (Placeholder)</div>
+
+      <div class="hwfwm-grid">
+        <div class="hwfwm-field">
+          <div class="hwfwm-label">Mods Key</div>
+          <input type="text" name="system.hooks.modsKey" value="{{system.hooks.modsKey}}" placeholder="future: modifier profile key" />
+        </div>
+
+        <div class="hwfwm-field">
+          <div class="hwfwm-label">Effects Key</div>
+          <input type="text" name="system.hooks.effectsKey" value="{{system.hooks.effectsKey}}" placeholder="future: effects profile key" />
+        </div>
+      </div>
+
+      <div class="hwfwm-muted" style="margin-top:6px;">
+        Hooks are placeholders for later automation.
+      </div>
+    </div>
+  </section>
+</form>
