@@ -1,34 +1,40 @@
 // scripts/sheets/items/talent-sheet.mjs
 
+const { HandlebarsApplicationMixin } = foundry.applications.api;
+
 /**
- * HWFWM Talent Item Sheet
+ * HWFWM Talent Item Sheet (V13 Sheet V2)
  * - Talents are PASSIVE items that adjust the character (stats + grants)
  * - This sheet is data-entry only; no mechanics application logic here.
  */
-export class HwfwmTalentSheet extends ItemSheet {
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      classes: ["hwfwm-system", "sheet", "item", "talent"],
-      width: 640,
-      height: 680,
-      resizable: true,
-
-      // IMPORTANT: ensure form fields persist to the Item document
+export class HwfwmTalentSheet extends HandlebarsApplicationMixin(
+  foundry.applications.sheets.ItemSheetV2
+) {
+  static DEFAULT_OPTIONS = foundry.utils.mergeObject(super.DEFAULT_OPTIONS, {
+    classes: ["hwfwm-system", "sheet", "item", "talent"],
+    position: { width: 640, height: 680 },
+    form: {
       submitOnChange: true,
       closeOnSubmit: false
-    });
-  }
+    }
+  });
 
-  get template() {
-    return "systems/hwfwm-system/templates/item/talent-sheet.hbs";
-  }
+  static PARTS = {
+    form: {
+      template: "systems/hwfwm-system/templates/item/talent-sheet.hbs"
+    }
+  };
 
   /** @override */
-  async getData(options = {}) {
-    const data = await super.getData(options);
+  async _prepareContext(options) {
+    const context = await super._prepareContext(options);
+
+    // Normalize common aliases so templates can use {{item}} and {{system}}
+    context.item = this.document;
+    context.system = this.document.system;
 
     // ---- dropdown/options scaffolding ----
-    data.talentSources = [
+    context.talentSources = [
       { value: "manual", label: "Manual" },
       { value: "race", label: "Race" },
       { value: "role", label: "Role" },
@@ -37,20 +43,20 @@ export class HwfwmTalentSheet extends ItemSheet {
       { value: "system", label: "System" }
     ];
 
-    data.stackModes = [
+    context.stackModes = [
       { value: "stack", label: "Stack" },
       { value: "replace", label: "Replace" },
       { value: "none", label: "No Stacking" }
     ];
 
-    data.attributesList = [
+    context.attributesList = [
       { value: "power", label: "Power" },
       { value: "speed", label: "Speed" },
       { value: "spirit", label: "Spirit" },
       { value: "recovery", label: "Recovery" }
     ];
 
-    data.resourcesList = [
+    context.resourcesList = [
       { value: "lifeForce", label: "Life Force" },
       { value: "mana", label: "Mana" },
       { value: "stamina", label: "Stamina" },
@@ -63,7 +69,7 @@ export class HwfwmTalentSheet extends ItemSheet {
       { value: "naturalArmor", label: "Natural Armor" }
     ];
 
-    data.grantTypes = [
+    context.grantTypes = [
       { value: "specialties", label: "Specialties" },
       { value: "affinities", label: "Affinities" },
       { value: "aptitudes", label: "Aptitudes" },
@@ -72,7 +78,7 @@ export class HwfwmTalentSheet extends ItemSheet {
 
     // ---- Safe normalization for templates (UI-only) ----
     // Avoid template crashes when fields are missing in older items.
-    const sys = data.system ?? (data.item?.system ?? {});
+    const sys = context.system ?? {};
     sys.adjustments ??= {};
     sys.adjustments.attributes ??= {};
     sys.adjustments.resources ??= {};
@@ -86,9 +92,8 @@ export class HwfwmTalentSheet extends ItemSheet {
     sys.grants.aptitudes ??= [];
     sys.grants.resistances ??= [];
 
-    // Ensure the merged/normalized system is visible to the template consistently
-    data.system = sys;
+    context.system = sys;
 
-    return data;
+    return context;
   }
 }
