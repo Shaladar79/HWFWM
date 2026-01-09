@@ -11,7 +11,12 @@ export class HwfwmFeatureSheet extends ItemSheet {
       classes: ["hwfwm-system", "sheet", "item", "feature"],
       width: 560,
       height: 520,
-      resizable: true
+      resizable: true,
+
+      // IMPORTANT: ensure form fields persist to the Item document
+      submitOnChange: true,
+      closeOnSubmit: false
+
       // If you later add internal tabs inside the item sheet, add tabs[] here.
     });
   }
@@ -51,4 +56,3 @@ export class HwfwmFeatureSheet extends ItemSheet {
     return data;
   }
 }
-
