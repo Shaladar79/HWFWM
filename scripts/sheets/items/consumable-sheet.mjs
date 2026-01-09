@@ -1,37 +1,42 @@
 // scripts/sheets/items/consumable-sheet.mjs
 
+const { HandlebarsApplicationMixin } = foundry.applications.api;
+
 /**
- * HWFWM Consumable Item Sheet (placeholder baseline)
+ * HWFWM Consumable Item Sheet (V13 Sheet V2)
  * - Minimal form: quantity, readied, notes, and use-effect placeholder
  * - No mechanics wiring yet.
  */
-export class HwfwmConsumableSheet extends ItemSheet {
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      classes: ["hwfwm-system", "sheet", "item", "consumable"],
-      width: 560,
-      height: 540,
-      resizable: true,
-
-      // IMPORTANT: ensure form fields persist to the Item document
+export class HwfwmConsumableSheet extends HandlebarsApplicationMixin(
+  foundry.applications.sheets.ItemSheetV2
+) {
+  static DEFAULT_OPTIONS = foundry.utils.mergeObject(super.DEFAULT_OPTIONS, {
+    classes: ["hwfwm-system", "sheet", "item", "consumable"],
+    position: { width: 560, height: 540 },
+    form: {
       submitOnChange: true,
       closeOnSubmit: false
-    });
-  }
+    }
+  });
 
-  get template() {
-    return "systems/hwfwm-system/templates/item/consumable-sheet.hbs";
-  }
+  static PARTS = {
+    form: {
+      template: "systems/hwfwm-system/templates/item/consumable-sheet.hbs"
+    }
+  };
 
   /** @override */
-  async getData(options = {}) {
-    const data = await super.getData(options);
+  async _prepareContext(options) {
+    const context = await super._prepareContext(options);
 
-    data.readiedOptions = [
+    context.item = this.document;
+    context.system = this.document.system;
+
+    context.readiedOptions = [
       { value: "no", label: "No" },
       { value: "yes", label: "Yes" }
     ];
 
-    return data;
+    return context;
   }
 }
