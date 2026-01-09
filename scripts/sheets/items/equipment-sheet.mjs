@@ -12,7 +12,11 @@ export class HwfwmEquipmentSheet extends ItemSheet {
       classes: ["hwfwm-system", "sheet", "item", "equipment"],
       width: 640,
       height: 620,
-      resizable: true
+      resizable: true,
+
+      // IMPORTANT: ensure form fields persist to the Item document
+      submitOnChange: true,
+      closeOnSubmit: false
     });
   }
 
