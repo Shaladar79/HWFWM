@@ -5,6 +5,7 @@ import { HwfwmActor } from "./scripts/documents/actor.mjs";
 // Item sheet classes
 import { HwfwmFeatureSheet } from "./scripts/sheets/items/feature-sheet.mjs";
 import { HwfwmTalentSheet } from "./scripts/sheets/items/talent-sheet.mjs";
+import { HwfwmAbilitySheet } from "./scripts/sheets/items/ability-sheet.mjs";
 import { HwfwmEquipmentSheet } from "./scripts/sheets/items/equipment-sheet.mjs";
 import { HwfwmConsumableSheet } from "./scripts/sheets/items/consumable-sheet.mjs";
 import { HwfwmMiscItemSheet } from "./scripts/sheets/items/miscitem-sheet.mjs";
@@ -58,6 +59,7 @@ Hooks.once("init", async () => {
     // Item sheets
     "systems/hwfwm-system/templates/item/feature-sheet.hbs",
     "systems/hwfwm-system/templates/item/talent-sheet.hbs",
+    "systems/hwfwm-system/templates/item/ability-sheet.hbs",
     "systems/hwfwm-system/templates/item/equipment-sheet.hbs",
     "systems/hwfwm-system/templates/item/consumable-sheet.hbs",
     "systems/hwfwm-system/templates/item/miscitem-sheet.hbs",
@@ -90,6 +92,12 @@ Hooks.once("init", async () => {
       label: "HWFWM Talent Sheet"
     });
 
+    Items.registerSheet("hwfwm-system", HwfwmAbilitySheet, {
+      types: ["ability"],
+      makeDefault: true,
+      label: "HWFWM Ability Sheet"
+    });
+
     Items.registerSheet("hwfwm-system", HwfwmEquipmentSheet, {
       types: ["equipment"],
       makeDefault: true,
@@ -115,3 +123,4 @@ Hooks.once("init", async () => {
     });
   }
 });
+;
