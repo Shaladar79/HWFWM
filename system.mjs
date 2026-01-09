@@ -10,9 +10,6 @@ import { HwfwmEquipmentSheet } from "./scripts/sheets/items/equipment-sheet.mjs"
 import { HwfwmConsumableSheet } from "./scripts/sheets/items/consumable-sheet.mjs";
 import { HwfwmMiscItemSheet } from "./scripts/sheets/items/miscitem-sheet.mjs";
 
-// Essence Ability sheet class (imported)
-import { HwfwmEssenceAbilitySheet } from "./scripts/sheets/essence-ability-sheet.mjs";
-
 Hooks.once("init", async () => {
   console.log("HWFWM System | Initialized");
 
@@ -62,8 +59,7 @@ Hooks.once("init", async () => {
     "systems/hwfwm-system/templates/item/ability-sheet.hbs",
     "systems/hwfwm-system/templates/item/equipment-sheet.hbs",
     "systems/hwfwm-system/templates/item/consumable-sheet.hbs",
-    "systems/hwfwm-system/templates/item/miscitem-sheet.hbs",
-    "systems/hwfwm-system/templates/item/essence-ability-sheet.hbs"
+    "systems/hwfwm-system/templates/item/miscitem-sheet.hbs"
   ]);
 
   // v13+ namespaced Actors collection (avoids deprecation warning)
@@ -115,12 +111,5 @@ Hooks.once("init", async () => {
       makeDefault: true,
       label: "HWFWM Misc Item Sheet"
     });
-
-    Items.registerSheet("hwfwm-system", HwfwmEssenceAbilitySheet, {
-      types: ["essenceAbility"],
-      makeDefault: true,
-      label: "HWFWM Essence Ability Sheet"
-    });
   }
 });
-;
