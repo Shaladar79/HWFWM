@@ -161,14 +161,6 @@
       }
     },
 
-    "essenceAbility": {
-      "system": {
-        "boundAttribute": "",
-        "boundEssenceKey": "",
-        "notes": ""
-      }
-    },
-
     "equipment": {
       "system": {
         "type": "weapon",
