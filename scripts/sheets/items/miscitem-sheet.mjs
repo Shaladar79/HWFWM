@@ -11,7 +11,11 @@ export class HwfwmMiscItemSheet extends ItemSheet {
       classes: ["hwfwm-system", "sheet", "item", "miscItem"],
       width: 560,
       height: 520,
-      resizable: true
+      resizable: true,
+
+      // IMPORTANT: ensure form fields persist to the Item document
+      submitOnChange: true,
+      closeOnSubmit: false
     });
   }
 
