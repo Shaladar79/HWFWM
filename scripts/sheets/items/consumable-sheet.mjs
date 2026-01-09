@@ -11,7 +11,11 @@ export class HwfwmConsumableSheet extends ItemSheet {
       classes: ["hwfwm-system", "sheet", "item", "consumable"],
       width: 560,
       height: 540,
-      resizable: true
+      resizable: true,
+
+      // IMPORTANT: ensure form fields persist to the Item document
+      submitOnChange: true,
+      closeOnSubmit: false
     });
   }
 
