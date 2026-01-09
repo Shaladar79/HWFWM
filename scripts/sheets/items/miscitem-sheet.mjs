@@ -1,37 +1,40 @@
 // scripts/sheets/items/miscitem-sheet.mjs
 
+const { HandlebarsApplicationMixin } = foundry.applications.api;
+
 /**
- * HWFWM Misc Item Sheet (baseline placeholder)
+ * HWFWM Misc Item Sheet (V13 Sheet V2)
  * - Simple sheet for catalogKey + quantity + notes
  * - No compendium lookups or actor wiring yet
  */
-export class HwfwmMiscItemSheet extends ItemSheet {
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      classes: ["hwfwm-system", "sheet", "item", "miscItem"],
-      width: 560,
-      height: 520,
-      resizable: true,
-
-      // IMPORTANT: ensure form fields persist to the Item document
+export class HwfwmMiscItemSheet extends HandlebarsApplicationMixin(
+  foundry.applications.sheets.ItemSheetV2
+) {
+  static DEFAULT_OPTIONS = foundry.utils.mergeObject(super.DEFAULT_OPTIONS, {
+    classes: ["hwfwm-system", "sheet", "item", "miscItem"],
+    position: { width: 560, height: 520 },
+    form: {
       submitOnChange: true,
       closeOnSubmit: false
-    });
-  }
+    }
+  });
 
-  get template() {
-    return "systems/hwfwm-system/templates/item/miscitem-sheet.hbs";
-  }
+  static PARTS = {
+    form: {
+      template: "systems/hwfwm-system/templates/item/miscitem-sheet.hbs"
+    }
+  };
 
   /** @override */
-  async getData(options = {}) {
-    const data = await super.getData(options);
+  async _prepareContext(options) {
+    const context = await super._prepareContext(options);
 
-    // Optional: if you later want to provide a dropdown from CONFIG,
-    // you can populate data.miscCatalog here.
-    // For now we keep it manual and stable.
-    data.miscCatalog = CONFIG["hwfwm-system"]?.miscItemCatalog ?? null;
+    context.item = this.document;
+    context.system = this.document.system;
 
-    return data;
+    // Optional: later you can provide a dropdown from CONFIG
+    context.miscCatalog = CONFIG["hwfwm-system"]?.miscItemCatalog ?? null;
+
+    return context;
   }
 }
