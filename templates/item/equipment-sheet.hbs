@@ -1,4 +1,4 @@
-<form class="hwfwm-item-sheet hwfwm-item-sheet--equipment" autocomplete="off">
+<div class="hwfwm-item-sheet hwfwm-item-sheet--equipment" autocomplete="off">
   <header class="hwfwm-item-header">
     <div class="hwfwm-item-title">
       <label>Name</label>
@@ -42,17 +42,27 @@
       <div class="hwfwm-grid">
         <div class="hwfwm-field">
           <div class="hwfwm-label">Damage</div>
-          <input type="text" name="system.weapon.damage" placeholder="e.g. 1d8 + STR" />
+          <input
+            type="text"
+            name="system.weapon.damage"
+            value="{{system.weapon.damage}}"
+            placeholder="e.g. 1d8 + STR"
+          />
         </div>
 
         <div class="hwfwm-field">
           <div class="hwfwm-label">Reach / Range</div>
-          <input type="text" name="system.weapon.range" placeholder="melee / 5m / 20m" />
+          <input
+            type="text"
+            name="system.weapon.range"
+            value="{{system.weapon.range}}"
+            placeholder="melee / 5m / 20m"
+          />
         </div>
 
         <div class="hwfwm-field">
           <div class="hwfwm-label">Weapon Notes</div>
-          <textarea name="system.weapon.notes" rows="4"></textarea>
+          <textarea name="system.weapon.notes" rows="4">{{system.weapon.notes}}</textarea>
         </div>
       </div>
     </div>
@@ -66,17 +76,27 @@
       <div class="hwfwm-grid">
         <div class="hwfwm-field">
           <div class="hwfwm-label">Armor Value</div>
-          <input type="number" name="system.armor.value" placeholder="0" />
+          <input
+            type="number"
+            name="system.armor.value"
+            value="{{system.armor.value}}"
+            placeholder="0"
+          />
         </div>
 
         <div class="hwfwm-field">
           <div class="hwfwm-label">Shielding</div>
-          <input type="number" name="system.armor.shielding" placeholder="0" />
+          <input
+            type="number"
+            name="system.armor.shielding"
+            value="{{system.armor.shielding}}"
+            placeholder="0"
+          />
         </div>
 
         <div class="hwfwm-field">
           <div class="hwfwm-label">Armor Notes</div>
-          <textarea name="system.armor.notes" rows="4"></textarea>
+          <textarea name="system.armor.notes" rows="4">{{system.armor.notes}}</textarea>
         </div>
       </div>
     </div>
@@ -90,7 +110,7 @@
       <div class="hwfwm-grid">
         <div class="hwfwm-field">
           <div class="hwfwm-label">Description / Notes</div>
-          <textarea name="system.misc.notes" rows="6"></textarea>
+          <textarea name="system.misc.notes" rows="6">{{system.misc.notes}}</textarea>
         </div>
       </div>
     </div>
@@ -103,4 +123,5 @@
     </div>
 
   </section>
-</form>
+</div>
+
