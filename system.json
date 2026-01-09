@@ -10,6 +10,7 @@
   },
   "esmodules": ["system.mjs"],
   "styles": ["styles/main.css", "styles/sheet.css"],
+
   "documentTypes": {
     "Actor": {
       "pc": {}
@@ -19,9 +20,54 @@
       "talent": {},
       "essenceAbility": {},
       "equipment": {},
-      "consumable": {}
+      "consumable": {},
+      "miscItem": {}
     }
   },
+
+  "packs": [
+    {
+      "name": "features",
+      "label": "HWFWM - Features Library",
+      "path": "packs/features",
+      "type": "Item",
+      "system": "hwfwm-system",
+      "private": false
+    },
+    {
+      "name": "talents",
+      "label": "HWFWM - Talents Library",
+      "path": "packs/talents",
+      "type": "Item",
+      "system": "hwfwm-system",
+      "private": false
+    },
+    {
+      "name": "equipment",
+      "label": "HWFWM - Equipment Library",
+      "path": "packs/equipment",
+      "type": "Item",
+      "system": "hwfwm-system",
+      "private": false
+    },
+    {
+      "name": "consumables",
+      "label": "HWFWM - Consumables Library",
+      "path": "packs/consumables",
+      "type": "Item",
+      "system": "hwfwm-system",
+      "private": false
+    },
+    {
+      "name": "miscitems",
+      "label": "HWFWM - Misc Items Library",
+      "path": "packs/miscitems",
+      "type": "Item",
+      "system": "hwfwm-system",
+      "private": false
+    }
+  ],
+
   "manifest": "https://raw.githubusercontent.com/Shaladar79/HWFWM/main/system.json",
   "download": "https://github.com/Shaladar79/HWFWM/archive/refs/heads/main.zip"
 }
