@@ -11,7 +11,11 @@ export class HwfwmTalentSheet extends ItemSheet {
       classes: ["hwfwm-system", "sheet", "item", "talent"],
       width: 640,
       height: 680,
-      resizable: true
+      resizable: true,
+
+      // IMPORTANT: ensure form fields persist to the Item document
+      submitOnChange: true,
+      closeOnSubmit: false
     });
   }
 
