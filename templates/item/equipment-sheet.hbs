@@ -16,8 +16,9 @@
         <div class="hwfwm-field">
           <div class="hwfwm-label">Type</div>
           <select name="system.type">
+            <option value="">— Select —</option>
             {{#each equipmentTypes as |t|}}
-              <option value="{{t.value}}" {{#if (eq t.value ../_ui.type)}}selected{{/if}}>
+              <option value="{{t.value}}" {{#if (eq t.value ../system.type)}}selected{{/if}}>
                 {{t.label}}
               </option>
             {{/each}}
@@ -124,4 +125,3 @@
 
   </section>
 </div>
-
