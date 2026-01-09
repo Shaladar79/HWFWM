@@ -18,6 +18,7 @@
     "Item": {
       "feature": {},
       "talent": {},
+      "ability": {},
       "essenceAbility": {},
       "equipment": {},
       "consumable": {},
@@ -38,6 +39,14 @@
       "name": "talents",
       "label": "HWFWM - Talents Library",
       "path": "packs/talents",
+      "type": "Item",
+      "system": "hwfwm-system",
+      "private": false
+    },
+    {
+      "name": "abilities",
+      "label": "HWFWM - Abilities Library",
+      "path": "packs/abilities",
       "type": "Item",
       "system": "hwfwm-system",
       "private": false
