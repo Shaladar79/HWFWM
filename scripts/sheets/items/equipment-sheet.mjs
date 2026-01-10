@@ -2,12 +2,6 @@
 
 const { HandlebarsApplicationMixin } = foundry.applications.api;
 
-/**
- * HWFWM Equipment Item Sheet (V13 Sheet V2)
- * - Supports a "type" dropdown: weapon | armor | misc
- * - Template conditionally displays sections based on type
- * - UI-only: provides safe defaults + option lists derived from CONFIG catalogs
- */
 export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
   foundry.applications.sheets.ItemSheetV2
 ) {
@@ -30,20 +24,15 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
   async _prepareContext(options) {
     const context = await super._prepareContext(options);
 
-    // Normalize common aliases so templates can use {{item}} and {{system}}
     context.item = this.document;
     context.system = this.document.system ?? {};
 
-    // ---------------------------------------------------------------------
-    // Baseline dropdowns
-    // ---------------------------------------------------------------------
     context.equipmentTypes = [
       { value: "weapon", label: "Weapon" },
       { value: "armor", label: "Armor" },
       { value: "misc", label: "Misc" }
     ];
 
-    // Attribute list used by the Adjustments section
     context.attributesList = [
       { value: "power", label: "Power" },
       { value: "speed", label: "Speed" },
@@ -51,7 +40,6 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
       { value: "recovery", label: "Recovery" }
     ];
 
-    // Determine current equipment type
     const type = (context.system?.type ?? context.system?.category ?? "weapon").toString();
     context._ui = {
       type,
@@ -60,16 +48,13 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
       isMisc: type === "misc"
     };
 
-    // ---------------------------------------------------------------------
-    // OPTION LISTS (derived from live catalogs in CONFIG["hwfwm-system"])
-    // ---------------------------------------------------------------------
+    // ----- Option lists from CONFIG catalogs -----
     const cfg = CONFIG["hwfwm-system"] ?? {};
 
     const specialtyCatalog = cfg.specialtyCatalog ?? {};
     const affinityCatalog = cfg.affinityCatalog ?? {};
     const resistanceCatalog = cfg.resistanceCatalog ?? {};
 
-    // Specialty Types derived from specialtyCatalog.attribute (power/speed/spirit/recovery)
     const specialtyTypeOrder = ["power", "speed", "spirit", "recovery"];
     const specialtyTypeLabels = {
       power: "Power",
@@ -93,7 +78,6 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
       specialtiesByType[t].push({ value: key, label: meta?.name ?? key });
     }
 
-    // Sort specialties per type
     for (const t of Object.keys(specialtiesByType)) {
       specialtiesByType[t].sort((a, b) => String(a.label).localeCompare(String(b.label)));
     }
@@ -104,7 +88,6 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
 
     context.specialtiesByType = specialtiesByType;
 
-    // Simple catalog -> options helper
     const toOptions = (catalog) =>
       Object.entries(catalog)
         .map(([key, meta]) => ({ value: key, label: meta?.name ?? key }))
@@ -113,20 +96,18 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
     context.affinityOptions = toOptions(affinityCatalog);
     context.resistanceOptions = toOptions(resistanceCatalog);
 
-    // ---------------------------------------------------------------------
-    // SAFE NORMALIZATION (prevents undefined nested paths)
-    // ---------------------------------------------------------------------
+    // ----- Safe normalization -----
     const sys = context.system;
 
-    // Equipped should be boolean for checkbox
     sys.equipped = !!sys.equipped;
 
-    // Ensure sub-objects exist for new fields
+    sys.description ??= "";
+    sys.notes ??= "";
+
     sys.weapon ??= {};
     sys.armor ??= {};
     sys.misc ??= {};
 
-    // Weapon defaults
     sys.weapon.category ??= "";
     sys.weapon.weaponType ??= "";
     sys.weapon.damagePerSuccess ??= 0;
@@ -135,32 +116,21 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
     sys.weapon.damageType1 ??= "";
     sys.weapon.damageType2 ??= "";
     sys.weapon.damageType3 ??= "";
-    sys.weapon.description ??= "";
 
-    // Armor defaults
     sys.armor.value ??= 0;
     sys.armor.armorType ??= "";
-    sys.armor.description ??= "";
 
-    // Misc defaults
     sys.misc.armor ??= 0;
-    sys.misc.description ??= "";
 
-    // Adjustments container
     sys.adjustments ??= {};
     sys.adjustments.attributes ??= {};
     sys.adjustments.resources ??= {};
 
-    // Attributes: flat only
     for (const a of context.attributesList) {
       sys.adjustments.attributes[a.value] ??= {};
-      if (typeof sys.adjustments.attributes[a.value].flat !== "number") {
-        // Preserve existing values if present, but default missing to 0
-        sys.adjustments.attributes[a.value].flat ??= 0;
-      }
+      sys.adjustments.attributes[a.value].flat ??= 0;
     }
 
-    // Resources: pct+flat for LF/Mana/Stamina; flat-only for others
     const ensurePctFlat = (k) => {
       sys.adjustments.resources[k] ??= {};
       sys.adjustments.resources[k].pct ??= 0;
@@ -181,32 +151,79 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
     ensureFlat("defense");
     ensureFlat("naturalArmor");
 
-    // Repeatable rows: ensure arrays exist and render at least one row
-    sys.adjustments.specialties ??= [];
-    sys.adjustments.affinities ??= [];
-    sys.adjustments.resistances ??= [];
+    sys.adjustments.specialties = Array.isArray(sys.adjustments.specialties) ? sys.adjustments.specialties : [];
+    sys.adjustments.affinities = Array.isArray(sys.adjustments.affinities) ? sys.adjustments.affinities : [];
+    sys.adjustments.resistances = Array.isArray(sys.adjustments.resistances) ? sys.adjustments.resistances : [];
 
-    const ensureMinRows = (arr, factory) => {
-      if (!Array.isArray(arr)) return [factory()];
-      if (arr.length < 1) arr.push(factory());
-      return arr;
-    };
+    if (sys.adjustments.specialties.length < 1) sys.adjustments.specialties.push({ type: "", key: "" });
+    if (sys.adjustments.affinities.length < 1) sys.adjustments.affinities.push({ key: "" });
+    if (sys.adjustments.resistances.length < 1) sys.adjustments.resistances.push({ key: "" });
 
-    sys.adjustments.specialties = ensureMinRows(sys.adjustments.specialties, () => ({
-      type: "",
-      key: ""
-    }));
-
-    sys.adjustments.affinities = ensureMinRows(sys.adjustments.affinities, () => ({
-      key: ""
-    }));
-
-    sys.adjustments.resistances = ensureMinRows(sys.adjustments.resistances, () => ({
-      key: ""
-    }));
-
-    // Re-attach normalized system to context
     context.system = sys;
     return context;
+  }
+
+  /** @override */
+  _onRender(context, options) {
+    super._onRender(context, options);
+
+    // Delegate once per render, safely (remove then add)
+    const el = this.element;
+    if (!el) return;
+
+    this._boundClick ??= this._handleClick.bind(this);
+    el.removeEventListener("click", this._boundClick);
+    el.addEventListener("click", this._boundClick);
+  }
+
+  async _handleClick(event) {
+    const btn = event.target?.closest?.("[data-action]");
+    if (!btn) return;
+
+    const action = btn.dataset.action;
+    const index = Number(btn.dataset.index);
+
+    switch (action) {
+      case "add-specialty-row":
+        return this._addRow("system.adjustments.specialties", { type: "", key: "" });
+
+      case "remove-specialty-row":
+        return this._removeRow("system.adjustments.specialties", index, { type: "", key: "" });
+
+      case "add-affinity-row":
+        return this._addRow("system.adjustments.affinities", { key: "" });
+
+      case "remove-affinity-row":
+        return this._removeRow("system.adjustments.affinities", index, { key: "" });
+
+      case "add-resistance-row":
+        return this._addRow("system.adjustments.resistances", { key: "" });
+
+      case "remove-resistance-row":
+        return this._removeRow("system.adjustments.resistances", index, { key: "" });
+
+      default:
+        return;
+    }
+  }
+
+  async _addRow(path, row) {
+    const current = foundry.utils.deepClone(foundry.utils.getProperty(this.document, path) ?? []);
+    current.push(foundry.utils.deepClone(row));
+    await this.document.update({ [path]: current });
+  }
+
+  async _removeRow(path, index, fallbackRow) {
+    let current = foundry.utils.deepClone(foundry.utils.getProperty(this.document, path) ?? []);
+    if (!Array.isArray(current)) current = [];
+
+    if (Number.isFinite(index) && index >= 0 && index < current.length) {
+      current.splice(index, 1);
+    }
+
+    // Keep at least 1 row so UI never disappears
+    if (current.length < 1) current.push(foundry.utils.deepClone(fallbackRow));
+
+    await this.document.update({ [path]: current });
   }
 }
