@@ -781,17 +781,44 @@
     grid-template-columns: 1fr;
   }
 }
+
 /* =========================================================
-   Item Sheets (Equipment / Consumable / Misc Item)
+   Item Sheets (ALL TYPES) – Scrollable body for V13 SheetV2
    ========================================================= */
 
+/* Make the application content a flex column so we can scroll inside */
 .hwfwm-item-sheet {
   background: #e9e2d6;
   padding: 12px;
+
+  /* NEW: allow a header + scrollable body layout */
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0; /* critical for nested scrolling inside window */
 }
 
+/* Keep header fixed at top */
 .hwfwm-item-header {
-  margin-bottom: 12px;
+  margin-bottom: 0; /* header spacing handled by gap now */
+}
+
+/* NEW: the body becomes the scroll container */
+.hwfwm-item-body {
+  flex: 1 1 auto;
+  min-height: 0;     /* critical for flexbox scrolling */
+  overflow: auto;    /* THIS is the scrollbar */
+  padding-right: 2px; /* keeps scrollbar from overlaying content */
+}
+
+/* Subtle scrollbar for item sheets too */
+.hwfwm-item-body::-webkit-scrollbar {
+  width: 8px;
+}
+.hwfwm-item-body::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
 }
 
 .hwfwm-item-title {
@@ -809,6 +836,7 @@
   box-sizing: border-box;
   resize: vertical;
 }
+
 
 /* =========================================================
    Header v2: Portrait + inline fields under Name
