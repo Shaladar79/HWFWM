@@ -29,7 +29,8 @@ Hooks.once("init", async () => {
   Handlebars.registerHelper("not", (v) => !v);
 
   // Preload actor sheet templates + partials
-  await loadTemplates([
+  // V13+: loadTemplates is namespaced under foundry.applications.handlebars
+  await foundry.applications.handlebars.loadTemplates([
     "systems/hwfwm-system/templates/actor/actor-sheet.hbs",
 
     // Parts
