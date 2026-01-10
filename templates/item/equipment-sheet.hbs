@@ -35,6 +35,27 @@
       </div>
     </div>
 
+    <!-- IMAGE (moved to top) -->
+    <div class="hwfwm-card">
+      <div class="hwfwm-card__title" style="color:#000;">Image</div>
+      <div class="hwfwm-muted" style="margin-bottom: 8px; color:#000;">
+        Click the image to change it.
+      </div>
+
+      <img
+        src="{{item.img}}"
+        data-edit="img"
+        title="{{item.name}}"
+        style="max-width: 180px; height: auto; cursor: pointer; border: 1px solid rgba(0,0,0,0.35); border-radius: 6px;"
+      />
+    </div>
+
+    <!-- DESCRIPTION (shared; below image) -->
+    <div class="hwfwm-card">
+      <div class="hwfwm-card__title" style="color:#000;">Description</div>
+      <textarea name="system.description" rows="6">{{system.description}}</textarea>
+    </div>
+
     <!-- WEAPON -->
     {{#if _ui.isWeapon}}
     <div class="hwfwm-card">
@@ -61,35 +82,17 @@
 
         <div class="hwfwm-field">
           <div class="hwfwm-label" style="color:#000;">Damage per Success</div>
-          <input
-            type="number"
-            name="system.weapon.damagePerSuccess"
-            value="{{system.weapon.damagePerSuccess}}"
-            step="1"
-            placeholder="0"
-          />
+          <input type="number" name="system.weapon.damagePerSuccess" value="{{system.weapon.damagePerSuccess}}" step="1" placeholder="0" />
         </div>
 
         <div class="hwfwm-field">
           <div class="hwfwm-label" style="color:#000;">Range</div>
-          <input
-            type="number"
-            name="system.weapon.range"
-            value="{{system.weapon.range}}"
-            step="1"
-            placeholder="0"
-          />
+          <input type="number" name="system.weapon.range" value="{{system.weapon.range}}" step="1" placeholder="0" />
         </div>
 
         <div class="hwfwm-field">
           <div class="hwfwm-label" style="color:#000;">Action Cost</div>
-          <input
-            type="number"
-            name="system.weapon.actionCost"
-            value="{{system.weapon.actionCost}}"
-            step="1"
-            placeholder="0"
-          />
+          <input type="number" name="system.weapon.actionCost" value="{{system.weapon.actionCost}}" step="1" placeholder="0" />
         </div>
 
         <div class="hwfwm-field" style="grid-column: 1 / -1;">
@@ -99,7 +102,6 @@
               <div class="hwfwm-label" style="color:#000;">Damage Type 1</div>
               <select name="system.weapon.damageType1">
                 <option value="">— Select —</option>
-                {{!-- Placeholder until damage type config exists --}}
               </select>
             </div>
 
@@ -107,7 +109,6 @@
               <div class="hwfwm-label" style="color:#000;">Damage Type 2</div>
               <select name="system.weapon.damageType2">
                 <option value="">— Select —</option>
-                {{!-- Placeholder until damage type config exists --}}
               </select>
             </div>
 
@@ -115,15 +116,9 @@
               <div class="hwfwm-label" style="color:#000;">Damage Type 3</div>
               <select name="system.weapon.damageType3">
                 <option value="">— Select —</option>
-                {{!-- Placeholder until damage type config exists --}}
               </select>
             </div>
           </div>
-        </div>
-
-        <div class="hwfwm-field" style="grid-column: 1 / -1;">
-          <div class="hwfwm-label" style="color:#000;">Description</div>
-          <textarea name="system.weapon.description" rows="4">{{system.weapon.description}}</textarea>
         </div>
       </div>
     </div>
@@ -137,26 +132,14 @@
       <div class="hwfwm-grid">
         <div class="hwfwm-field">
           <div class="hwfwm-label" style="color:#000;">Armor</div>
-          <input
-            type="number"
-            name="system.armor.value"
-            value="{{system.armor.value}}"
-            step="1"
-            placeholder="0"
-          />
+          <input type="number" name="system.armor.value" value="{{system.armor.value}}" step="1" placeholder="0" />
         </div>
 
         <div class="hwfwm-field">
           <div class="hwfwm-label" style="color:#000;">Armor Type (placeholder)</div>
           <select name="system.armor.armorType">
             <option value="">— Select —</option>
-            {{!-- Placeholder until equipment config provides armor types --}}
           </select>
-        </div>
-
-        <div class="hwfwm-field" style="grid-column: 1 / -1;">
-          <div class="hwfwm-label" style="color:#000;">Description</div>
-          <textarea name="system.armor.description" rows="4">{{system.armor.description}}</textarea>
         </div>
       </div>
     </div>
@@ -170,18 +153,7 @@
       <div class="hwfwm-grid">
         <div class="hwfwm-field">
           <div class="hwfwm-label" style="color:#000;">Armor (Misc)</div>
-          <input
-            type="number"
-            name="system.misc.armor"
-            value="{{system.misc.armor}}"
-            step="1"
-            placeholder="0"
-          />
-        </div>
-
-        <div class="hwfwm-field" style="grid-column: 1 / -1;">
-          <div class="hwfwm-label" style="color:#000;">Description</div>
-          <textarea name="system.misc.description" rows="4">{{system.misc.description}}</textarea>
+          <input type="number" name="system.misc.armor" value="{{system.misc.armor}}" step="1" placeholder="0" />
         </div>
       </div>
     </div>
@@ -189,9 +161,7 @@
 
     <!-- ADJUSTMENTS -->
     <div class="hwfwm-card">
-      <div class="hwfwm-card__title" style="color:#000;">
-        Adjustments
-      </div>
+      <div class="hwfwm-card__title" style="color:#000;">Adjustments</div>
       <div class="hwfwm-muted" style="margin-bottom: 8px; color:#000;">
         (there also needs to be a adjustments section which has fields for attributes, resources, specialties type drop, specialty drop, affininity drop, resistance drop once one of these is filled another of the same needs to appear incase an equipment item grants multiple of them)
       </div>
@@ -258,20 +228,20 @@
         <input type="number" name="system.adjustments.resources.naturalArmor.flat" value="{{lookup (lookup system.adjustments.resources 'naturalArmor') 'flat'}}" step="1" placeholder="0" />
       </div>
 
-      <!-- Specialties (repeatable rows, seeded) -->
-      <div class="hwfwm-card__title" style="font-size: 0.95em; margin-top: 14px; color:#000;">Specialties</div>
-      <div class="hwfwm-muted" style="margin-bottom: 8px; color:#000;">
-        Seed multiple rows if the equipment grants multiple specialties.
+      <!-- Specialties -->
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top: 14px;">
+        <div class="hwfwm-card__title" style="font-size: 0.95em; color:#000;">Specialties</div>
+        <button type="button" class="hwfwm-itembtn" data-action="add-specialty-row">Add Row</button>
       </div>
 
       {{#each system.adjustments.specialties as |row i|}}
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
+        <div style="display:grid; grid-template-columns: 1fr 1fr auto; gap: 10px; margin-bottom: 8px;">
           <div>
             <div class="hwfwm-label" style="color:#000;">Specialty Type</div>
             <select name="system.adjustments.specialties.{{i}}.type">
               <option value="">— Select —</option>
               {{#each @root.specialtyTypeOptions as |o|}}
-                <option value="{{o.value}}" {{#if (eq o.value @root.system.adjustments.specialties.[{{i}}].type)}}selected{{/if}}>{{o.label}}</option>
+                <option value="{{o.value}}" {{#if (eq o.value row.type)}}selected{{/if}}>{{o.label}}</option>
               {{/each}}
             </select>
           </div>
@@ -287,49 +257,57 @@
               {{/if}}
             </select>
           </div>
+
+          <div style="display:flex; align-items:flex-end;">
+            <button type="button" class="hwfwm-itembtn" data-action="remove-specialty-row" data-index="{{i}}">Remove</button>
+          </div>
         </div>
       {{/each}}
 
-      <!-- Affinities (repeatable rows, seeded) -->
-      <div class="hwfwm-card__title" style="font-size: 0.95em; margin-top: 14px; color:#000;">Affinities</div>
-      {{#each system.adjustments.affinities as |row i|}}
-        <div style="margin-bottom: 8px;">
-          <select name="system.adjustments.affinities.{{i}}.key">
-            <option value="">— Select Affinity —</option>
-            {{#each @root.affinityOptions as |o|}}
-              <option value="{{o.value}}" {{#if (eq o.value row.key)}}selected{{/if}}>{{o.label}}</option>
-            {{/each}}
-          </select>
-        </div>
-      {{/each}}
-
-      <!-- Resistances (repeatable rows, seeded) -->
-      <div class="hwfwm-card__title" style="font-size: 0.95em; margin-top: 14px; color:#000;">Resistances</div>
-      {{#each system.adjustments.resistances as |row i|}}
-        <div style="margin-bottom: 8px;">
-          <select name="system.adjustments.resistances.{{i}}.key">
-            <option value="">— Select Resistance —</option>
-            {{#each @root.resistanceOptions as |o|}}
-              <option value="{{o.value}}" {{#if (eq o.value row.key)}}selected{{/if}}>{{o.label}}</option>
-            {{/each}}
-          </select>
-        </div>
-      {{/each}}
-    </div>
-
-    <!-- IMAGE -->
-    <div class="hwfwm-card">
-      <div class="hwfwm-card__title" style="color:#000;">Image</div>
-      <div class="hwfwm-muted" style="margin-bottom: 8px; color:#000;">
-        Click the image to change it.
+      <!-- Affinities -->
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top: 14px;">
+        <div class="hwfwm-card__title" style="font-size: 0.95em; color:#000;">Affinities</div>
+        <button type="button" class="hwfwm-itembtn" data-action="add-affinity-row">Add Row</button>
       </div>
 
-      <img
-        src="{{item.img}}"
-        data-edit="img"
-        title="{{item.name}}"
-        style="max-width: 180px; height: auto; cursor: pointer; border: 1px solid rgba(0,0,0,0.35); border-radius: 6px;"
-      />
+      {{#each system.adjustments.affinities as |row i|}}
+        <div style="display:grid; grid-template-columns: 1fr auto; gap: 10px; margin-bottom: 8px;">
+          <div>
+            <select name="system.adjustments.affinities.{{i}}.key">
+              <option value="">— Select Affinity —</option>
+              {{#each @root.affinityOptions as |o|}}
+                <option value="{{o.value}}" {{#if (eq o.value row.key)}}selected{{/if}}>{{o.label}}</option>
+              {{/each}}
+            </select>
+          </div>
+          <div>
+            <button type="button" class="hwfwm-itembtn" data-action="remove-affinity-row" data-index="{{i}}">Remove</button>
+          </div>
+        </div>
+      {{/each}}
+
+      <!-- Resistances -->
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top: 14px;">
+        <div class="hwfwm-card__title" style="font-size: 0.95em; color:#000;">Resistances</div>
+        <button type="button" class="hwfwm-itembtn" data-action="add-resistance-row">Add Row</button>
+      </div>
+
+      {{#each system.adjustments.resistances as |row i|}}
+        <div style="display:grid; grid-template-columns: 1fr auto; gap: 10px; margin-bottom: 8px;">
+          <div>
+            <select name="system.adjustments.resistances.{{i}}.key">
+              <option value="">— Select Resistance —</option>
+              {{#each @root.resistanceOptions as |o|}}
+                <option value="{{o.value}}" {{#if (eq o.value row.key)}}selected{{/if}}>{{o.label}}</option>
+              {{/each}}
+            </select>
+          </div>
+          <div>
+            <button type="button" class="hwfwm-itembtn" data-action="remove-resistance-row" data-index="{{i}}">Remove</button>
+          </div>
+        </div>
+      {{/each}}
+
     </div>
 
     <!-- NOTES -->
