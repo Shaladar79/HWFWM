@@ -9,16 +9,16 @@
     />
   </header>
 
-  <section class="hwfwm-sheet__body" style="padding: 12px;">
+  <section class="hwfwm-sheet__body" style="padding: 12px; color:#000;">
 
     <!-- CORE -->
     <div class="hwfwm-card">
-      <div class="hwfwm-card__title">Core</div>
+      <div class="hwfwm-card__title" style="color:#000;">Core</div>
 
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
 
         <div>
-          <label class="hwfwm-label">Source</label>
+          <label class="hwfwm-label" style="color:#000;">Source</label>
           <select name="system.source">
             <option value="trained" {{#if (eq system.source "trained")}}selected{{/if}}>Trained</option>
             <option value="granted" {{#if (eq system.source "granted")}}selected{{/if}}>Granted</option>
@@ -26,7 +26,7 @@
         </div>
 
         <div>
-          <label class="hwfwm-label">Category</label>
+          <label class="hwfwm-label" style="color:#000;">Category</label>
           <select name="system.category">
             <option value="attributes" {{#if (eq system.category "attributes")}}selected{{/if}}>Attributes</option>
             <option value="resources" {{#if (eq system.category "resources")}}selected{{/if}}>Resources</option>
@@ -39,162 +39,264 @@
         </div>
 
         <div style="grid-column: 1 / span 2;">
-          <label class="hwfwm-label">Tags</label>
+          <label class="hwfwm-label" style="color:#000;">Tags</label>
           <input type="text" name="system.tags" value="{{system.tags}}" placeholder="comma, separated, tags" />
         </div>
       </div>
     </div>
 
-    <!-- ADJUSTMENTS -->
+    <!-- CATEGORY: ATTRIBUTES -->
+    {{#if (eq system.category "attributes")}}
+      <div class="hwfwm-card" style="margin-top: 12px;">
+        <div class="hwfwm-card__title" style="color:#000;">Attribute Adjustments</div>
+        <div class="hwfwm-muted" style="margin-bottom: 8px; color:#000;">
+          Flat adjustments only. Attributes are never adjusted by %.
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1.2fr 1fr; gap: 8px; align-items:center;">
+          <div style="color:#000;"><strong>Attribute</strong></div>
+          <div style="color:#000;"><strong>Flat Delta</strong></div>
+
+          {{#each attributesList as |a|}}
+            <div style="color:#000;">{{a.label}}</div>
+            <input
+              type="number"
+              name="system.adjustments.attributes.{{a.value}}.flat"
+              value="{{lookup (lookup ../system.adjustments.attributes a.value) 'flat'}}"
+              step="1"
+              placeholder="0"
+            />
+          {{/each}}
+        </div>
+      </div>
+    {{/if}}
+
+    <!-- CATEGORY: RESOURCES -->
+    {{#if (eq system.category "resources")}}
+      <div class="hwfwm-card" style="margin-top: 12px;">
+        <div class="hwfwm-card__title" style="color:#000;">Resource / Status Adjustments</div>
+        <div class="hwfwm-muted" style="margin-bottom: 8px; color:#000;">
+          Lifeforce, Mana, and Stamina support Flat + % adjustments. All other entries are Flat only.
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 8px; align-items:center;">
+          <div style="color:#000;"><strong>Resource</strong></div>
+          <div style="color:#000;"><strong>% Delta</strong></div>
+          <div style="color:#000;"><strong>Flat Delta</strong></div>
+
+          <!-- Lifeforce -->
+          <div style="color:#000;">Lifeforce (Max)</div>
+          <input
+            type="number"
+            name="system.adjustments.resources.lifeforce.pct"
+            value="{{lookup (lookup system.adjustments.resources 'lifeforce') 'pct'}}"
+            step="1"
+            placeholder="0"
+          />
+          <input
+            type="number"
+            name="system.adjustments.resources.lifeforce.flat"
+            value="{{lookup (lookup system.adjustments.resources 'lifeforce') 'flat'}}"
+            step="1"
+            placeholder="0"
+          />
+
+          <!-- Mana -->
+          <div style="color:#000;">Mana (Max)</div>
+          <input
+            type="number"
+            name="system.adjustments.resources.mana.pct"
+            value="{{lookup (lookup system.adjustments.resources 'mana') 'pct'}}"
+            step="1"
+            placeholder="0"
+          />
+          <input
+            type="number"
+            name="system.adjustments.resources.mana.flat"
+            value="{{lookup (lookup system.adjustments.resources 'mana') 'flat'}}"
+            step="1"
+            placeholder="0"
+          />
+
+          <!-- Stamina -->
+          <div style="color:#000;">Stamina (Max)</div>
+          <input
+            type="number"
+            name="system.adjustments.resources.stamina.pct"
+            value="{{lookup (lookup system.adjustments.resources 'stamina') 'pct'}}"
+            step="1"
+            placeholder="0"
+          />
+          <input
+            type="number"
+            name="system.adjustments.resources.stamina.flat"
+            value="{{lookup (lookup system.adjustments.resources 'stamina') 'flat'}}"
+            step="1"
+            placeholder="0"
+          />
+
+          <!-- Trauma (flat only) -->
+          <div style="color:#000;">Trauma (Max)</div>
+          <div></div>
+          <input
+            type="number"
+            name="system.adjustments.resources.trauma.flat"
+            value="{{lookup (lookup system.adjustments.resources 'trauma') 'flat'}}"
+            step="1"
+            placeholder="0"
+          />
+
+          <!-- Pace (flat only) -->
+          <div style="color:#000;">Pace</div>
+          <div></div>
+          <input
+            type="number"
+            name="system.adjustments.resources.pace.flat"
+            value="{{lookup (lookup system.adjustments.resources 'pace') 'flat'}}"
+            step="1"
+            placeholder="0"
+          />
+
+          <!-- Reaction (flat only) -->
+          <div style="color:#000;">Reaction</div>
+          <div></div>
+          <input
+            type="number"
+            name="system.adjustments.resources.reaction.flat"
+            value="{{lookup (lookup system.adjustments.resources 'reaction') 'flat'}}"
+            step="1"
+            placeholder="0"
+          />
+
+          <!-- Defense (flat only) -->
+          <div style="color:#000;">Defense</div>
+          <div></div>
+          <input
+            type="number"
+            name="system.adjustments.resources.defense.flat"
+            value="{{lookup (lookup system.adjustments.resources 'defense') 'flat'}}"
+            step="1"
+            placeholder="0"
+          />
+
+          <!-- Natural Armor (flat only) -->
+          <div style="color:#000;">Natural Armor</div>
+          <div></div>
+          <input
+            type="number"
+            name="system.adjustments.resources.naturalArmor.flat"
+            value="{{lookup (lookup system.adjustments.resources 'naturalArmor') 'flat'}}"
+            step="1"
+            placeholder="0"
+          />
+        </div>
+      </div>
+    {{/if}}
+
+    <!-- CATEGORY: SPECIALTIES -->
+    {{#if (eq system.category "specialties")}}
+      <div class="hwfwm-card" style="margin-top: 12px;">
+        <div class="hwfwm-card__title" style="color:#000;">Specialty Grant</div>
+        <div class="hwfwm-muted" style="margin-bottom: 8px; color:#000;">
+          Choose a specialty type, then choose a specialty from that type.
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div>
+            <label class="hwfwm-label" style="color:#000;">Specialty Type</label>
+            <select name="system.grants.specialty.type">
+              <option value="">— Select Type —</option>
+              {{#each specialtyTypeOptions as |o|}}
+                <option value="{{o.value}}" {{#if (eq o.value ../system.grants.specialty.type)}}selected{{/if}}>
+                  {{o.label}}
+                </option>
+              {{/each}}
+            </select>
+          </div>
+
+          <div>
+            <label class="hwfwm-label" style="color:#000;">Specialty</label>
+            <select name="system.grants.specialty.key">
+              <option value="">— Select Specialty —</option>
+
+              {{!-- specialtiesByType is expected to be: { [typeValue]: [{value,label}, ...] } --}}
+              {{#if system.grants.specialty.type}}
+                {{#each (lookup ../specialtiesByType ../system.grants.specialty.type) as |s|}}
+                  <option value="{{s.value}}" {{#if (eq s.value ../system.grants.specialty.key)}}selected{{/if}}>
+                    {{s.label}}
+                  </option>
+                {{/each}}
+              {{/if}}
+            </select>
+          </div>
+        </div>
+      </div>
+    {{/if}}
+
+    <!-- CATEGORY: AFFINITIES -->
+    {{#if (eq system.category "affinities")}}
+      <div class="hwfwm-card" style="margin-top: 12px;">
+        <div class="hwfwm-card__title" style="color:#000;">Affinity Grant</div>
+
+        <label class="hwfwm-label" style="color:#000;">Affinity</label>
+        <select name="system.grants.affinity.key">
+          <option value="">— Select Affinity —</option>
+          {{#each affinityOptions as |o|}}
+            <option value="{{o.value}}" {{#if (eq o.value ../system.grants.affinity.key)}}selected{{/if}}>
+              {{o.label}}
+            </option>
+          {{/each}}
+        </select>
+      </div>
+    {{/if}}
+
+    <!-- CATEGORY: APTITUDES -->
+    {{#if (eq system.category "aptitudes")}}
+      <div class="hwfwm-card" style="margin-top: 12px;">
+        <div class="hwfwm-card__title" style="color:#000;">Aptitude Grant</div>
+
+        <label class="hwfwm-label" style="color:#000;">Aptitude</label>
+        <select name="system.grants.aptitude.key">
+          <option value="">— Select Aptitude —</option>
+          {{#each aptitudeOptions as |o|}}
+            <option value="{{o.value}}" {{#if (eq o.value ../system.grants.aptitude.key)}}selected{{/if}}>
+              {{o.label}}
+            </option>
+          {{/each}}
+        </select>
+      </div>
+    {{/if}}
+
+    <!-- CATEGORY: RESISTANCES -->
+    {{#if (eq system.category "resistances")}}
+      <div class="hwfwm-card" style="margin-top: 12px;">
+        <div class="hwfwm-card__title" style="color:#000;">Resistance Grant</div>
+
+        <label class="hwfwm-label" style="color:#000;">Resistance</label>
+        <select name="system.grants.resistance.key">
+          <option value="">— Select Resistance —</option>
+          {{#each resistanceOptions as |o|}}
+            <option value="{{o.value}}" {{#if (eq o.value ../system.grants.resistance.key)}}selected{{/if}}>
+              {{o.label}}
+            </option>
+          {{/each}}
+        </select>
+      </div>
+    {{/if}}
+
+    <!-- CATEGORY: EXPERTISE (placeholder) -->
+    {{#if (eq system.category "expertise")}}
+      <div class="hwfwm-card" style="margin-top: 12px;">
+        <div class="hwfwm-card__title" style="color:#000;">Expertise</div>
+        <div class="hwfwm-muted" style="color:#000;">
+          Expertise UI not wired yet. Define the desired fields and we will implement them next.
+        </div>
+      </div>
+    {{/if}}
+
+    <!-- DESCRIPTION (always visible) -->
     <div class="hwfwm-card" style="margin-top: 12px;">
-      <div class="hwfwm-card__title">Adjustments</div>
-      <div class="hwfwm-muted" style="margin-bottom: 8px;">
-        Data-only placeholders. These will be applied by the actor engine later.
-      </div>
-
-      <!-- Attribute adjustments -->
-      <div class="hwfwm-card__title" style="font-size: 0.95em; margin-top: 6px;">Attributes</div>
-      <div style="display:grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 8px; align-items:center;">
-        <div class="hwfwm-muted"><strong>Attribute</strong></div>
-        <div class="hwfwm-muted"><strong>% Delta</strong></div>
-        <div class="hwfwm-muted"><strong>Flat Delta</strong></div>
-
-        {{#each attributesList as |a|}}
-          <div>{{a.label}}</div>
-          <input
-            type="number"
-            name="system.adjustments.attributes.{{a.value}}.pct"
-            value="{{lookup (lookup ../system.adjustments.attributes a.value) 'pct'}}"
-            step="1"
-            placeholder="0"
-          />
-          <input
-            type="number"
-            name="system.adjustments.attributes.{{a.value}}.flat"
-            value="{{lookup (lookup ../system.adjustments.attributes a.value) 'flat'}}"
-            step="1"
-            placeholder="0"
-          />
-        {{/each}}
-      </div>
-
-      <!-- Resource adjustments -->
-      <div class="hwfwm-card__title" style="font-size: 0.95em; margin-top: 14px;">Resources / Status</div>
-      <div style="display:grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 8px; align-items:center;">
-        <div class="hwfwm-muted"><strong>Resource</strong></div>
-        <div class="hwfwm-muted"><strong>Max Delta</strong></div>
-        <div class="hwfwm-muted"><strong>Value Delta</strong></div>
-
-        {{#each resourcesList as |r|}}
-          <div>{{r.label}}</div>
-          <input
-            type="number"
-            name="system.adjustments.resources.{{r.value}}.max"
-            value="{{lookup (lookup ../system.adjustments.resources r.value) 'max'}}"
-            step="1"
-            placeholder="0"
-          />
-          <input
-            type="number"
-            name="system.adjustments.resources.{{r.value}}.value"
-            value="{{lookup (lookup ../system.adjustments.resources r.value) 'value'}}"
-            step="1"
-            placeholder="0"
-          />
-        {{/each}}
-      </div>
-
-      <!-- Quick singles -->
-      <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 14px;">
-        <div>
-          <label class="hwfwm-label">Defense (flat)</label>
-          <input type="number" name="system.adjustments.defense.flat" value="{{system.adjustments.defense.flat}}" step="1" placeholder="0" />
-        </div>
-        <div>
-          <label class="hwfwm-label">Pace (flat)</label>
-          <input type="number" name="system.adjustments.pace.flat" value="{{system.adjustments.pace.flat}}" step="1" placeholder="0" />
-        </div>
-        <div>
-          <label class="hwfwm-label">Natural Armor (flat)</label>
-          <input type="number" name="system.adjustments.naturalArmor.flat" value="{{system.adjustments.naturalArmor.flat}}" step="1" placeholder="0" />
-        </div>
-      </div>
-    </div>
-
-    <!-- GRANTS -->
-    <div class="hwfwm-card" style="margin-top: 12px;">
-      <div class="hwfwm-card__title">Grants</div>
-      <div class="hwfwm-muted" style="margin-bottom: 8px;">
-        Add keys that the actor can interpret later (specialty keys, affinity keys, etc.).
-      </div>
-
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-        <!-- Specialties -->
-        <div>
-          <div class="hwfwm-card__title" style="font-size: 0.95em;">Specialties</div>
-          {{#each system.grants.specialties as |g i|}}
-            <input
-              type="text"
-              name="system.grants.specialties.{{i}}.key"
-              value="{{g.key}}"
-              placeholder="specialty key"
-              style="margin-bottom:6px;"
-            />
-          {{/each}}
-        </div>
-
-        <!-- Affinities -->
-        <div>
-          <div class="hwfwm-card__title" style="font-size: 0.95em;">Affinities</div>
-          {{#each system.grants.affinities as |g i|}}
-            <input
-              type="text"
-              name="system.grants.affinities.{{i}}.key"
-              value="{{g.key}}"
-              placeholder="affinity key"
-              style="margin-bottom:6px;"
-            />
-          {{/each}}
-        </div>
-
-        <!-- Aptitudes -->
-        <div>
-          <div class="hwfwm-card__title" style="font-size: 0.95em;">Aptitudes</div>
-          {{#each system.grants.aptitudes as |g i|}}
-            <input
-              type="text"
-              name="system.grants.aptitudes.{{i}}.key"
-              value="{{g.key}}"
-              placeholder="aptitude key"
-              style="margin-bottom:6px;"
-            />
-          {{/each}}
-        </div>
-
-        <!-- Resistances -->
-        <div>
-          <div class="hwfwm-card__title" style="font-size: 0.95em;">Resistances</div>
-          {{#each system.grants.resistances as |g i|}}
-            <input
-              type="text"
-              name="system.grants.resistances.{{i}}.key"
-              value="{{g.key}}"
-              placeholder="resistance key"
-              style="margin-bottom:6px;"
-            />
-          {{/each}}
-        </div>
-      </div>
-
-      <div class="hwfwm-muted" style="margin-top: 10px;">
-        Note: “Add row” buttons will be wired up after the baseline sheets are stable.
-        For now, you can seed rows in the item data (or compendium entries) and edit them here.
-      </div>
-    </div>
-
-    <!-- DESCRIPTION -->
-    <div class="hwfwm-card" style="margin-top: 12px;">
-      <div class="hwfwm-card__title">Description</div>
+      <div class="hwfwm-card__title" style="color:#000;">Description</div>
 
       {{editor
         system.description
