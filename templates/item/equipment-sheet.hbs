@@ -1,20 +1,20 @@
 <div class="hwfwm-item-sheet hwfwm-item-sheet--equipment" autocomplete="off">
   <header class="hwfwm-item-header">
     <div class="hwfwm-item-title">
-      <label>Name</label>
-      <input type="text" name="name" value="{{item.name}}" />
+      <label class="hwfwm-label" style="color:#000;">Name</label>
+      <input type="text" name="name" value="{{item.name}}" placeholder="Equipment Name" />
     </div>
   </header>
 
-  <section class="hwfwm-item-body">
+  <section class="hwfwm-item-body" style="color:#000;">
 
     <!-- CORE -->
     <div class="hwfwm-card">
-      <div class="hwfwm-card__title">Equipment</div>
+      <div class="hwfwm-card__title" style="color:#000;">Equipment</div>
 
       <div class="hwfwm-grid">
         <div class="hwfwm-field">
-          <div class="hwfwm-label">Type</div>
+          <div class="hwfwm-label" style="color:#000;">Type</div>
           <select name="system.type">
             <option value="">— Select —</option>
             {{#each equipmentTypes as |t|}}
@@ -26,7 +26,7 @@
         </div>
 
         <div class="hwfwm-field">
-          <div class="hwfwm-label">Equipped</div>
+          <div class="hwfwm-label" style="color:#000;">Equipped</div>
           <select name="system.equipped">
             <option value="no" {{#if (eq system.equipped "no")}}selected{{/if}}>No</option>
             <option value="yes" {{#if (eq system.equipped "yes")}}selected{{/if}}>Yes</option>
@@ -38,11 +38,11 @@
     <!-- WEAPON -->
     {{#if _ui.isWeapon}}
     <div class="hwfwm-card">
-      <div class="hwfwm-card__title">Weapon (Placeholder)</div>
+      <div class="hwfwm-card__title" style="color:#000;">Weapon (Placeholder)</div>
 
       <div class="hwfwm-grid">
         <div class="hwfwm-field">
-          <div class="hwfwm-label">Damage</div>
+          <div class="hwfwm-label" style="color:#000;">Damage</div>
           <input
             type="text"
             name="system.weapon.damage"
@@ -52,7 +52,7 @@
         </div>
 
         <div class="hwfwm-field">
-          <div class="hwfwm-label">Reach / Range</div>
+          <div class="hwfwm-label" style="color:#000;">Reach / Range</div>
           <input
             type="text"
             name="system.weapon.range"
@@ -62,7 +62,7 @@
         </div>
 
         <div class="hwfwm-field">
-          <div class="hwfwm-label">Weapon Notes</div>
+          <div class="hwfwm-label" style="color:#000;">Weapon Notes</div>
           <textarea name="system.weapon.notes" rows="4">{{system.weapon.notes}}</textarea>
         </div>
       </div>
@@ -72,11 +72,11 @@
     <!-- ARMOR -->
     {{#if _ui.isArmor}}
     <div class="hwfwm-card">
-      <div class="hwfwm-card__title">Armor (Placeholder)</div>
+      <div class="hwfwm-card__title" style="color:#000;">Armor (Placeholder)</div>
 
       <div class="hwfwm-grid">
         <div class="hwfwm-field">
-          <div class="hwfwm-label">Armor Value</div>
+          <div class="hwfwm-label" style="color:#000;">Armor Value</div>
           <input
             type="number"
             name="system.armor.value"
@@ -86,7 +86,7 @@
         </div>
 
         <div class="hwfwm-field">
-          <div class="hwfwm-label">Shielding</div>
+          <div class="hwfwm-label" style="color:#000;">Shielding</div>
           <input
             type="number"
             name="system.armor.shielding"
@@ -96,7 +96,7 @@
         </div>
 
         <div class="hwfwm-field">
-          <div class="hwfwm-label">Armor Notes</div>
+          <div class="hwfwm-label" style="color:#000;">Armor Notes</div>
           <textarea name="system.armor.notes" rows="4">{{system.armor.notes}}</textarea>
         </div>
       </div>
@@ -106,11 +106,11 @@
     <!-- MISC -->
     {{#if _ui.isMisc}}
     <div class="hwfwm-card">
-      <div class="hwfwm-card__title">Misc Item (Placeholder)</div>
+      <div class="hwfwm-card__title" style="color:#000;">Misc Item (Placeholder)</div>
 
       <div class="hwfwm-grid">
         <div class="hwfwm-field">
-          <div class="hwfwm-label">Description / Notes</div>
+          <div class="hwfwm-label" style="color:#000;">Description / Notes</div>
           <textarea name="system.misc.notes" rows="6">{{system.misc.notes}}</textarea>
         </div>
       </div>
@@ -119,7 +119,7 @@
 
     <!-- NOTES -->
     <div class="hwfwm-card">
-      <div class="hwfwm-card__title">General Notes</div>
+      <div class="hwfwm-card__title" style="color:#000;">General Notes</div>
       <textarea name="system.notes" rows="6">{{system.notes}}</textarea>
     </div>
 
