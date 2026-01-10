@@ -35,7 +35,7 @@
       </div>
     </div>
 
-    <!-- IMAGE (moved to top) -->
+    <!-- IMAGE (top) -->
     <div class="hwfwm-card">
       <div class="hwfwm-card__title" style="color:#000;">Image</div>
       <div class="hwfwm-muted" style="margin-bottom: 8px; color:#000;">
@@ -50,7 +50,7 @@
       />
     </div>
 
-    <!-- DESCRIPTION (shared; below image) -->
+    <!-- DESCRIPTION (below image, shared) -->
     <div class="hwfwm-card">
       <div class="hwfwm-card__title" style="color:#000;">Description</div>
       <textarea name="system.description" rows="6">{{system.description}}</textarea>
@@ -76,7 +76,6 @@
           <div class="hwfwm-label" style="color:#000;">Weapon Type (placeholder)</div>
           <select name="system.weapon.weaponType">
             <option value="">— Select —</option>
-            {{!-- Placeholder until equipment config provides weapon types by category --}}
           </select>
         </div>
 
@@ -131,15 +130,15 @@
 
       <div class="hwfwm-grid">
         <div class="hwfwm-field">
-          <div class="hwfwm-label" style="color:#000;">Armor</div>
-          <input type="number" name="system.armor.value" value="{{system.armor.value}}" step="1" placeholder="0" />
-        </div>
-
-        <div class="hwfwm-field">
           <div class="hwfwm-label" style="color:#000;">Armor Type (placeholder)</div>
           <select name="system.armor.armorType">
             <option value="">— Select —</option>
           </select>
+        </div>
+
+        <div class="hwfwm-field">
+          <div class="hwfwm-label" style="color:#000;">Armor</div>
+          <input type="number" name="system.armor.value" value="{{system.armor.value}}" step="1" placeholder="0" />
         </div>
       </div>
     </div>
@@ -162,9 +161,6 @@
     <!-- ADJUSTMENTS -->
     <div class="hwfwm-card">
       <div class="hwfwm-card__title" style="color:#000;">Adjustments</div>
-      <div class="hwfwm-muted" style="margin-bottom: 8px; color:#000;">
-        (there also needs to be a adjustments section which has fields for attributes, resources, specialties type drop, specialty drop, affininity drop, resistance drop once one of these is filled another of the same needs to appear incase an equipment item grants multiple of them)
-      </div>
 
       <!-- Attributes -->
       <div class="hwfwm-card__title" style="font-size: 0.95em; margin-top: 6px; color:#000;">Attributes</div>
