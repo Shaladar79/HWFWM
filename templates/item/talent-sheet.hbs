@@ -16,39 +16,26 @@
       <div class="hwfwm-card__title">Core</div>
 
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-        <div>
-          <label class="hwfwm-label">Enabled</label>
-          <label style="display:flex; align-items:center; gap:8px;">
-            <input type="checkbox" name="system.enabled" {{#if system.enabled}}checked{{/if}} />
-            <span class="hwfwm-muted">Applies when enabled</span>
-          </label>
-        </div>
 
         <div>
           <label class="hwfwm-label">Source</label>
           <select name="system.source">
-            {{#each talentSources as |o|}}
-              <option value="{{o.value}}" {{#if (eq o.value ../system.source)}}selected{{/if}}>
-                {{o.label}}
-              </option>
-            {{/each}}
-          </select>
-        </div>
-
-        <div>
-          <label class="hwfwm-label">Stack Mode</label>
-          <select name="system.stackMode">
-            {{#each stackModes as |o|}}
-              <option value="{{o.value}}" {{#if (eq o.value ../system.stackMode)}}selected{{/if}}>
-                {{o.label}}
-              </option>
-            {{/each}}
+            <option value="trained" {{#if (eq system.source "trained")}}selected{{/if}}>Trained</option>
+            <option value="granted" {{#if (eq system.source "granted")}}selected{{/if}}>Granted</option>
           </select>
         </div>
 
         <div>
           <label class="hwfwm-label">Category</label>
-          <input type="text" name="system.category" value="{{system.category}}" placeholder="e.g. Defense, Mobility" />
+          <select name="system.category">
+            <option value="attributes" {{#if (eq system.category "attributes")}}selected{{/if}}>Attributes</option>
+            <option value="resources" {{#if (eq system.category "resources")}}selected{{/if}}>Resources</option>
+            <option value="specialties" {{#if (eq system.category "specialties")}}selected{{/if}}>Specialties</option>
+            <option value="affinities" {{#if (eq system.category "affinities")}}selected{{/if}}>Affinities</option>
+            <option value="aptitudes" {{#if (eq system.category "aptitudes")}}selected{{/if}}>Aptitudes</option>
+            <option value="resistances" {{#if (eq system.category "resistances")}}selected{{/if}}>Resistances</option>
+            <option value="expertise" {{#if (eq system.category "expertise")}}selected{{/if}}>Expertise</option>
+          </select>
         </div>
 
         <div style="grid-column: 1 / span 2;">
