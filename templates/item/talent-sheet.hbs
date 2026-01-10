@@ -76,7 +76,7 @@
       <div class="hwfwm-card" style="margin-top: 12px;">
         <div class="hwfwm-card__title" style="color:#000;">Resource / Status Adjustments</div>
         <div class="hwfwm-muted" style="margin-bottom: 8px; color:#000;">
-          Lifeforce, Mana, and Stamina support Flat + % adjustments. All other entries are Flat only.
+          Life Force, Mana, and Stamina support Flat + % adjustments. All other entries are Flat only.
         </div>
 
         <div style="display:grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 8px; align-items:center;">
@@ -84,19 +84,19 @@
           <div style="color:#000;"><strong>% Delta</strong></div>
           <div style="color:#000;"><strong>Flat Delta</strong></div>
 
-          <!-- Lifeforce -->
-          <div style="color:#000;">Lifeforce (Max)</div>
+          <!-- Life Force -->
+          <div style="color:#000;">Life Force (Max)</div>
           <input
             type="number"
-            name="system.adjustments.resources.lifeforce.pct"
-            value="{{lookup (lookup system.adjustments.resources 'lifeforce') 'pct'}}"
+            name="system.adjustments.resources.lifeForce.pct"
+            value="{{lookup (lookup system.adjustments.resources 'lifeForce') 'pct'}}"
             step="1"
             placeholder="0"
           />
           <input
             type="number"
-            name="system.adjustments.resources.lifeforce.flat"
-            value="{{lookup (lookup system.adjustments.resources 'lifeforce') 'flat'}}"
+            name="system.adjustments.resources.lifeForce.flat"
+            value="{{lookup (lookup system.adjustments.resources 'lifeForce') 'flat'}}"
             step="1"
             placeholder="0"
           />
@@ -219,7 +219,6 @@
             <select name="system.grants.specialty.key">
               <option value="">— Select Specialty —</option>
 
-              {{!-- specialtiesByType is expected to be: { [typeValue]: [{value,label}, ...] } --}}
               {{#if system.grants.specialty.type}}
                 {{#each (lookup ../specialtiesByType ../system.grants.specialty.type) as |s|}}
                   <option value="{{s.value}}" {{#if (eq s.value ../system.grants.specialty.key)}}selected{{/if}}>
@@ -289,7 +288,7 @@
       <div class="hwfwm-card" style="margin-top: 12px;">
         <div class="hwfwm-card__title" style="color:#000;">Expertise</div>
         <div class="hwfwm-muted" style="color:#000;">
-          Expertise UI not wired yet. Define the desired fields and we will implement them next.
+          Expertise UI not wired yet.
         </div>
       </div>
     {{/if}}
