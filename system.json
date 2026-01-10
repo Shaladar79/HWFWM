@@ -29,7 +29,7 @@
     {
       "name": "features",
       "label": "HWFWM - Features Library",
-      "path": "packs/feature.db",
+      "path": "packs/features.db",
       "type": "Item",
       "system": "hwfwm-system",
       "private": false
@@ -37,7 +37,7 @@
     {
       "name": "talents",
       "label": "HWFWM - Talents Library",
-      "path": "packs/talent.db",
+      "path": "packs/talents.db",
       "type": "Item",
       "system": "hwfwm-system",
       "private": false
@@ -45,7 +45,7 @@
     {
       "name": "abilities",
       "label": "HWFWM - Abilities Library",
-      "path": "packs/ability.db",
+      "path": "packs/abilities.db",
       "type": "Item",
       "system": "hwfwm-system",
       "private": false
@@ -61,7 +61,7 @@
     {
       "name": "consumables",
       "label": "HWFWM - Consumables Library",
-      "path": "packs/consumable.db",
+      "path": "packs/consumables.db",
       "type": "Item",
       "system": "hwfwm-system",
       "private": false
@@ -69,7 +69,7 @@
     {
       "name": "miscitems",
       "label": "HWFWM - Misc Items Library",
-      "path": "packs/miscitem.db",
+      "path": "packs/miscitems.db",
       "type": "Item",
       "system": "hwfwm-system",
       "private": false
