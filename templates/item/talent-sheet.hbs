@@ -216,12 +216,14 @@
 
           <div>
             <label class="hwfwm-label" style="color:#000;">Specialty</label>
+
+            <!-- FIX: use @root to avoid parent-scope lookup failures -->
             <select name="system.grants.specialty.key">
               <option value="">— Select Specialty —</option>
 
-              {{#if system.grants.specialty.type}}
-                {{#each (lookup ../specialtiesByType ../system.grants.specialty.type) as |s|}}
-                  <option value="{{s.value}}" {{#if (eq s.value ../system.grants.specialty.key)}}selected{{/if}}>
+              {{#if @root.system.grants.specialty.type}}
+                {{#each (lookup @root.specialtiesByType @root.system.grants.specialty.type) as |s|}}
+                  <option value="{{s.value}}" {{#if (eq s.value @root.system.grants.specialty.key)}}selected{{/if}}>
                     {{s.label}}
                   </option>
                 {{/each}}
