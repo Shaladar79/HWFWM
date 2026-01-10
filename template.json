@@ -8,14 +8,12 @@
           "raceKey": "",
           "backgroundKey": ""
         },
-
         "attributes": {
           "power": { "rankKey": "normal", "num": 0, "base": 0, "mod": 0, "total": 0 },
           "speed": { "rankKey": "normal", "num": 0, "base": 0, "mod": 0, "total": 0 },
           "spirit": { "rankKey": "normal", "num": 0, "base": 0, "mod": 0, "total": 0 },
           "recovery": { "rankKey": "normal", "num": 0, "base": 0, "mod": 0, "total": 0 }
         },
-
         "resources": {
           "lifeForce": { "value": 0, "max": 0, "recovery": 0 },
           "trauma": { "value": 0, "max": 0 },
@@ -27,48 +25,38 @@
           "armor": { "value": 0, "max": 0 },
           "naturalArmor": 0
         },
-
         "defense": { "base": 0, "mod": 0, "total": 0 },
-
         "_ui": {
           "addSpecialtyKey": "",
           "addAffinityKey": "",
           "addResistanceKey": "",
           "addAptitudeKey": "",
-
           "essenceSubTab": "power",
-
           "treasuresSubTab": "equipment",
           "addMiscItemKey": ""
         },
-
         "specialties": {
           "athletics": { "name": "Athletics", "attribute": "Power", "total": 0, "notes": "" },
           "acrobatics": { "name": "Acrobatics", "attribute": "Speed", "total": 0, "notes": "" },
           "perception": { "name": "Perception", "attribute": "Spirit", "total": 0, "notes": "" },
           "survival": { "name": "Survival", "attribute": "Recovery", "total": 0, "notes": "" }
         },
-
         "specialtiesCustom": {},
-
         "affinities": {},
         "aptitudes": {},
         "resistances": {},
-
         "essences": {
           "powerKey": "",
           "speedKey": "",
           "spiritKey": "",
           "recoveryKey": ""
         },
-
         "confluenceEssences": {
           "powerKey": "",
           "speedKey": "",
           "spiritKey": "",
           "recoveryKey": ""
         },
-
         "treasures": {
           "coins": {
             "lesser": 0,
@@ -78,13 +66,11 @@
             "gold": 0,
             "diamond": 0
           },
-
           "miscItems": {}
         }
       }
     }
   },
-
   "Item": {
     "feature": {
       "system": {
@@ -100,7 +86,6 @@
         "notes": ""
       }
     },
-
     "talent": {
       "system": {
         "enabled": true,
@@ -109,7 +94,6 @@
         "category": "",
         "tags": "",
         "description": "",
-
         "adjustments": {
           "attributes": {
             "power": { "pct": 0, "flat": 0 },
@@ -117,7 +101,6 @@
             "spirit": { "pct": 0, "flat": 0 },
             "recovery": { "pct": 0, "flat": 0 }
           },
-
           "resources": {
             "lifeForce": { "max": 0, "value": 0 },
             "mana": { "max": 0, "value": 0 },
@@ -130,23 +113,19 @@
             "defense": { "max": 0, "value": 0 },
             "naturalArmor": { "max": 0, "value": 0 }
           },
-
           "defense": { "flat": 0 },
           "pace": { "flat": 0 },
           "naturalArmor": { "flat": 0 }
         },
-
         "grants": {
           "specialties": [],
           "affinities": [],
           "aptitudes": [],
           "resistances": []
         },
-
         "notes": ""
       }
     },
-
     "ability": {
       "system": {
         "abilityType": "racial",
@@ -164,25 +143,55 @@
     "equipment": {
       "system": {
         "type": "weapon",
-        "equipped": "no",
+        "equipped": false,
+
+        "description": "",
+        "notes": "",
 
         "weapon": {
-          "damage": "",
-          "range": "",
-          "notes": ""
+          "category": "",
+          "weaponType": "",
+          "damagePerSuccess": 0,
+          "range": 0,
+          "actionCost": 0,
+          "damageType1": "",
+          "damageType2": "",
+          "damageType3": ""
         },
 
         "armor": {
-          "value": 0,
-          "shielding": 0,
-          "notes": ""
+          "armorType": "",
+          "value": 0
         },
 
         "misc": {
-          "notes": ""
+          "armor": 0
         },
 
-        "notes": ""
+        "adjustments": {
+          "attributes": {
+            "power": { "flat": 0 },
+            "speed": { "flat": 0 },
+            "spirit": { "flat": 0 },
+            "recovery": { "flat": 0 }
+          },
+
+          "resources": {
+            "lifeForce": { "pct": 0, "flat": 0 },
+            "mana": { "pct": 0, "flat": 0 },
+            "stamina": { "pct": 0, "flat": 0 },
+
+            "trauma": { "flat": 0 },
+            "pace": { "flat": 0 },
+            "reaction": { "flat": 0 },
+            "defense": { "flat": 0 },
+            "naturalArmor": { "flat": 0 }
+          },
+
+          "specialties": [{ "type": "", "key": "" }],
+          "affinities": [{ "key": "" }],
+          "resistances": [{ "key": "" }]
+        }
       }
     },
 
