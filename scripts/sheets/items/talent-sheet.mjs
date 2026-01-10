@@ -33,22 +33,11 @@ export class HwfwmTalentSheet extends HandlebarsApplicationMixin(
     context.item = this.document;
     context.system = this.document.system;
 
-    // ---- dropdown/options scaffolding ----
-    context.talentSources = [
-      { value: "manual", label: "Manual" },
-      { value: "race", label: "Race" },
-      { value: "role", label: "Role" },
-      { value: "background", label: "Background" },
-      { value: "rank", label: "Rank" },
-      { value: "system", label: "System" }
-    ];
+    const cfg = CONFIG["hwfwm-system"] ?? {};
 
-    context.stackModes = [
-      { value: "stack", label: "Stack" },
-      { value: "replace", label: "Replace" },
-      { value: "none", label: "No Stacking" }
-    ];
-
+    // -----------------------------------------------------------------------
+    // Baseline lists (kept; template uses attributesList)
+    // -----------------------------------------------------------------------
     context.attributesList = [
       { value: "power", label: "Power" },
       { value: "speed", label: "Speed" },
@@ -56,44 +45,115 @@ export class HwfwmTalentSheet extends HandlebarsApplicationMixin(
       { value: "recovery", label: "Recovery" }
     ];
 
-    context.resourcesList = [
-      { value: "lifeForce", label: "Life Force" },
-      { value: "mana", label: "Mana" },
-      { value: "stamina", label: "Stamina" },
-      { value: "shielding", label: "Shielding" },
-      { value: "armor", label: "Armor" },
-      { value: "pace", label: "Pace" },
-      { value: "reaction", label: "Reaction" },
-      { value: "trauma", label: "Trauma" },
-      { value: "defense", label: "Defense" },
-      { value: "naturalArmor", label: "Natural Armor" }
-    ];
+    // -----------------------------------------------------------------------
+    // Dropdown option sources (derived from your live config catalogs)
+    // -----------------------------------------------------------------------
+    const specialtyCatalog = cfg.specialtyCatalog ?? {};
+    const affinityCatalog = cfg.affinityCatalog ?? {};
+    const aptitudeCatalog = cfg.aptitudeCatalog ?? {};
+    const resistanceCatalog = cfg.resistanceCatalog ?? {};
 
-    context.grantTypes = [
-      { value: "specialties", label: "Specialties" },
-      { value: "affinities", label: "Affinities" },
-      { value: "aptitudes", label: "Aptitudes" },
-      { value: "resistances", label: "Resistances" }
-    ];
+    // Specialty Types (derived from specialtyCatalog.attribute)
+    // We normalize to lower-case values for storage: power/speed/spirit/recovery
+    const specialtyTypeOrder = ["power", "speed", "spirit", "recovery"];
+    const specialtyTypeLabels = {
+      power: "Power",
+      speed: "Speed",
+      spirit: "Spirit",
+      recovery: "Recovery"
+    };
 
-    // ---- Safe normalization for templates (UI-only) ----
-    // Avoid template crashes when fields are missing in older items.
+    const typesFound = new Set();
+    const specialtiesByType = {};
+
+    for (const [key, meta] of Object.entries(specialtyCatalog)) {
+      const rawAttr = String(meta?.attribute ?? "").trim();
+      if (!rawAttr) continue;
+
+      const type = rawAttr.toLowerCase();
+      if (!specialtyTypeOrder.includes(type)) continue;
+
+      typesFound.add(type);
+      specialtiesByType[type] ??= [];
+      specialtiesByType[type].push({ value: key, label: meta?.name ?? key });
+    }
+
+    // Sort each type list by label
+    for (const t of Object.keys(specialtiesByType)) {
+      specialtiesByType[t].sort((a, b) => String(a.label).localeCompare(String(b.label)));
+    }
+
+    context.specialtyTypeOptions = specialtyTypeOrder
+      .filter((t) => typesFound.has(t))
+      .map((t) => ({ value: t, label: specialtyTypeLabels[t] ?? t }));
+
+    context.specialtiesByType = specialtiesByType;
+
+    // Affinity/Aptitude/Resistance options (object catalogs keyed by id)
+    const toOptions = (catalog) =>
+      Object.entries(catalog)
+        .map(([key, meta]) => ({ value: key, label: meta?.name ?? key }))
+        .sort((a, b) => String(a.label).localeCompare(String(b.label)));
+
+    context.affinityOptions = toOptions(affinityCatalog);
+    context.aptitudeOptions = toOptions(aptitudeCatalog);
+    context.resistanceOptions = toOptions(resistanceCatalog);
+
+    // -----------------------------------------------------------------------
+    // Safe normalization for templates (UI-only)
+    // Avoid crashes when fields are missing in older items.
+    // -----------------------------------------------------------------------
     const sys = context.system ?? {};
+
     sys.adjustments ??= {};
     sys.adjustments.attributes ??= {};
     sys.adjustments.resources ??= {};
-    sys.adjustments.defense ??= {};
-    sys.adjustments.pace ??= {};
-    sys.adjustments.naturalArmor ??= {};
 
+    // Attributes: ensure flat exists for each attribute
+    for (const a of context.attributesList) {
+      sys.adjustments.attributes[a.value] ??= {};
+      sys.adjustments.attributes[a.value].flat ??= 0;
+    }
+
+    // Resources model for this sheet:
+    // - lifeForce/mana/stamina: pct + flat
+    // - others: flat only
+    const ensurePctFlat = (k) => {
+      sys.adjustments.resources[k] ??= {};
+      sys.adjustments.resources[k].pct ??= 0;
+      sys.adjustments.resources[k].flat ??= 0;
+    };
+    const ensureFlat = (k) => {
+      sys.adjustments.resources[k] ??= {};
+      sys.adjustments.resources[k].flat ??= 0;
+    };
+
+    ensurePctFlat("lifeForce");
+    ensurePctFlat("mana");
+    ensurePctFlat("stamina");
+
+    ensureFlat("trauma");
+    ensureFlat("pace");
+    ensureFlat("reaction");
+    ensureFlat("defense");
+    ensureFlat("naturalArmor");
+
+    // Grants: new single-selection objects
     sys.grants ??= {};
-    sys.grants.specialties ??= [];
-    sys.grants.affinities ??= [];
-    sys.grants.aptitudes ??= [];
-    sys.grants.resistances ??= [];
+    sys.grants.specialty ??= {};
+    sys.grants.specialty.type ??= "";
+    sys.grants.specialty.key ??= "";
+
+    sys.grants.affinity ??= {};
+    sys.grants.affinity.key ??= "";
+
+    sys.grants.aptitude ??= {};
+    sys.grants.aptitude.key ??= "";
+
+    sys.grants.resistance ??= {};
+    sys.grants.resistance.key ??= "";
 
     context.system = sys;
-
     return context;
   }
 }
