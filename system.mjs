@@ -50,9 +50,6 @@ Hooks.once("init", async () => {
     "systems/hwfwm-system/templates/actor/tabs/traits/enhancements.hbs",
     "systems/hwfwm-system/templates/actor/tabs/traits/features.hbs",
 
-    // (Add these once you create them for the rank block in Overview)
-    // "systems/hwfwm-system/templates/actor/tabs/overview/rank-summary.hbs",
-
     // Item sheets
     "systems/hwfwm-system/templates/item/feature-sheet.hbs",
     "systems/hwfwm-system/templates/item/talent-sheet.hbs",
@@ -62,8 +59,9 @@ Hooks.once("init", async () => {
     "systems/hwfwm-system/templates/item/miscitem-sheet.hbs"
   ]);
 
-  // v13+ namespaced Actors collection (avoids deprecation warning)
+  // v13+ namespaced collections (avoids deprecation warnings)
   const ActorsCollection = foundry.documents.collections.Actors;
+  const ItemsCollection = foundry.documents.collections.Items;
 
   // Register our sheet for PC actors only
   ActorsCollection.registerSheet("hwfwm-system", HwfwmActorSheet, {
@@ -75,41 +73,39 @@ Hooks.once("init", async () => {
   // ---------------------------------------------------------
   // Item Sheets
   // ---------------------------------------------------------
-  if (typeof Items !== "undefined") {
-    Items.registerSheet("hwfwm-system", HwfwmFeatureSheet, {
-      types: ["feature"],
-      makeDefault: true,
-      label: "HWFWM Feature Sheet"
-    });
+  ItemsCollection.registerSheet("hwfwm-system", HwfwmFeatureSheet, {
+    types: ["feature"],
+    makeDefault: true,
+    label: "HWFWM Feature Sheet"
+  });
 
-    Items.registerSheet("hwfwm-system", HwfwmTalentSheet, {
-      types: ["talent"],
-      makeDefault: true,
-      label: "HWFWM Talent Sheet"
-    });
+  ItemsCollection.registerSheet("hwfwm-system", HwfwmTalentSheet, {
+    types: ["talent"],
+    makeDefault: true,
+    label: "HWFWM Talent Sheet"
+  });
 
-    Items.registerSheet("hwfwm-system", HwfwmAbilitySheet, {
-      types: ["ability"],
-      makeDefault: true,
-      label: "HWFWM Ability Sheet"
-    });
+  ItemsCollection.registerSheet("hwfwm-system", HwfwmAbilitySheet, {
+    types: ["ability"],
+    makeDefault: true,
+    label: "HWFWM Ability Sheet"
+  });
 
-    Items.registerSheet("hwfwm-system", HwfwmEquipmentSheet, {
-      types: ["equipment"],
-      makeDefault: true,
-      label: "HWFWM Equipment Sheet"
-    });
+  ItemsCollection.registerSheet("hwfwm-system", HwfwmEquipmentSheet, {
+    types: ["equipment"],
+    makeDefault: true,
+    label: "HWFWM Equipment Sheet"
+  });
 
-    Items.registerSheet("hwfwm-system", HwfwmConsumableSheet, {
-      types: ["consumable"],
-      makeDefault: true,
-      label: "HWFWM Consumable Sheet"
-    });
+  ItemsCollection.registerSheet("hwfwm-system", HwfwmConsumableSheet, {
+    types: ["consumable"],
+    makeDefault: true,
+    label: "HWFWM Consumable Sheet"
+  });
 
-    Items.registerSheet("hwfwm-system", HwfwmMiscItemSheet, {
-      types: ["miscItem"],
-      makeDefault: true,
-      label: "HWFWM Misc Item Sheet"
-    });
-  }
+  ItemsCollection.registerSheet("hwfwm-system", HwfwmMiscItemSheet, {
+    types: ["miscItem"],
+    makeDefault: true,
+    label: "HWFWM Misc Item Sheet"
+  });
 });
