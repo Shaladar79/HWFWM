@@ -7,15 +7,18 @@ const { HandlebarsApplicationMixin } = foundry.applications.api;
  * Category-driven layout:
  *  - category: damage | recovery
  *
+ * Shared fields (always shown):
+ *  - itemRank: normal | iron | bronze | silver | gold | diamond
+ *
  * Damage fields:
  *  - damagePerSuccess (number)
  *  - damageType1/2/3 (string keys)
  *  - actionCost (number)
  *
  * Recovery fields:
- *  - recovered (number)
  *  - recoveryType (lifeforce | mana | stamina)
- *  - actionCost (number)  [shared field]
+ *  - recoveredPerRank (number)
+ *  - actionCost (number) [shared]
  *
  * Notes:
  * - Uses fixed keys instead of arrays to avoid V13 submitOnChange array pitfalls.
@@ -44,6 +47,12 @@ export class HwfwmConsumableSheet extends HandlebarsApplicationMixin(
     const system = foundry.utils.deepClone(this.document.system ?? {});
     system.description ??= ""; // render-safe
 
+    // Normalize itemRank (always present in UI)
+    const ir = (system.itemRank ?? "normal").toString();
+    system.itemRank = ["normal", "iron", "bronze", "silver", "gold", "diamond"].includes(ir)
+      ? ir
+      : "normal";
+
     // Normalize category (default to "damage" for stable conditional rendering)
     const cat = (system.category ?? "damage").toString();
     system.category = cat === "recovery" ? "recovery" : "damage";
@@ -58,13 +67,28 @@ export class HwfwmConsumableSheet extends HandlebarsApplicationMixin(
     system.damageType3 = (system.damageType3 ?? "").toString();
 
     // Recovery
-    system.recovered = this._toNumberOrBlank(system.recovered);
+    // Backward-compat display: if older items used system.recovered, show it as recoveredPerRank.
+    const legacyRecovered = system.recovered;
+    if (system.recoveredPerRank === undefined && legacyRecovered !== undefined) {
+      system.recoveredPerRank = legacyRecovered;
+    }
+    system.recoveredPerRank = this._toNumberOrBlank(system.recoveredPerRank);
+
     const rt = (system.recoveryType ?? "").toString();
     system.recoveryType = ["lifeforce", "mana", "stamina"].includes(rt) ? rt : "";
 
     context.system = system;
 
     // UI-only select options for template rendering
+    context.itemRankOptions = [
+      { value: "normal", label: "Normal" },
+      { value: "iron", label: "Iron" },
+      { value: "bronze", label: "Bronze" },
+      { value: "silver", label: "Silver" },
+      { value: "gold", label: "Gold" },
+      { value: "diamond", label: "Diamond" }
+    ];
+
     context.categoryOptions = [
       { value: "damage", label: "Damage" },
       { value: "recovery", label: "Recovery" }
@@ -107,6 +131,14 @@ export class HwfwmConsumableSheet extends HandlebarsApplicationMixin(
         ? (foundry.utils.isObject(formData) ? foundry.utils.flattenObject(formData) : formData)
         : {};
 
+    // Normalize itemRank if present
+    if ("system.itemRank" in flat) {
+      const ir = (flat["system.itemRank"] ?? "normal").toString();
+      flat["system.itemRank"] = ["normal", "iron", "bronze", "silver", "gold", "diamond"].includes(ir)
+        ? ir
+        : "normal";
+    }
+
     // Normalize category if present
     if ("system.category" in flat) {
       const v = (flat["system.category"] ?? "damage").toString();
@@ -123,9 +155,9 @@ export class HwfwmConsumableSheet extends HandlebarsApplicationMixin(
       flat["system.damagePerSuccess"] = this._toNumberOrBlank(flat["system.damagePerSuccess"]);
     }
 
-    // Coerce recovery numeric
-    if ("system.recovered" in flat) {
-      flat["system.recovered"] = this._toNumberOrBlank(flat["system.recovered"]);
+    // Coerce recovery numeric (new key)
+    if ("system.recoveredPerRank" in flat) {
+      flat["system.recoveredPerRank"] = this._toNumberOrBlank(flat["system.recoveredPerRank"]);
     }
 
     // Normalize recoveryType if present
