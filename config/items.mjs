@@ -47,8 +47,10 @@ export const DAMAGE_TYPE_KEYS = Object.freeze([
 ]);
 
 /* -------------------------------------------- */
-/* Equipment config (new)                        */
+/* Equipment config                              */
 /* -------------------------------------------- */
+
+export const EQUIPMENT_TYPE_KEYS = Object.freeze(["weapon", "armor", "misc"]);
 
 export const WEAPON_CATEGORY_KEYS = Object.freeze(["melee", "ranged"]);
 
@@ -120,13 +122,12 @@ export function coerceOneOfStrings(value, allowedStrings, fallback = "") {
 
 /**
  * Normalizes consumable system data in-place (runtime-only).
- * This matches the schema you just locked in:
+ * This matches the schema you locked in:
  * system.itemRank, system.category, system.readied (boolean), etc.
  */
 export function normalizeConsumableSystem(system) {
   if (!system || typeof system !== "object") return;
 
-  // Always-present, schema-backed fields
   system.itemRank = coerceEnum(system.itemRank, ITEM_RANK_KEYS, "normal");
   system.category = coerceEnum(system.category, CONSUMABLE_CATEGORY_KEYS, "damage");
 
@@ -151,7 +152,6 @@ export function normalizeConsumableSystem(system) {
   system.recoveredPerRank = coerceNumberOrZero(system.recoveredPerRank);
 
   // Legacy compatibility (display/use only). We do not persist changes here.
-  // If a legacy key exists, prefer the new schema key when absent.
   if (system.recoveredPerRank === 0 && system.recovered !== undefined) {
     const legacy = Number(system.recovered);
     if (Number.isFinite(legacy) && legacy > 0) system.recoveredPerRank = legacy;
@@ -174,52 +174,53 @@ export function normalizeEquipmentSystem(system) {
   system.notes = (system.notes ?? "").toString();
   system.equipped = coerceBoolean(system.equipped);
 
-  // Type is your top-level branch: weapon | armor | misc (already in schema)
-  system.type = (system.type ?? "weapon").toString();
+  // Top-level equipment branch
+  system.type = coerceEnum(system.type, EQUIPMENT_TYPE_KEYS, "weapon");
 
   // Weapon subtree
   if (!system.weapon || typeof system.weapon !== "object") system.weapon = {};
-  system.weapon.category = coerceEnum(system.weapon.category, WEAPON_CATEGORY_KEYS, "");
 
-  // Weapon type depends on category
+  system.weapon.category = coerceEnum(system.weapon.category, WEAPON_CATEGORY_KEYS, "");
+  system.weapon.weaponType = (system.weapon.weaponType ?? "").toString();
+
   if (system.weapon.category) {
     const allowed = WEAPON_TYPES_BY_CATEGORY[system.weapon.category] ?? [];
     system.weapon.weaponType = coerceOneOfStrings(system.weapon.weaponType, allowed, "");
-  } else {
-    // No category selected => clear weaponType to avoid invalid combos.
-    system.weapon.weaponType = (system.weapon.weaponType ?? "").toString();
-    if (system.weapon.weaponType) system.weapon.weaponType = "";
+  } else if (system.weapon.weaponType) {
+    system.weapon.weaponType = "";
   }
+
+  system.weapon.damagePerSuccess = coerceNumberOrZero(system.weapon.damagePerSuccess);
+  system.weapon.range = coerceNumberOrZero(system.weapon.range);
+  system.weapon.actionCost = coerceNumberOrZero(system.weapon.actionCost);
+
+  system.weapon.damageType1 = (system.weapon.damageType1 ?? "").toString();
+  system.weapon.damageType2 = (system.weapon.damageType2 ?? "").toString();
+  system.weapon.damageType3 = (system.weapon.damageType3 ?? "").toString();
 
   // Armor subtree
   if (!system.armor || typeof system.armor !== "object") system.armor = {};
 
-  // We are treating system.armor.armorType as the *class* selector for now ("light|medium|heavy"),
-  // because your current schema uses armor.armorType and your template labels it as Armor Type.
-  // When you add the second dropdown in the sheet later, we'll store the specific type as armor.armorName
-  // or armor.variant (schema-backed).
+  // armorType = armor class (light|medium|heavy)
   system.armor.armorType = coerceEnum(system.armor.armorType, ARMOR_CLASS_KEYS, "");
 
-  // Store the specific armor selection in armor.armorName (new field you will add to schema + sheet)
-  // If it doesn't exist yet, keep it safe as a string.
+  // armorName = specific armor name under that class
   system.armor.armorName = (system.armor.armorName ?? "").toString();
 
   if (system.armor.armorType) {
     const allowedArmorNames = ARMOR_TYPES_BY_CLASS[system.armor.armorType] ?? [];
     system.armor.armorName = coerceOneOfStrings(system.armor.armorName, allowedArmorNames, "");
-  } else {
-    if (system.armor.armorName) system.armor.armorName = "";
+  } else if (system.armor.armorName) {
+    system.armor.armorName = "";
   }
-
-  // Numeric coercions for existing schema fields
-  system.weapon.damagePerSuccess = coerceNumberOrZero(system.weapon.damagePerSuccess);
-  system.weapon.range = coerceNumberOrZero(system.weapon.range);
-  system.weapon.actionCost = coerceNumberOrZero(system.weapon.actionCost);
 
   system.armor.value = coerceNumberOrZero(system.armor.value);
 
+  // Misc subtree
   if (!system.misc || typeof system.misc !== "object") system.misc = {};
   system.misc.armor = coerceNumberOrZero(system.misc.armor);
+
+  // NOTE: adjustments arrays are handled by the sheet and intentionally not touched here.
 }
 
 /* -------------------------------------------- */
@@ -249,7 +250,6 @@ export class HwfwmItem extends Item {
       case "ability":
       case "miscItem":
       default:
-        // Keep intentionally minimal to avoid accidental behavior changes.
         system.description = (system.description ?? "").toString();
         system.notes = (system.notes ?? "").toString();
         break;
