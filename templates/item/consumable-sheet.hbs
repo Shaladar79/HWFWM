@@ -11,7 +11,6 @@
     <!-- IMAGE (top) -->
     <div class="hwfwm-card">
       <div class="hwfwm-card__title" style="color:#000;">Image</div>
-
       <img
         src="{{item.img}}"
         data-edit="img"
@@ -42,6 +41,18 @@
             <input type="checkbox" name="system.readied" {{#if system.readied}}checked{{/if}} />
             <span style="color:#000;">Available for quick use</span>
           </label>
+        </div>
+
+        <!-- ALWAYS-SHOWN: ITEM RANK (must be above Category) -->
+        <div class="hwfwm-field">
+          <div class="hwfwm-label" style="color:#000;">Item Rank</div>
+          <select name="system.itemRank">
+            {{#each itemRankOptions as |o|}}
+              <option value="{{o.value}}" {{#if (eq o.value ../system.itemRank)}}selected{{/if}}>
+                {{o.label}}
+              </option>
+            {{/each}}
+          </select>
         </div>
 
         <div class="hwfwm-field">
@@ -104,16 +115,6 @@
         <!-- RECOVERY -->
         {{#if isRecovery}}
           <div class="hwfwm-field">
-            <div class="hwfwm-label" style="color:#000;">Recovered</div>
-            <input type="number" name="system.recovered" value="{{system.recovered}}" min="0" step="1" />
-          </div>
-
-          <div class="hwfwm-field">
-            <div class="hwfwm-label" style="color:#000;">Action Cost</div>
-            <input type="number" name="system.actionCost" value="{{system.actionCost}}" min="0" step="1" />
-          </div>
-
-          <div class="hwfwm-field">
             <div class="hwfwm-label" style="color:#000;">Recovery Type</div>
             <select name="system.recoveryType">
               {{#each recoveryTypeOptions as |o|}}
@@ -122,6 +123,16 @@
                 </option>
               {{/each}}
             </select>
+          </div>
+
+          <div class="hwfwm-field">
+            <div class="hwfwm-label" style="color:#000;">Recovered per Rank</div>
+            <input type="number" name="system.recoveredPerRank" value="{{system.recoveredPerRank}}" min="0" step="1" />
+          </div>
+
+          <div class="hwfwm-field">
+            <div class="hwfwm-label" style="color:#000;">Action Cost</div>
+            <input type="number" name="system.actionCost" value="{{system.actionCost}}" min="0" step="1" />
           </div>
         {{/if}}
       </div>
