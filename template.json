@@ -143,8 +143,12 @@
       "system": {
         "type": "weapon",
         "equipped": false,
+
+        "itemRank": "normal",
+
         "description": "",
         "notes": "",
+
         "weapon": {
           "category": "",
           "weaponType": "",
@@ -155,13 +159,17 @@
           "damageType2": "",
           "damageType3": ""
         },
+
         "armor": {
           "armorType": "",
+          "armorName": "",
           "value": 0
         },
+
         "misc": {
           "armor": 0
         },
+
         "adjustments": {
           "attributes": {
             "power": { "flat": 0 },
