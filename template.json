@@ -105,4 +105,117 @@
             "lifeForce": { "max": 0, "value": 0 },
             "mana": { "max": 0, "value": 0 },
             "stamina": { "max": 0, "value": 0 },
-            "shielding": { "max": 0, "va
+            "shielding": { "max": 0, "value": 0 },
+            "armor": { "max": 0, "value": 0 },
+            "pace": { "max": 0, "value": 0 },
+            "reaction": { "max": 0, "value": 0 },
+            "trauma": { "max": 0, "value": 0 },
+            "defense": { "max": 0, "value": 0 },
+            "naturalArmor": { "max": 0, "value": 0 }
+          },
+          "defense": { "flat": 0 },
+          "pace": { "flat": 0 },
+          "naturalArmor": { "flat": 0 }
+        },
+        "grants": {
+          "specialties": [],
+          "affinities": [],
+          "aptitudes": [],
+          "resistances": []
+        },
+        "notes": ""
+      }
+    },
+    "ability": {
+      "system": {
+        "abilityType": "racial",
+        "category": "",
+        "tags": "",
+        "description": "",
+        "hooks": {
+          "modsKey": "",
+          "effectsKey": ""
+        },
+        "notes": ""
+      }
+    },
+    "equipment": {
+      "system": {
+        "type": "weapon",
+        "equipped": false,
+        "description": "",
+        "notes": "",
+        "weapon": {
+          "category": "",
+          "weaponType": "",
+          "damagePerSuccess": 0,
+          "range": 0,
+          "actionCost": 0,
+          "damageType1": "",
+          "damageType2": "",
+          "damageType3": ""
+        },
+        "armor": {
+          "armorType": "",
+          "value": 0
+        },
+        "misc": {
+          "armor": 0
+        },
+        "adjustments": {
+          "attributes": {
+            "power": { "flat": 0 },
+            "speed": { "flat": 0 },
+            "spirit": { "flat": 0 },
+            "recovery": { "flat": 0 }
+          },
+          "resources": {
+            "lifeForce": { "pct": 0, "flat": 0 },
+            "mana": { "pct": 0, "flat": 0 },
+            "stamina": { "pct": 0, "flat": 0 },
+            "trauma": { "flat": 0 },
+            "pace": { "flat": 0 },
+            "reaction": { "flat": 0 },
+            "defense": { "flat": 0 },
+            "naturalArmor": { "flat": 0 }
+          },
+          "specialties": [{ "type": "", "key": "" }],
+          "affinities": [{ "key": "" }],
+          "resistances": [{ "key": "" }]
+        }
+      }
+    },
+
+    "consumable": {
+      "system": {
+        "itemRank": "normal",
+        "category": "damage",
+
+        "quantity": 1,
+        "readied": false,
+
+        "description": "",
+
+        "damagePerSuccess": 0,
+        "damageType1": "",
+        "damageType2": "",
+        "damageType3": "",
+        "actionCost": 0,
+
+        "recoveryType": "",
+        "recoveredPerRank": 0,
+
+        "useEffect": "",
+        "notes": ""
+      }
+    },
+
+    "miscItem": {
+      "system": {
+        "catalogKey": "",
+        "quantity": 1,
+        "notes": ""
+      }
+    }
+  }
+}
