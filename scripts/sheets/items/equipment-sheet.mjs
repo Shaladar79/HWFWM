@@ -167,13 +167,18 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
   _onRender(context, options) {
     super._onRender(context, options);
 
-    // Delegate once per render, safely (remove then add)
     const el = this.element;
     if (!el) return;
 
+    // Click delegation (Add/Remove row)
     this._boundClick ??= this._handleClick.bind(this);
     el.removeEventListener("click", this._boundClick);
     el.addEventListener("click", this._boundClick);
+
+    // Change delegation (force-save array row edits reliably)
+    this._boundChange ??= this._handleChange.bind(this);
+    el.removeEventListener("change", this._boundChange);
+    el.addEventListener("change", this._boundChange);
   }
 
   async _handleClick(event) {
@@ -207,10 +212,65 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
     }
   }
 
+  /**
+   * Force-persist row edits for array-of-objects fields.
+   * Foundry will not reliably persist dot-index updates for ArrayFields in all cases.
+   * We capture the change and update the entire array explicitly.
+   */
+  async _handleChange(event) {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+
+    const name = target.getAttribute("name") ?? "";
+    if (!name.startsWith("system.adjustments.")) return;
+
+    // Matches:
+    // system.adjustments.specialties.0.type
+    // system.adjustments.specialties.0.key
+    // system.adjustments.affinities.0.key
+    // system.adjustments.resistances.0.key
+    const m = name.match(
+      /^system\.adjustments\.(specialties|affinities|resistances)\.(\d+)\.(type|key)$/
+    );
+    if (!m) return;
+
+    const [, group, idxStr, field] = m;
+    const index = Number(idxStr);
+    if (!Number.isFinite(index) || index < 0) return;
+
+    const value =
+      target instanceof HTMLInputElement || target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement
+        ? target.value
+        : "";
+
+    const path = `system.adjustments.${group}`;
+    const current = foundry.utils.deepClone(foundry.utils.getProperty(this.document, path) ?? []);
+    if (!Array.isArray(current)) return;
+
+    // Ensure row exists
+    while (current.length <= index) {
+      if (group === "specialties") current.push({ type: "", key: "" });
+      else current.push({ key: "" });
+    }
+
+    // Apply change
+    current[index] ??= group === "specialties" ? { type: "", key: "" } : { key: "" };
+    current[index][field] = value;
+
+    // If specialty type changed, clear specialty key so the dependent dropdown is consistent
+    if (group === "specialties" && field === "type") {
+      current[index].key = "";
+    }
+
+    // Persist whole array
+    await this.document.update({ [path]: current });
+  }
+
   async _addRow(path, row) {
     const current = foundry.utils.deepClone(foundry.utils.getProperty(this.document, path) ?? []);
-    current.push(foundry.utils.deepClone(row));
-    await this.document.update({ [path]: current });
+    const next = Array.isArray(current) ? current : [];
+    next.push(foundry.utils.deepClone(row));
+    await this.document.update({ [path]: next });
   }
 
   async _removeRow(path, index, fallbackRow) {
