@@ -56,6 +56,24 @@
       <textarea name="system.description" rows="6">{{system.description}}</textarea>
     </div>
 
+    <!-- NEW: ITEM RANK (persistent, directly under Description) -->
+    <div class="hwfwm-card">
+      <div class="hwfwm-card__title" style="color:#000;">Item Rank</div>
+      <div class="hwfwm-grid">
+        <div class="hwfwm-field" style="grid-column: 1 / -1;">
+          <div class="hwfwm-label" style="color:#000;">Rank</div>
+          <select name="system.itemRank">
+            <option value="normal" {{#if (eq system.itemRank "normal")}}selected{{/if}}>Normal</option>
+            <option value="iron" {{#if (eq system.itemRank "iron")}}selected{{/if}}>Iron</option>
+            <option value="bronze" {{#if (eq system.itemRank "bronze")}}selected{{/if}}>Bronze</option>
+            <option value="silver" {{#if (eq system.itemRank "silver")}}selected{{/if}}>Silver</option>
+            <option value="gold" {{#if (eq system.itemRank "gold")}}selected{{/if}}>Gold</option>
+            <option value="diamond" {{#if (eq system.itemRank "diamond")}}selected{{/if}}>Diamond</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
     <!-- WEAPON -->
     {{#if _ui.isWeapon}}
     <div class="hwfwm-card">
