@@ -2,6 +2,9 @@ import { HWFWM_CONFIG } from "./config/index.mjs";
 import { HwfwmActorSheet } from "./scripts/sheets/actor/actor-sheet.mjs";
 import { HwfwmActor } from "./scripts/documents/actor.mjs";
 
+// NEW: Item document class (normalization + wiring for item fields)
+import { HwfwmItem } from "./config/items.mjs";
+
 // Item sheet classes
 import { HwfwmFeatureSheet } from "./scripts/sheets/items/feature-sheet.mjs";
 import { HwfwmTalentSheet } from "./scripts/sheets/items/talent-sheet.mjs";
@@ -18,6 +21,9 @@ Hooks.once("init", async () => {
 
   // Register Actor document class (derived data engine)
   CONFIG.Actor.documentClass = HwfwmActor;
+
+  // NEW: Register Item document class (runtime normalization + field wiring)
+  CONFIG.Item.documentClass = HwfwmItem;
 
   // ---------------------------------------------------------
   // Handlebars helpers used by templates
