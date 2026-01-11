@@ -1,373 +1,405 @@
-<div class="hwfwm-item-sheet hwfwm-item-sheet--equipment" autocomplete="off">
-  <header class="hwfwm-item-header">
-    <div class="hwfwm-item-title">
-      <label class="hwfwm-label" style="color:#000;">Name</label>
-      <input type="text" name="name" value="{{item.name}}" placeholder="Equipment Name" />
-    </div>
-  </header>
+// scripts/sheets/items/equipment-sheet.mjs
 
-  <section class="hwfwm-item-body" style="color:#000;">
+import {
+  ITEM_RANK_KEYS,
+  DAMAGE_TYPE_KEYS,
+  WEAPON_CATEGORY_KEYS,
+  WEAPON_TYPES_BY_CATEGORY,
+  ARMOR_CLASS_KEYS,
+  ARMOR_TYPES_BY_CLASS
+} from "../../../config/items.mjs";
 
-    <!-- CORE -->
-    <div class="hwfwm-card">
-      <div class="hwfwm-card__title" style="color:#000;">Equipment</div>
+const { HandlebarsApplicationMixin } = foundry.applications.api;
 
-      <div class="hwfwm-grid">
-        <div class="hwfwm-field">
-          <div class="hwfwm-label" style="color:#000;">Type</div>
-          <select name="system.type">
-            <option value="">— Select —</option>
-            {{#each equipmentTypes as |t|}}
-              <option value="{{t.value}}" {{#if (eq t.value ../system.type)}}selected{{/if}}>
-                {{t.label}}
-              </option>
-            {{/each}}
-          </select>
-        </div>
+export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
+  foundry.applications.sheets.ItemSheetV2
+) {
+  static DEFAULT_OPTIONS = foundry.utils.mergeObject(super.DEFAULT_OPTIONS, {
+    classes: ["hwfwm-system", "sheet", "item", "equipment"],
+    position: { width: 640, height: 620 },
+    form: {
+      submitOnChange: true,
+      closeOnSubmit: false
+    }
+  });
 
-        <div class="hwfwm-field">
-          <div class="hwfwm-label" style="color:#000;">Equipped</div>
-          <label style="display:flex; align-items:center; gap:8px;">
-            <input type="checkbox" name="system.equipped" {{#if system.equipped}}checked{{/if}} />
-            <span style="color:#000;">Apply when equipped</span>
-          </label>
-        </div>
-      </div>
-    </div>
+  static PARTS = {
+    form: {
+      template: "systems/hwfwm-system/templates/item/equipment-sheet.hbs"
+    }
+  };
 
-    <!-- IMAGE (top) -->
-    <div class="hwfwm-card">
-      <div class="hwfwm-card__title" style="color:#000;">Image</div>
-      <div class="hwfwm-muted" style="margin-bottom: 8px; color:#000;">
-        Click the image to change it.
-      </div>
+  /**
+   * Coerce a value that might be:
+   * - Array               -> return as-is
+   * - { "0": {...}, ... } -> convert to array in numeric order
+   * - anything else       -> []
+   */
+  _coerceIndexedToArray(value) {
+    if (Array.isArray(value)) return value;
 
-      <img
-        src="{{item.img}}"
-        data-edit="img"
-        title="{{item.name}}"
-        style="max-width: 180px; height: auto; cursor: pointer; border: 1px solid rgba(0,0,0,0.35); border-radius: 6px;"
-      />
-    </div>
+    if (value && typeof value === "object") {
+      const keys = Object.keys(value).filter((k) => /^\d+$/.test(k));
+      if (!keys.length) return [];
+      keys.sort((a, b) => Number(a) - Number(b));
+      return keys.map((k) => value[k]);
+    }
 
-    <!-- DESCRIPTION (below image, shared) -->
-    <div class="hwfwm-card">
-      <div class="hwfwm-card__title" style="color:#000;">Description</div>
-      <textarea name="system.description" rows="6">{{system.description}}</textarea>
-    </div>
+    return [];
+  }
 
-    <!-- ITEM RANK (persistent, directly under Description) -->
-    <div class="hwfwm-card">
-      <div class="hwfwm-card__title" style="color:#000;">Item Rank</div>
-      <div class="hwfwm-grid">
-        <div class="hwfwm-field" style="grid-column: 1 / -1;">
-          <div class="hwfwm-label" style="color:#000;">Rank</div>
-          <select name="system.itemRank">
-            <option value="normal" {{#if (eq system.itemRank "normal")}}selected{{/if}}>Normal</option>
-            <option value="iron" {{#if (eq system.itemRank "iron")}}selected{{/if}}>Iron</option>
-            <option value="bronze" {{#if (eq system.itemRank "bronze")}}selected{{/if}}>Bronze</option>
-            <option value="silver" {{#if (eq system.itemRank "silver")}}selected{{/if}}>Silver</option>
-            <option value="gold" {{#if (eq system.itemRank "gold")}}selected{{/if}}>Gold</option>
-            <option value="diamond" {{#if (eq system.itemRank "diamond")}}selected{{/if}}>Diamond</option>
-          </select>
-        </div>
-      </div>
-    </div>
+  _ensureMinRows(arr, factory, min = 1) {
+    const out = Array.isArray(arr) ? arr : [];
+    while (out.length < min) out.push(factory());
+    return out;
+  }
 
-    <!-- WEAPON -->
-    {{#if _ui.isWeapon}}
-    <div class="hwfwm-card">
-      <div class="hwfwm-card__title" style="color:#000;">Weapon</div>
+  _titleCaseFromKey(key) {
+    const s = String(key ?? "");
+    if (!s) return "";
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
 
-      <div class="hwfwm-grid">
-        <div class="hwfwm-field">
-          <div class="hwfwm-label" style="color:#000;">Weapon Category</div>
-          <select name="system.weapon.category">
-            <option value="">— Select —</option>
-            {{#each weaponCategoryOptions as |o|}}
-              <option value="{{o.value}}" {{#if (eq o.value ../system.weapon.category)}}selected{{/if}}>
-                {{o.label}}
-              </option>
-            {{/each}}
-          </select>
-        </div>
+  /** @override */
+  async _prepareContext(options) {
+    const context = await super._prepareContext(options);
 
-        <div class="hwfwm-field">
-          <div class="hwfwm-label" style="color:#000;">Weapon Type</div>
-          <select name="system.weapon.weaponType" {{#unless system.weapon.category}}disabled{{/unless}}>
-            <option value="">— Select —</option>
-            {{#each weaponTypeOptions as |o|}}
-              <option value="{{o.value}}" {{#if (eq o.value ../system.weapon.weaponType)}}selected{{/if}}>
-                {{o.label}}
-              </option>
-            {{/each}}
-          </select>
-        </div>
+    context.item = this.document;
+    context.system = this.document.system ?? {};
 
-        <div class="hwfwm-field">
-          <div class="hwfwm-label" style="color:#000;">Damage per Success</div>
-          <input type="number" name="system.weapon.damagePerSuccess" value="{{system.weapon.damagePerSuccess}}" step="1" placeholder="0" />
-        </div>
+    context.equipmentTypes = [
+      { value: "weapon", label: "Weapon" },
+      { value: "armor", label: "Armor" },
+      { value: "misc", label: "Misc" }
+    ];
 
-        <div class="hwfwm-field">
-          <div class="hwfwm-label" style="color:#000;">Range</div>
-          <input type="number" name="system.weapon.range" value="{{system.weapon.range}}" step="1" placeholder="0" />
-        </div>
+    context.attributesList = [
+      { value: "power", label: "Power" },
+      { value: "speed", label: "Speed" },
+      { value: "spirit", label: "Spirit" },
+      { value: "recovery", label: "Recovery" }
+    ];
 
-        <div class="hwfwm-field">
-          <div class="hwfwm-label" style="color:#000;">Action Cost</div>
-          <input type="number" name="system.weapon.actionCost" value="{{system.weapon.actionCost}}" step="1" placeholder="0" />
-        </div>
+    const sys = context.system;
 
-        <div class="hwfwm-field" style="grid-column: 1 / -1;">
-          <div class="hwfwm-label" style="color:#000;">Damage Types</div>
-          <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
-            <div>
-              <div class="hwfwm-label" style="color:#000;">Damage Type 1</div>
-              <select name="system.weapon.damageType1">
-                <option value="">— Select —</option>
-                {{#each damageTypeOptions as |o|}}
-                  <option value="{{o.value}}" {{#if (eq o.value ../system.weapon.damageType1)}}selected{{/if}}>
-                    {{o.label}}
-                  </option>
-                {{/each}}
-              </select>
-            </div>
+    // ----- Safe normalization (sheet-side) -----
+    sys.equipped = !!sys.equipped;
 
-            <div>
-              <div class="hwfwm-label" style="color:#000;">Damage Type 2</div>
-              <select name="system.weapon.damageType2">
-                <option value="">— Select —</option>
-                {{#each damageTypeOptions as |o|}}
-                  <option value="{{o.value}}" {{#if (eq o.value ../system.weapon.damageType2)}}selected{{/if}}>
-                    {{o.label}}
-                  </option>
-                {{/each}}
-              </select>
-            </div>
+    sys.itemRank ??= "normal";
+    sys.description ??= "";
+    sys.notes ??= "";
 
-            <div>
-              <div class="hwfwm-label" style="color:#000;">Damage Type 3</div>
-              <select name="system.weapon.damageType3">
-                <option value="">— Select —</option>
-                {{#each damageTypeOptions as |o|}}
-                  <option value="{{o.value}}" {{#if (eq o.value ../system.weapon.damageType3)}}selected{{/if}}>
-                    {{o.label}}
-                  </option>
-                {{/each}}
-              </select>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    {{/if}}
+    sys.weapon ??= {};
+    sys.armor ??= {};
+    sys.misc ??= {};
 
-    <!-- ARMOR -->
-    {{#if _ui.isArmor}}
-    <div class="hwfwm-card">
-      <div class="hwfwm-card__title" style="color:#000;">Armor</div>
+    sys.weapon.category ??= "";
+    sys.weapon.weaponType ??= "";
+    sys.weapon.damagePerSuccess ??= 0;
+    sys.weapon.range ??= 0;
+    sys.weapon.actionCost ??= 0;
+    sys.weapon.damageType1 ??= "";
+    sys.weapon.damageType2 ??= "";
+    sys.weapon.damageType3 ??= "";
 
-      <div class="hwfwm-grid">
-        <div class="hwfwm-field">
-          <div class="hwfwm-label" style="color:#000;">Armor Class</div>
-          <select name="system.armor.armorType">
-            <option value="">— Select —</option>
-            {{#each armorClassOptions as |o|}}
-              <option value="{{o.value}}" {{#if (eq o.value ../system.armor.armorType)}}selected{{/if}}>
-                {{o.label}}
-              </option>
-            {{/each}}
-          </select>
-        </div>
+    sys.armor.value ??= 0;
+    sys.armor.armorType ??= "";
+    sys.armor.armorName ??= "";
 
-        <div class="hwfwm-field">
-          <div class="hwfwm-label" style="color:#000;">Armor Type</div>
-          <select name="system.armor.armorName" {{#unless system.armor.armorType}}disabled{{/unless}}>
-            <option value="">— Select —</option>
-            {{#each armorTypeOptions as |o|}}
-              <option value="{{o.value}}" {{#if (eq o.value ../system.armor.armorName)}}selected{{/if}}>
-                {{o.label}}
-              </option>
-            {{/each}}
-          </select>
-        </div>
+    sys.misc.armor ??= 0;
 
-        <div class="hwfwm-field">
-          <div class="hwfwm-label" style="color:#000;">Armor</div>
-          <input type="number" name="system.armor.value" value="{{system.armor.value}}" step="1" placeholder="0" />
-        </div>
-      </div>
-    </div>
-    {{/if}}
+    sys.adjustments ??= {};
+    sys.adjustments.attributes ??= {};
+    sys.adjustments.resources ??= {};
 
-    <!-- MISC -->
-    {{#if _ui.isMisc}}
-    <div class="hwfwm-card">
-      <div class="hwfwm-card__title" style="color:#000;">Misc</div>
+    for (const a of context.attributesList) {
+      sys.adjustments.attributes[a.value] ??= {};
+      sys.adjustments.attributes[a.value].flat ??= 0;
+    }
 
-      <div class="hwfwm-grid">
-        <div class="hwfwm-field">
-          <div class="hwfwm-label" style="color:#000;">Armor (Misc)</div>
-          <input type="number" name="system.misc.armor" value="{{system.misc.armor}}" step="1" placeholder="0" />
-        </div>
-      </div>
-    </div>
-    {{/if}}
+    const ensurePctFlat = (k) => {
+      sys.adjustments.resources[k] ??= {};
+      sys.adjustments.resources[k].pct ??= 0;
+      sys.adjustments.resources[k].flat ??= 0;
+    };
+    const ensureFlat = (k) => {
+      sys.adjustments.resources[k] ??= {};
+      sys.adjustments.resources[k].flat ??= 0;
+    };
 
-    <!-- ADJUSTMENTS -->
-    <div class="hwfwm-card">
-      <div class="hwfwm-card__title" style="color:#000;">Adjustments</div>
+    ensurePctFlat("lifeForce");
+    ensurePctFlat("mana");
+    ensurePctFlat("stamina");
 
-      <!-- Attributes -->
-      <div class="hwfwm-card__title" style="font-size: 0.95em; margin-top: 6px; color:#000;">Attributes</div>
-      <div style="display:grid; grid-template-columns: 1.2fr 1fr; gap: 8px; align-items:center;">
-        <div style="color:#000;"><strong>Attribute</strong></div>
-        <div style="color:#000;"><strong>Flat Delta</strong></div>
+    ensureFlat("trauma");
+    ensureFlat("pace");
+    ensureFlat("reaction");
+    ensureFlat("defense");
+    ensureFlat("naturalArmor");
 
-        {{#each attributesList as |a|}}
-          <div style="color:#000;">{{a.label}}</div>
-          <input
-            type="number"
-            name="system.adjustments.attributes.{{a.value}}.flat"
-            value="{{lookup (lookup ../system.adjustments.attributes a.value) 'flat'}}"
-            step="1"
-            placeholder="0"
-          />
-        {{/each}}
-      </div>
+    // IMPORTANT: preserve numeric-key objects by coercing to arrays
+    sys.adjustments.specialties = this._ensureMinRows(
+      this._coerceIndexedToArray(sys.adjustments.specialties),
+      () => ({ type: "", key: "" }),
+      1
+    );
 
-      <!-- Resources -->
-      <div class="hwfwm-card__title" style="font-size: 0.95em; margin-top: 14px; color:#000;">Resources</div>
-      <div class="hwfwm-muted" style="margin-bottom: 8px; color:#000;">
-        Life Force / Mana / Stamina support % + Flat. All others are Flat only.
-      </div>
+    sys.adjustments.affinities = this._ensureMinRows(
+      this._coerceIndexedToArray(sys.adjustments.affinities),
+      () => ({ key: "" }),
+      1
+    );
 
-      <div style="display:grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 8px; align-items:center;">
-        <div style="color:#000;"><strong>Resource</strong></div>
-        <div style="color:#000;"><strong>% Delta</strong></div>
-        <div style="color:#000;"><strong>Flat Delta</strong></div>
+    sys.adjustments.resistances = this._ensureMinRows(
+      this._coerceIndexedToArray(sys.adjustments.resistances),
+      () => ({ key: "" }),
+      1
+    );
 
-        <div style="color:#000;">Life Force (Max)</div>
-        <input type="number" name="system.adjustments.resources.lifeForce.pct" value="{{lookup (lookup system.adjustments.resources 'lifeForce') 'pct'}}" step="1" placeholder="0" />
-        <input type="number" name="system.adjustments.resources.lifeForce.flat" value="{{lookup (lookup system.adjustments.resources 'lifeForce') 'flat'}}" step="1" placeholder="0" />
+    // ----- Branch flags -----
+    const type = (sys?.type ?? sys?.category ?? "weapon").toString();
+    context._ui = {
+      type,
+      isWeapon: type === "weapon",
+      isArmor: type === "armor",
+      isMisc: type === "misc"
+    };
 
-        <div style="color:#000;">Mana (Max)</div>
-        <input type="number" name="system.adjustments.resources.mana.pct" value="{{lookup (lookup system.adjustments.resources 'mana') 'pct'}}" step="1" placeholder="0" />
-        <input type="number" name="system.adjustments.resources.mana.flat" value="{{lookup (lookup system.adjustments.resources 'mana') 'flat'}}" step="1" placeholder="0" />
+    // ---------------------------------------------------------
+    // Option lists (now wired to config/items.mjs)
+    // ---------------------------------------------------------
 
-        <div style="color:#000;">Stamina (Max)</div>
-        <input type="number" name="system.adjustments.resources.stamina.pct" value="{{lookup (lookup system.adjustments.resources 'stamina') 'pct'}}" step="1" placeholder="0" />
-        <input type="number" name="system.adjustments.resources.stamina.flat" value="{{lookup (lookup system.adjustments.resources 'stamina') 'flat'}}" step="1" placeholder="0" />
+    // Item rank options (if you want to render as options later; HBS currently hardcodes)
+    context.itemRankOptions = ITEM_RANK_KEYS.map((k) => ({
+      value: k,
+      label: this._titleCaseFromKey(k)
+    }));
 
-        <div style="color:#000;">Trauma</div>
-        <div></div>
-        <input type="number" name="system.adjustments.resources.trauma.flat" value="{{lookup (lookup system.adjustments.resources 'trauma') 'flat'}}" step="1" placeholder="0" />
+    context.weaponCategoryOptions = WEAPON_CATEGORY_KEYS.map((k) => ({
+      value: k,
+      label: this._titleCaseFromKey(k)
+    }));
 
-        <div style="color:#000;">Pace</div>
-        <div></div>
-        <input type="number" name="system.adjustments.resources.pace.flat" value="{{lookup (lookup system.adjustments.resources 'pace') 'flat'}}" step="1" placeholder="0" />
+    // Weapon types depend on selected category
+    const selectedWeaponCategory = String(sys.weapon.category ?? "");
+    const weaponTypes =
+      selectedWeaponCategory && WEAPON_TYPES_BY_CATEGORY[selectedWeaponCategory]
+        ? WEAPON_TYPES_BY_CATEGORY[selectedWeaponCategory]
+        : [];
 
-        <div style="color:#000;">Reaction</div>
-        <div></div>
-        <input type="number" name="system.adjustments.resources.reaction.flat" value="{{lookup (lookup system.adjustments.resources 'reaction') 'flat'}}" step="1" placeholder="0" />
+    context.weaponTypeOptions = weaponTypes.map((name) => ({
+      value: name,
+      label: name
+    }));
 
-        <div style="color:#000;">Defense</div>
-        <div></div>
-        <input type="number" name="system.adjustments.resources.defense.flat" value="{{lookup (lookup system.adjustments.resources 'defense') 'flat'}}" step="1" placeholder="0" />
+    // Armor class options
+    context.armorClassOptions = ARMOR_CLASS_KEYS.map((k) => ({
+      value: k,
+      label: this._titleCaseFromKey(k)
+    }));
 
-        <div style="color:#000;">Natural Armor</div>
-        <div></div>
-        <input type="number" name="system.adjustments.resources.naturalArmor.flat" value="{{lookup (lookup system.adjustments.resources 'naturalArmor') 'flat'}}" step="1" placeholder="0" />
-      </div>
+    // Armor types depend on selected class (armorType)
+    const selectedArmorClass = String(sys.armor.armorType ?? "");
+    const armorTypes =
+      selectedArmorClass && ARMOR_TYPES_BY_CLASS[selectedArmorClass]
+        ? ARMOR_TYPES_BY_CLASS[selectedArmorClass]
+        : [];
 
-      <!-- Specialties -->
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top: 14px;">
-        <div class="hwfwm-card__title" style="font-size: 0.95em; color:#000;">Specialties</div>
-        <button type="button" class="hwfwm-itembtn" data-action="add-specialty-row">Add Row</button>
-      </div>
+    context.armorTypeOptions = armorTypes.map((name) => ({
+      value: name,
+      label: name
+    }));
 
-      {{#each system.adjustments.specialties as |row i|}}
-        <div style="display:grid; grid-template-columns: 1fr 1fr auto; gap: 10px; margin-bottom: 8px;">
-          <div>
-            <div class="hwfwm-label" style="color:#000;">Specialty Type</div>
-            <select name="system.adjustments.specialties.{{i}}.type">
-              <option value="">— Select —</option>
-              {{#each @root.specialtyTypeOptions as |o|}}
-                <option value="{{o.value}}" {{#if (eq o.value row.type)}}selected{{/if}}>{{o.label}}</option>
-              {{/each}}
-            </select>
-          </div>
+    // Damage types (shared list for 1/2/3)
+    context.damageTypeOptions = DAMAGE_TYPE_KEYS.map((k) => ({
+      value: k,
+      label: this._titleCaseFromKey(k)
+    }));
 
-          <div>
-            <div class="hwfwm-label" style="color:#000;">Specialty</div>
-            <select name="system.adjustments.specialties.{{i}}.key">
-              <option value="">— Select —</option>
-              {{#if row.type}}
-                {{#each (lookup @root.specialtiesByType row.type) as |s|}}
-                  <option value="{{s.value}}" {{#if (eq s.value row.key)}}selected{{/if}}>{{s.label}}</option>
-                {{/each}}
-              {{/if}}
-            </select>
-          </div>
+    // ---------------------------------------------------------
+    // Existing catalogs for specialties/affinities/resistances
+    // ---------------------------------------------------------
+    const cfg = CONFIG["hwfwm-system"] ?? {};
+    const specialtyCatalog = cfg.specialtyCatalog ?? {};
+    const affinityCatalog = cfg.affinityCatalog ?? {};
+    const resistanceCatalog = cfg.resistanceCatalog ?? {};
 
-          <div style="display:flex; align-items:flex-end;">
-            <button type="button" class="hwfwm-itembtn" data-action="remove-specialty-row" data-index="{{i}}">Remove</button>
-          </div>
-        </div>
-      {{/each}}
+    const specialtyTypeOrder = ["power", "speed", "spirit", "recovery"];
+    const specialtyTypeLabels = {
+      power: "Power",
+      speed: "Speed",
+      spirit: "Spirit",
+      recovery: "Recovery"
+    };
 
-      <!-- Affinities -->
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top: 14px;">
-        <div class="hwfwm-card__title" style="font-size: 0.95em; color:#000;">Affinities</div>
-        <button type="button" class="hwfwm-itembtn" data-action="add-affinity-row">Add Row</button>
-      </div>
+    const typesFound = new Set();
+    const specialtiesByType = {};
 
-      {{#each system.adjustments.affinities as |row i|}}
-        <div style="display:grid; grid-template-columns: 1fr auto; gap: 10px; margin-bottom: 8px;">
-          <div>
-            <select name="system.adjustments.affinities.{{i}}.key">
-              <option value="">— Select Affinity —</option>
-              {{#each @root.affinityOptions as |o|}}
-                <option value="{{o.value}}" {{#if (eq o.value row.key)}}selected{{/if}}>{{o.label}}</option>
-              {{/each}}
-            </select>
-          </div>
-          <div>
-            <button type="button" class="hwfwm-itembtn" data-action="remove-affinity-row" data-index="{{i}}">Remove</button>
-          </div>
-        </div>
-      {{/each}}
+    for (const [key, meta] of Object.entries(specialtyCatalog)) {
+      const rawAttr = String(meta?.attribute ?? "").trim();
+      if (!rawAttr) continue;
 
-      <!-- Resistances -->
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top: 14px;">
-        <div class="hwfwm-card__title" style="font-size: 0.95em; color:#000;">Resistances</div>
-        <button type="button" class="hwfwm-itembtn" data-action="add-resistance-row">Add Row</button>
-      </div>
+      const t = rawAttr.toLowerCase();
+      if (!specialtyTypeOrder.includes(t)) continue;
 
-      {{#each system.adjustments.resistances as |row i|}}
-        <div style="display:grid; grid-template-columns: 1fr auto; gap: 10px; margin-bottom: 8px;">
-          <div>
-            <select name="system.adjustments.resistances.{{i}}.key">
-              <option value="">— Select Resistance —</option>
-              {{#each @root.resistanceOptions as |o|}}
-                <option value="{{o.value}}" {{#if (eq o.value row.key)}}selected{{/if}}>{{o.label}}</option>
-              {{/each}}
-            </select>
-          </div>
-          <div>
-            <button type="button" class="hwfwm-itembtn" data-action="remove-resistance-row" data-index="{{i}}">Remove</button>
-          </div>
-        </div>
-      {{/each}}
+      typesFound.add(t);
+      specialtiesByType[t] ??= [];
+      specialtiesByType[t].push({ value: key, label: meta?.name ?? key });
+    }
 
-    </div>
+    for (const t of Object.keys(specialtiesByType)) {
+      specialtiesByType[t].sort((a, b) => String(a.label).localeCompare(String(b.label)));
+    }
 
-    <!-- NOTES -->
-    <div class="hwfwm-card">
-      <div class="hwfwm-card__title" style="color:#000;">Notes</div>
-      <textarea name="system.notes" rows="6">{{system.notes}}</textarea>
-    </div>
+    context.specialtyTypeOptions = specialtyTypeOrder
+      .filter((t) => typesFound.has(t))
+      .map((t) => ({ value: t, label: specialtyTypeLabels[t] ?? t }));
 
-  </section>
-</div>
+    context.specialtiesByType = specialtiesByType;
+
+    const toOptions = (catalog) =>
+      Object.entries(catalog)
+        .map(([key, meta]) => ({ value: key, label: meta?.name ?? key }))
+        .sort((a, b) => String(a.label).localeCompare(String(b.label)));
+
+    context.affinityOptions = toOptions(affinityCatalog);
+    context.resistanceOptions = toOptions(resistanceCatalog);
+
+    // Finalize
+    context.system = sys;
+    return context;
+  }
+
+  /** @override */
+  _onRender(context, options) {
+    super._onRender(context, options);
+
+    const el = this.element;
+    if (!el) return;
+
+    // Click delegation (Add/Remove row)
+    this._boundClick ??= this._handleClick.bind(this);
+    el.removeEventListener("click", this._boundClick);
+    el.addEventListener("click", this._boundClick);
+
+    // Change delegation (force-save array row edits reliably)
+    this._boundChange ??= this._handleChange.bind(this);
+    el.removeEventListener("change", this._boundChange);
+    el.addEventListener("change", this._boundChange);
+  }
+
+  async _handleClick(event) {
+    const btn = event.target?.closest?.("[data-action]");
+    if (!btn) return;
+
+    const action = btn.dataset.action;
+    const index = Number(btn.dataset.index);
+
+    switch (action) {
+      case "add-specialty-row":
+        return this._addRow("system.adjustments.specialties", { type: "", key: "" });
+
+      case "remove-specialty-row":
+        return this._removeRow("system.adjustments.specialties", index, { type: "", key: "" });
+
+      case "add-affinity-row":
+        return this._addRow("system.adjustments.affinities", { key: "" });
+
+      case "remove-affinity-row":
+        return this._removeRow("system.adjustments.affinities", index, { key: "" });
+
+      case "add-resistance-row":
+        return this._addRow("system.adjustments.resistances", { key: "" });
+
+      case "remove-resistance-row":
+        return this._removeRow("system.adjustments.resistances", index, { key: "" });
+
+      default:
+        return;
+    }
+  }
+
+  async _handleChange(event) {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+
+    const name = target.getAttribute("name") ?? "";
+
+    // Handle repeatable arrays (existing behavior)
+    if (name.startsWith("system.adjustments.")) {
+      const m = name.match(
+        /^system\.adjustments\.(specialties|affinities|resistances)\.(\d+)\.(type|key)$/
+      );
+      if (!m) return;
+
+      const [, group, idxStr, field] = m;
+      const index = Number(idxStr);
+      if (!Number.isFinite(index) || index < 0) return;
+
+      const value =
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLSelectElement ||
+        target instanceof HTMLTextAreaElement
+          ? target.value
+          : "";
+
+      const path = `system.adjustments.${group}`;
+
+      // Read and coerce current value to a real array
+      const raw = foundry.utils.getProperty(this.document, path);
+      let current = this._coerceIndexedToArray(foundry.utils.deepClone(raw));
+
+      // Ensure row exists
+      while (current.length <= index) {
+        if (group === "specialties") current.push({ type: "", key: "" });
+        else current.push({ key: "" });
+      }
+
+      current[index] ??= group === "specialties" ? { type: "", key: "" } : { key: "" };
+      current[index][field] = value;
+
+      if (group === "specialties" && field === "type") {
+        current[index].key = "";
+      }
+
+      await this.document.update({ [path]: current });
+      return;
+    }
+
+    // Handle dependent dropdown clearing (weapon/armor)
+    // - If weapon category changes => clear weaponType
+    if (name === "system.weapon.category") {
+      await this.document.update({
+        "system.weapon.weaponType": ""
+      });
+      return;
+    }
+
+    // - If armor class changes => clear armorName
+    if (name === "system.armor.armorType") {
+      await this.document.update({
+        "system.armor.armorName": ""
+      });
+      return;
+    }
+  }
+
+  async _addRow(path, row) {
+    const raw = foundry.utils.getProperty(this.document, path);
+    const current = this._coerceIndexedToArray(foundry.utils.deepClone(raw));
+    current.push(foundry.utils.deepClone(row));
+    await this.document.update({ [path]: current });
+  }
+
+  async _removeRow(path, index, fallbackRow) {
+    const raw = foundry.utils.getProperty(this.document, path);
+    let current = this._coerceIndexedToArray(foundry.utils.deepClone(raw));
+
+    if (Number.isFinite(index) && index >= 0 && index < current.length) {
+      current.splice(index, 1);
+    }
+
+    if (current.length < 1) current.push(foundry.utils.deepClone(fallbackRow));
+    await this.document.update({ [path]: current });
+  }
+}
