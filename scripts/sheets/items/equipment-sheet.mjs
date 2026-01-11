@@ -2,6 +2,14 @@
 
 const { HandlebarsApplicationMixin } = foundry.applications.api;
 
+import {
+  ITEM_RANK_KEYS,
+  WEAPON_CATEGORY_KEYS,
+  WEAPON_TYPES_BY_CATEGORY,
+  ARMOR_CLASS_KEYS,
+  ARMOR_TYPES_BY_CLASS
+} from "../../config/items.mjs";
+
 export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
   foundry.applications.sheets.ItemSheetV2
 ) {
@@ -43,6 +51,19 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
     const out = Array.isArray(arr) ? arr : [];
     while (out.length < min) out.push(factory());
     return out;
+  }
+
+  _toOptionsFromKeys(keys, labelFn) {
+    return (keys ?? []).map((k) => ({ value: k, label: labelFn ? labelFn(k) : k }));
+  }
+
+  _toOptionsFromStrings(strings) {
+    return (strings ?? []).map((s) => ({ value: s, label: s }));
+  }
+
+  _titleCaseKey(key) {
+    const s = String(key ?? "");
+    return s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
   }
 
   /** @override */
@@ -124,6 +145,11 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
     // ----- Safe normalization -----
     const sys = context.system;
 
+    // Persistent item rank (new)
+    sys.itemRank = ITEM_RANK_KEYS.includes(String(sys.itemRank ?? ""))
+      ? String(sys.itemRank)
+      : "normal";
+
     sys.equipped = !!sys.equipped;
 
     sys.description ??= "";
@@ -133,8 +159,21 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
     sys.armor ??= {};
     sys.misc ??= {};
 
-    sys.weapon.category ??= "";
+    // Weapon normalization (melee/ranged only)
+    sys.weapon.category = WEAPON_CATEGORY_KEYS.includes(String(sys.weapon.category ?? ""))
+      ? String(sys.weapon.category)
+      : "";
+
     sys.weapon.weaponType ??= "";
+    if (sys.weapon.category) {
+      const allowed = WEAPON_TYPES_BY_CATEGORY[sys.weapon.category] ?? [];
+      if (!allowed.includes(String(sys.weapon.weaponType ?? ""))) {
+        sys.weapon.weaponType = "";
+      }
+    } else {
+      if (String(sys.weapon.weaponType ?? "")) sys.weapon.weaponType = "";
+    }
+
     sys.weapon.damagePerSuccess ??= 0;
     sys.weapon.range ??= 0;
     sys.weapon.actionCost ??= 0;
@@ -142,8 +181,23 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
     sys.weapon.damageType2 ??= "";
     sys.weapon.damageType3 ??= "";
 
+    // Armor normalization (class + type)
+    sys.armor.armorType = ARMOR_CLASS_KEYS.includes(String(sys.armor.armorType ?? ""))
+      ? String(sys.armor.armorType)
+      : "";
+
+    // New dependent field
+    sys.armor.armorName ??= "";
+    if (sys.armor.armorType) {
+      const allowedArmor = ARMOR_TYPES_BY_CLASS[sys.armor.armorType] ?? [];
+      if (!allowedArmor.includes(String(sys.armor.armorName ?? ""))) {
+        sys.armor.armorName = "";
+      }
+    } else {
+      if (String(sys.armor.armorName ?? "")) sys.armor.armorName = "";
+    }
+
     sys.armor.value ??= 0;
-    sys.armor.armorType ??= "";
 
     sys.misc.armor ??= 0;
 
@@ -194,6 +248,27 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
       () => ({ key: "" }),
       1
     );
+
+    // ----- Equipment option lists (from config/items.mjs) -----
+    context.weaponCategoryOptions = this._toOptionsFromKeys(WEAPON_CATEGORY_KEYS, (k) =>
+      k === "melee" ? "Melee" : k === "ranged" ? "Ranged" : this._titleCaseKey(k)
+    );
+
+    const weaponTypes =
+      sys.weapon.category && WEAPON_TYPES_BY_CATEGORY[sys.weapon.category]
+        ? WEAPON_TYPES_BY_CATEGORY[sys.weapon.category]
+        : [];
+    context.weaponTypeOptions = this._toOptionsFromStrings(weaponTypes);
+
+    context.armorClassOptions = this._toOptionsFromKeys(ARMOR_CLASS_KEYS, (k) =>
+      k === "light" ? "Light" : k === "medium" ? "Medium" : k === "heavy" ? "Heavy" : this._titleCaseKey(k)
+    );
+
+    const armorTypes =
+      sys.armor.armorType && ARMOR_TYPES_BY_CLASS[sys.armor.armorType]
+        ? ARMOR_TYPES_BY_CLASS[sys.armor.armorType]
+        : [];
+    context.armorTypeOptions = this._toOptionsFromStrings(armorTypes);
 
     context.system = sys;
     return context;
@@ -253,44 +328,80 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
     if (!(target instanceof HTMLElement)) return;
 
     const name = target.getAttribute("name") ?? "";
-    if (!name.startsWith("system.adjustments.")) return;
 
-    const m = name.match(
-      /^system\.adjustments\.(specialties|affinities|resistances)\.(\d+)\.(type|key)$/
-    );
-    if (!m) return;
+    // Existing: adjustments array fix-ups
+    if (name.startsWith("system.adjustments.")) {
+      const m = name.match(
+        /^system\.adjustments\.(specialties|affinities|resistances)\.(\d+)\.(type|key)$/
+      );
+      if (!m) return;
 
-    const [, group, idxStr, field] = m;
-    const index = Number(idxStr);
-    if (!Number.isFinite(index) || index < 0) return;
+      const [, group, idxStr, field] = m;
+      const index = Number(idxStr);
+      if (!Number.isFinite(index) || index < 0) return;
 
-    const value =
-      target instanceof HTMLInputElement ||
-      target instanceof HTMLSelectElement ||
-      target instanceof HTMLTextAreaElement
-        ? target.value
-        : "";
+      const value =
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLSelectElement ||
+        target instanceof HTMLTextAreaElement
+          ? target.value
+          : "";
 
-    const path = `system.adjustments.${group}`;
+      const path = `system.adjustments.${group}`;
 
-    // Read and coerce current value to a real array
-    const raw = foundry.utils.getProperty(this.document, path);
-    let current = this._coerceIndexedToArray(foundry.utils.deepClone(raw));
+      // Read and coerce current value to a real array
+      const raw = foundry.utils.getProperty(this.document, path);
+      let current = this._coerceIndexedToArray(foundry.utils.deepClone(raw));
 
-    // Ensure row exists
-    while (current.length <= index) {
-      if (group === "specialties") current.push({ type: "", key: "" });
-      else current.push({ key: "" });
+      // Ensure row exists
+      while (current.length <= index) {
+        if (group === "specialties") current.push({ type: "", key: "" });
+        else current.push({ key: "" });
+      }
+
+      current[index] ??= group === "specialties" ? { type: "", key: "" } : { key: "" };
+      current[index][field] = value;
+
+      if (group === "specialties" && field === "type") {
+        current[index].key = "";
+      }
+
+      await this.document.update({ [path]: current });
+      return;
     }
 
-    current[index] ??= group === "specialties" ? { type: "", key: "" } : { key: "" };
-    current[index][field] = value;
+    // NEW: dependent dropdown behavior (weapon type depends on weapon category)
+    if (name === "system.weapon.category") {
+      const selected =
+        target instanceof HTMLSelectElement || target instanceof HTMLInputElement
+          ? String(target.value ?? "")
+          : "";
 
-    if (group === "specialties" && field === "type") {
-      current[index].key = "";
+      const allowed = WEAPON_TYPES_BY_CATEGORY[selected] ?? [];
+      const currentType = String(this.document.system?.weapon?.weaponType ?? "");
+
+      // If category changes and current type is invalid, clear it.
+      if (!allowed.includes(currentType)) {
+        await this.document.update({ "system.weapon.weaponType": "" });
+      }
+      return;
     }
 
-    await this.document.update({ [path]: current });
+    // NEW: dependent dropdown behavior (armor type depends on armor class)
+    if (name === "system.armor.armorType") {
+      const selected =
+        target instanceof HTMLSelectElement || target instanceof HTMLInputElement
+          ? String(target.value ?? "")
+          : "";
+
+      const allowed = ARMOR_TYPES_BY_CLASS[selected] ?? [];
+      const currentName = String(this.document.system?.armor?.armorName ?? "");
+
+      if (!allowed.includes(currentName)) {
+        await this.document.update({ "system.armor.armorName": "" });
+      }
+      return;
+    }
   }
 
   async _addRow(path, row) {
