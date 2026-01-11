@@ -1,43 +1,72 @@
 <div class="hwfwm-item-sheet hwfwm-item-sheet--consumable" autocomplete="off">
   <header class="hwfwm-item-header">
     <div class="hwfwm-item-title">
-      <label>Name</label>
-      <input type="text" name="name" value="{{item.name}}" />
+      <label class="hwfwm-label" style="color:#000;">Name</label>
+      <input type="text" name="name" value="{{item.name}}" placeholder="Consumable Name" />
     </div>
   </header>
 
-  <section class="hwfwm-item-body">
+  <section class="hwfwm-item-body" style="color:#000;">
+
+    <!-- IMAGE (top) -->
     <div class="hwfwm-card">
-      <div class="hwfwm-card__title">Consumable</div>
+      <div class="hwfwm-card__title" style="color:#000;">Image</div>
+      <div class="hwfwm-muted" style="margin-bottom: 8px; color:#000;">
+        Click the image to change it.
+      </div>
+
+      <img
+        src="{{item.img}}"
+        data-edit="img"
+        title="{{item.name}}"
+        style="max-width: 180px; height: auto; cursor: pointer; border: 1px solid rgba(0,0,0,0.35); border-radius: 6px;"
+      />
+    </div>
+
+    <!-- DESCRIPTION -->
+    <div class="hwfwm-card">
+      <div class="hwfwm-card__title" style="color:#000;">Description</div>
+      <textarea name="system.description" rows="6">{{system.description}}</textarea>
+    </div>
+
+    <!-- CORE -->
+    <div class="hwfwm-card">
+      <div class="hwfwm-card__title" style="color:#000;">Consumable</div>
 
       <div class="hwfwm-grid">
         <div class="hwfwm-field">
-          <div class="hwfwm-label">Quantity</div>
+          <div class="hwfwm-label" style="color:#000;">Quantity</div>
           <input type="number" name="system.quantity" value="{{system.quantity}}" min="0" step="1" />
         </div>
 
         <div class="hwfwm-field">
-          <div class="hwfwm-label">Readied</div>
-          <select name="system.readied">
-            {{#each readiedOptions as |o|}}
-              <option value="{{o.value}}" {{#if (eq o.value ../system.readied)}}selected{{/if}}>
-                {{o.label}}
-              </option>
-            {{/each}}
-          </select>
+          <div class="hwfwm-label" style="color:#000;">Readied</div>
+          <label style="display:flex; align-items:center; gap:8px;">
+            <input
+              type="checkbox"
+              name="system.readied"
+              {{#if (or system.readied (eq system.readied "yes"))}}checked{{/if}}
+            />
+            <span style="color:#000;">Available for quick use</span>
+          </label>
         </div>
 
-        <div class="hwfwm-field">
-          <div class="hwfwm-label">Use Effect (Placeholder)</div>
-          <textarea name="system.useEffect" rows="4" placeholder="Describe what happens when used (future wiring).">{{system.useEffect}}</textarea>
-        </div>
-
-        <div class="hwfwm-field">
-          <div class="hwfwm-label">Notes</div>
-          <textarea name="system.notes" rows="6">{{system.notes}}</textarea>
+        <div class="hwfwm-field" style="grid-column: 1 / -1;">
+          <div class="hwfwm-label" style="color:#000;">Use Effect (Placeholder)</div>
+          <textarea
+            name="system.useEffect"
+            rows="4"
+            placeholder="Describe what happens when used (future wiring)."
+          >{{system.useEffect}}</textarea>
         </div>
       </div>
     </div>
+
+    <!-- NOTES -->
+    <div class="hwfwm-card">
+      <div class="hwfwm-card__title" style="color:#000;">Notes</div>
+      <textarea name="system.notes" rows="6">{{system.notes}}</textarea>
+    </div>
+
   </section>
 </div>
-
