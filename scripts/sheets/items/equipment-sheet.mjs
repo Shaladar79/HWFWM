@@ -8,7 +8,7 @@ import {
   WEAPON_TYPES_BY_CATEGORY,
   ARMOR_CLASS_KEYS,
   ARMOR_TYPES_BY_CLASS
-} from "../../config/items.mjs";
+} from "../../../config/items.mjs";
 
 export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
   foundry.applications.sheets.ItemSheetV2
