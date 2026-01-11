@@ -20,6 +20,31 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
     }
   };
 
+  /**
+   * Coerce a value that might be:
+   * - Array               -> return as-is
+   * - { "0": {...}, ... } -> convert to array in numeric order
+   * - anything else       -> []
+   */
+  _coerceIndexedToArray(value) {
+    if (Array.isArray(value)) return value;
+
+    if (value && typeof value === "object") {
+      const keys = Object.keys(value).filter((k) => /^\d+$/.test(k));
+      if (!keys.length) return [];
+      keys.sort((a, b) => Number(a) - Number(b));
+      return keys.map((k) => value[k]);
+    }
+
+    return [];
+  }
+
+  _ensureMinRows(arr, factory, min = 1) {
+    const out = Array.isArray(arr) ? arr : [];
+    while (out.length < min) out.push(factory());
+    return out;
+  }
+
   /** @override */
   async _prepareContext(options) {
     const context = await super._prepareContext(options);
@@ -151,13 +176,24 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
     ensureFlat("defense");
     ensureFlat("naturalArmor");
 
-    sys.adjustments.specialties = Array.isArray(sys.adjustments.specialties) ? sys.adjustments.specialties : [];
-    sys.adjustments.affinities = Array.isArray(sys.adjustments.affinities) ? sys.adjustments.affinities : [];
-    sys.adjustments.resistances = Array.isArray(sys.adjustments.resistances) ? sys.adjustments.resistances : [];
+    // IMPORTANT: preserve numeric-key objects by coercing to arrays
+    sys.adjustments.specialties = this._ensureMinRows(
+      this._coerceIndexedToArray(sys.adjustments.specialties),
+      () => ({ type: "", key: "" }),
+      1
+    );
 
-    if (sys.adjustments.specialties.length < 1) sys.adjustments.specialties.push({ type: "", key: "" });
-    if (sys.adjustments.affinities.length < 1) sys.adjustments.affinities.push({ key: "" });
-    if (sys.adjustments.resistances.length < 1) sys.adjustments.resistances.push({ key: "" });
+    sys.adjustments.affinities = this._ensureMinRows(
+      this._coerceIndexedToArray(sys.adjustments.affinities),
+      () => ({ key: "" }),
+      1
+    );
+
+    sys.adjustments.resistances = this._ensureMinRows(
+      this._coerceIndexedToArray(sys.adjustments.resistances),
+      () => ({ key: "" }),
+      1
+    );
 
     context.system = sys;
     return context;
@@ -212,11 +248,6 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
     }
   }
 
-  /**
-   * Force-persist row edits for array-of-objects fields.
-   * Foundry will not reliably persist dot-index updates for ArrayFields in all cases.
-   * We capture the change and update the entire array explicitly.
-   */
   async _handleChange(event) {
     const target = event.target;
     if (!(target instanceof HTMLElement)) return;
@@ -224,11 +255,6 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
     const name = target.getAttribute("name") ?? "";
     if (!name.startsWith("system.adjustments.")) return;
 
-    // Matches:
-    // system.adjustments.specialties.0.type
-    // system.adjustments.specialties.0.key
-    // system.adjustments.affinities.0.key
-    // system.adjustments.resistances.0.key
     const m = name.match(
       /^system\.adjustments\.(specialties|affinities|resistances)\.(\d+)\.(type|key)$/
     );
@@ -239,13 +265,17 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
     if (!Number.isFinite(index) || index < 0) return;
 
     const value =
-      target instanceof HTMLInputElement || target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement
+      target instanceof HTMLInputElement ||
+      target instanceof HTMLSelectElement ||
+      target instanceof HTMLTextAreaElement
         ? target.value
         : "";
 
     const path = `system.adjustments.${group}`;
-    const current = foundry.utils.deepClone(foundry.utils.getProperty(this.document, path) ?? []);
-    if (!Array.isArray(current)) return;
+
+    // Read and coerce current value to a real array
+    const raw = foundry.utils.getProperty(this.document, path);
+    let current = this._coerceIndexedToArray(foundry.utils.deepClone(raw));
 
     // Ensure row exists
     while (current.length <= index) {
@@ -253,37 +283,32 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
       else current.push({ key: "" });
     }
 
-    // Apply change
     current[index] ??= group === "specialties" ? { type: "", key: "" } : { key: "" };
     current[index][field] = value;
 
-    // If specialty type changed, clear specialty key so the dependent dropdown is consistent
     if (group === "specialties" && field === "type") {
       current[index].key = "";
     }
 
-    // Persist whole array
     await this.document.update({ [path]: current });
   }
 
   async _addRow(path, row) {
-    const current = foundry.utils.deepClone(foundry.utils.getProperty(this.document, path) ?? []);
-    const next = Array.isArray(current) ? current : [];
-    next.push(foundry.utils.deepClone(row));
-    await this.document.update({ [path]: next });
+    const raw = foundry.utils.getProperty(this.document, path);
+    const current = this._coerceIndexedToArray(foundry.utils.deepClone(raw));
+    current.push(foundry.utils.deepClone(row));
+    await this.document.update({ [path]: current });
   }
 
   async _removeRow(path, index, fallbackRow) {
-    let current = foundry.utils.deepClone(foundry.utils.getProperty(this.document, path) ?? []);
-    if (!Array.isArray(current)) current = [];
+    const raw = foundry.utils.getProperty(this.document, path);
+    let current = this._coerceIndexedToArray(foundry.utils.deepClone(raw));
 
     if (Number.isFinite(index) && index >= 0 && index < current.length) {
       current.splice(index, 1);
     }
 
-    // Keep at least 1 row so UI never disappears
     if (current.length < 1) current.push(foundry.utils.deepClone(fallbackRow));
-
     await this.document.update({ [path]: current });
   }
 }
