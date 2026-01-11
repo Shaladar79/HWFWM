@@ -47,6 +47,16 @@ export class HwfwmConsumableSheet extends HandlebarsApplicationMixin(
     const system = foundry.utils.deepClone(this.document.system ?? {});
     system.description ??= ""; // render-safe
 
+    // Normalize readied (schema is boolean; older items may have "yes"/"no")
+    const r = system.readied;
+    system.readied =
+      r === true ||
+      r === 1 ||
+      r === "1" ||
+      r === "true" ||
+      r === "yes" ||
+      r === "on";
+
     // Normalize itemRank (always present in UI)
     const ir = (system.itemRank ?? "normal").toString();
     system.itemRank = ["normal", "iron", "bronze", "silver", "gold", "diamond"].includes(ir)
@@ -130,6 +140,17 @@ export class HwfwmConsumableSheet extends HandlebarsApplicationMixin(
       formData && typeof formData === "object"
         ? (foundry.utils.isObject(formData) ? foundry.utils.flattenObject(formData) : formData)
         : {};
+
+    // Coerce readied to boolean, preferring the checkbox checked state when applicable
+    const target = event?.target;
+    const targetName = target?.getAttribute?.("name") ?? target?.name ?? "";
+    if (targetName === "system.readied" && target instanceof HTMLInputElement) {
+      flat["system.readied"] = !!target.checked;
+    } else if ("system.readied" in flat) {
+      const r = flat["system.readied"];
+      flat["system.readied"] =
+        r === true || r === 1 || r === "1" || r === "true" || r === "yes" || r === "on";
+    }
 
     // Normalize itemRank if present
     if ("system.itemRank" in flat) {
