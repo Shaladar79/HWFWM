@@ -2,7 +2,7 @@
   <header class="hwfwm-item-header">
     <div class="hwfwm-item-title">
       <label class="hwfwm-label" style="color:#000;">Name</label>
-      <input type="text" name="name" value="{{item.name}}" placeholder="Consumable Name" />
+      <input type="text" name="name" value="{{item.name}}" />
     </div>
   </header>
 
@@ -11,9 +11,6 @@
     <!-- IMAGE (top) -->
     <div class="hwfwm-card">
       <div class="hwfwm-card__title" style="color:#000;">Image</div>
-      <div class="hwfwm-muted" style="margin-bottom: 8px; color:#000;">
-        Click the image to change it.
-      </div>
 
       <img
         src="{{item.img}}"
@@ -42,27 +39,95 @@
         <div class="hwfwm-field">
           <div class="hwfwm-label" style="color:#000;">Readied</div>
           <label style="display:flex; align-items:center; gap:8px;">
-            <input
-              type="checkbox"
-              name="system.readied"
-              {{#if (or system.readied (eq system.readied "yes"))}}checked{{/if}}
-            />
+            <input type="checkbox" name="system.readied" {{#if system.readied}}checked{{/if}} />
             <span style="color:#000;">Available for quick use</span>
           </label>
         </div>
 
-        <div class="hwfwm-field" style="grid-column: 1 / -1;">
-          <div class="hwfwm-label" style="color:#000;">Use Effect (Placeholder)</div>
-          <textarea
-            name="system.useEffect"
-            rows="4"
-            placeholder="Describe what happens when used (future wiring)."
-          >{{system.useEffect}}</textarea>
+        <div class="hwfwm-field">
+          <div class="hwfwm-label" style="color:#000;">Category</div>
+          <select name="system.category">
+            {{#each categoryOptions as |o|}}
+              <option value="{{o.value}}" {{#if (eq o.value ../system.category)}}selected{{/if}}>
+                {{o.label}}
+              </option>
+            {{/each}}
+          </select>
         </div>
+
+        <!-- DAMAGE -->
+        {{#if isDamage}}
+          <div class="hwfwm-field">
+            <div class="hwfwm-label" style="color:#000;">Damage per Success</div>
+            <input type="number" name="system.damagePerSuccess" value="{{system.damagePerSuccess}}" min="0" step="1" />
+          </div>
+
+          <div class="hwfwm-field">
+            <div class="hwfwm-label" style="color:#000;">Action Cost</div>
+            <input type="number" name="system.actionCost" value="{{system.actionCost}}" min="0" step="1" />
+          </div>
+
+          <div class="hwfwm-field">
+            <div class="hwfwm-label" style="color:#000;">Damage Type 1</div>
+            <select name="system.damageType1">
+              {{#each damageTypeOptions as |o|}}
+                <option value="{{o.value}}" {{#if (eq o.value ../system.damageType1)}}selected{{/if}}>
+                  {{o.label}}
+                </option>
+              {{/each}}
+            </select>
+          </div>
+
+          <div class="hwfwm-field">
+            <div class="hwfwm-label" style="color:#000;">Damage Type 2</div>
+            <select name="system.damageType2">
+              {{#each damageTypeOptions as |o|}}
+                <option value="{{o.value}}" {{#if (eq o.value ../system.damageType2)}}selected{{/if}}>
+                  {{o.label}}
+                </option>
+              {{/each}}
+            </select>
+          </div>
+
+          <div class="hwfwm-field">
+            <div class="hwfwm-label" style="color:#000;">Damage Type 3</div>
+            <select name="system.damageType3">
+              {{#each damageTypeOptions as |o|}}
+                <option value="{{o.value}}" {{#if (eq o.value ../system.damageType3)}}selected{{/if}}>
+                  {{o.label}}
+                </option>
+              {{/each}}
+            </select>
+          </div>
+        {{/if}}
+
+        <!-- RECOVERY -->
+        {{#if isRecovery}}
+          <div class="hwfwm-field">
+            <div class="hwfwm-label" style="color:#000;">Recovered</div>
+            <input type="number" name="system.recovered" value="{{system.recovered}}" min="0" step="1" />
+          </div>
+
+          <div class="hwfwm-field">
+            <div class="hwfwm-label" style="color:#000;">Action Cost</div>
+            <input type="number" name="system.actionCost" value="{{system.actionCost}}" min="0" step="1" />
+          </div>
+
+          <div class="hwfwm-field">
+            <div class="hwfwm-label" style="color:#000;">Recovery Type</div>
+            <select name="system.recoveryType">
+              {{#each recoveryTypeOptions as |o|}}
+                <option value="{{o.value}}" {{#if (eq o.value ../system.recoveryType)}}selected{{/if}}>
+                  {{o.label}}
+                </option>
+              {{/each}}
+            </select>
+          </div>
+        {{/if}}
       </div>
     </div>
 
-    <!-- NOTES -->
+    <!-- NOTES (bottom) -->
     <div class="hwfwm-card">
       <div class="hwfwm-card__title" style="color:#000;">Notes</div>
       <textarea name="system.notes" rows="6">{{system.notes}}</textarea>
