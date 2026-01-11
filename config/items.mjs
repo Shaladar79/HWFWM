@@ -47,6 +47,40 @@ export const DAMAGE_TYPE_KEYS = Object.freeze([
 ]);
 
 /* -------------------------------------------- */
+/* Equipment config (new)                        */
+/* -------------------------------------------- */
+
+export const WEAPON_CATEGORY_KEYS = Object.freeze(["melee", "ranged"]);
+
+export const WEAPON_TYPES_BY_CATEGORY = Object.freeze({
+  melee: Object.freeze([
+    "Dagger",
+    "Sword",
+    "Axe",
+    "Mace",
+    "Great Sword",
+    "Battle Axe",
+    "Maul",
+    "Spear",
+    "Lance",
+    "Staff"
+  ]),
+  ranged: Object.freeze(["Bow", "Crossbow", "Wand", "Gun"])
+});
+
+/**
+ * Canonical armor class keys (used for branching).
+ * Labels are handled by the sheet/template.
+ */
+export const ARMOR_CLASS_KEYS = Object.freeze(["light", "medium", "heavy"]);
+
+export const ARMOR_TYPES_BY_CLASS = Object.freeze({
+  light: Object.freeze(["Padded Armor", "Robe", "Combat Robe"]),
+  medium: Object.freeze(["Leather", "Studded Leather", "Chainmail"]),
+  heavy: Object.freeze(["Scale Mail", "Half-Plate", "Full Plate"])
+});
+
+/* -------------------------------------------- */
 /* Helper coercion                               */
 /* -------------------------------------------- */
 
@@ -69,6 +103,15 @@ export function coerceEnum(value, allowed, fallback) {
 export function coerceNumberOrZero(value) {
   const n = Number(value);
   return Number.isFinite(n) ? n : 0;
+}
+
+/**
+ * Coerce a string to one of the allowed display strings (case-sensitive),
+ * otherwise fallback.
+ */
+export function coerceOneOfStrings(value, allowedStrings, fallback = "") {
+  const v = (value ?? "").toString();
+  return allowedStrings.includes(v) ? v : fallback;
 }
 
 /* -------------------------------------------- */
@@ -119,19 +162,64 @@ export function normalizeConsumableSystem(system) {
 }
 
 /**
- * Minimal normalizers for other item types can be added as you wire them.
- * Keep them intentionally shallow unless you explicitly request deeper wiring.
+ * Normalizes equipment system data in-place (runtime-only).
+ * Keeps array-backed repeatable rows untouched (equipment sheet handles those).
  */
 export function normalizeEquipmentSystem(system) {
   if (!system || typeof system !== "object") return;
 
-  // Make sure common text fields exist
+  // Shared fields
+  system.itemRank = coerceEnum(system.itemRank, ITEM_RANK_KEYS, "normal");
   system.description = (system.description ?? "").toString();
   system.notes = (system.notes ?? "").toString();
+  system.equipped = coerceBoolean(system.equipped);
 
-  // You already handle array-row persistence in the equipment sheet.
-  // Do NOT coerce those arrays here beyond simple safety guards.
-  // (Leaving this as minimal on purpose.)
+  // Type is your top-level branch: weapon | armor | misc (already in schema)
+  system.type = (system.type ?? "weapon").toString();
+
+  // Weapon subtree
+  if (!system.weapon || typeof system.weapon !== "object") system.weapon = {};
+  system.weapon.category = coerceEnum(system.weapon.category, WEAPON_CATEGORY_KEYS, "");
+
+  // Weapon type depends on category
+  if (system.weapon.category) {
+    const allowed = WEAPON_TYPES_BY_CATEGORY[system.weapon.category] ?? [];
+    system.weapon.weaponType = coerceOneOfStrings(system.weapon.weaponType, allowed, "");
+  } else {
+    // No category selected => clear weaponType to avoid invalid combos.
+    system.weapon.weaponType = (system.weapon.weaponType ?? "").toString();
+    if (system.weapon.weaponType) system.weapon.weaponType = "";
+  }
+
+  // Armor subtree
+  if (!system.armor || typeof system.armor !== "object") system.armor = {};
+
+  // We are treating system.armor.armorType as the *class* selector for now ("light|medium|heavy"),
+  // because your current schema uses armor.armorType and your template labels it as Armor Type.
+  // When you add the second dropdown in the sheet later, we'll store the specific type as armor.armorName
+  // or armor.variant (schema-backed).
+  system.armor.armorType = coerceEnum(system.armor.armorType, ARMOR_CLASS_KEYS, "");
+
+  // Store the specific armor selection in armor.armorName (new field you will add to schema + sheet)
+  // If it doesn't exist yet, keep it safe as a string.
+  system.armor.armorName = (system.armor.armorName ?? "").toString();
+
+  if (system.armor.armorType) {
+    const allowedArmorNames = ARMOR_TYPES_BY_CLASS[system.armor.armorType] ?? [];
+    system.armor.armorName = coerceOneOfStrings(system.armor.armorName, allowedArmorNames, "");
+  } else {
+    if (system.armor.armorName) system.armor.armorName = "";
+  }
+
+  // Numeric coercions for existing schema fields
+  system.weapon.damagePerSuccess = coerceNumberOrZero(system.weapon.damagePerSuccess);
+  system.weapon.range = coerceNumberOrZero(system.weapon.range);
+  system.weapon.actionCost = coerceNumberOrZero(system.weapon.actionCost);
+
+  system.armor.value = coerceNumberOrZero(system.armor.value);
+
+  if (!system.misc || typeof system.misc !== "object") system.misc = {};
+  system.misc.armor = coerceNumberOrZero(system.misc.armor);
 }
 
 /* -------------------------------------------- */
@@ -168,4 +256,3 @@ export class HwfwmItem extends Item {
     }
   }
 }
-
