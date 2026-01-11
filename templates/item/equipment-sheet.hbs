@@ -94,7 +94,7 @@
 
         <div class="hwfwm-field">
           <div class="hwfwm-label" style="color:#000;">Weapon Type</div>
-          <select name="system.weapon.weaponType">
+          <select name="system.weapon.weaponType" {{#unless system.weapon.category}}disabled{{/unless}}>
             <option value="">— Select —</option>
             {{#each weaponTypeOptions as |o|}}
               <option value="{{o.value}}" {{#if (eq o.value ../system.weapon.weaponType)}}selected{{/if}}>
@@ -120,12 +120,17 @@
         </div>
 
         <div class="hwfwm-field" style="grid-column: 1 / -1;">
-          <div class="hwfwm-label" style="color:#000;">Damage Types (placeholders)</div>
+          <div class="hwfwm-label" style="color:#000;">Damage Types</div>
           <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
             <div>
               <div class="hwfwm-label" style="color:#000;">Damage Type 1</div>
               <select name="system.weapon.damageType1">
                 <option value="">— Select —</option>
+                {{#each damageTypeOptions as |o|}}
+                  <option value="{{o.value}}" {{#if (eq o.value ../system.weapon.damageType1)}}selected{{/if}}>
+                    {{o.label}}
+                  </option>
+                {{/each}}
               </select>
             </div>
 
@@ -133,6 +138,11 @@
               <div class="hwfwm-label" style="color:#000;">Damage Type 2</div>
               <select name="system.weapon.damageType2">
                 <option value="">— Select —</option>
+                {{#each damageTypeOptions as |o|}}
+                  <option value="{{o.value}}" {{#if (eq o.value ../system.weapon.damageType2)}}selected{{/if}}>
+                    {{o.label}}
+                  </option>
+                {{/each}}
               </select>
             </div>
 
@@ -140,6 +150,11 @@
               <div class="hwfwm-label" style="color:#000;">Damage Type 3</div>
               <select name="system.weapon.damageType3">
                 <option value="">— Select —</option>
+                {{#each damageTypeOptions as |o|}}
+                  <option value="{{o.value}}" {{#if (eq o.value ../system.weapon.damageType3)}}selected{{/if}}>
+                    {{o.label}}
+                  </option>
+                {{/each}}
               </select>
             </div>
           </div>
@@ -168,7 +183,7 @@
 
         <div class="hwfwm-field">
           <div class="hwfwm-label" style="color:#000;">Armor Type</div>
-          <select name="system.armor.armorName">
+          <select name="system.armor.armorName" {{#unless system.armor.armorType}}disabled{{/unless}}>
             <option value="">— Select —</option>
             {{#each armorTypeOptions as |o|}}
               <option value="{{o.value}}" {{#if (eq o.value ../system.armor.armorName)}}selected{{/if}}>
