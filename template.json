@@ -143,41 +143,30 @@
       "system": {
         "type": "weapon",
         "equipped": false,
-
         "itemRank": "normal",
-
         "description": "",
         "notes": "",
-
         "weapon": {
           "category": "",
           "weaponType": "",
-
           "damagePerSuccess": 0,
           "range": 0,
           "actionCost": 0,
-
           "bonusDamagePerSuccess": 0,
           "actionCostMod": 0,
-
           "damageType1": "",
           "damageType2": "",
           "damageType3": ""
         },
-
         "armor": {
           "armorType": "",
           "armorName": "",
-
           "value": 0,
-
           "bonusArmor": 0
         },
-
         "misc": {
           "armor": 0
         },
-
         "adjustments": {
           "attributes": {
             "power": { "flat": 0 },
@@ -201,31 +190,24 @@
         }
       }
     },
-
     "consumable": {
       "system": {
         "itemRank": "normal",
         "category": "damage",
-
         "quantity": 1,
         "readied": false,
-
         "description": "",
-
         "damagePerSuccess": 0,
         "damageType1": "",
         "damageType2": "",
         "damageType3": "",
         "actionCost": 0,
-
         "recoveryType": "",
         "recoveredPerRank": 0,
-
         "useEffect": "",
         "notes": ""
       }
     },
-
     "miscItem": {
       "system": {
         "catalogKey": "",
