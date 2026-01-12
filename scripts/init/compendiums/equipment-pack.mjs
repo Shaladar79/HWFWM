@@ -196,4 +196,225 @@ async function ensureEquipmentFolders(pack) {
   // Armor -> Light Armor, Medium Armor, Heavy Armor
 
   const rootWeapons = await ensureFolder(pack, "Weapons", null);
-  const rootArmor = await ensureFolder(pack, "Armor", n
+  const rootArmor = await ensureFolder(pack, "Armor", null);
+
+  const melee = await ensureFolder(pack, "Melee Weapons", rootWeapons.id);
+  const ranged = await ensureFolder(pack, "Ranged Weapons", rootWeapons.id);
+
+  const light = await ensureFolder(pack, "Light Armor", rootArmor.id);
+  const medium = await ensureFolder(pack, "Medium Armor", rootArmor.id);
+  const heavy = await ensureFolder(pack, "Heavy Armor", rootArmor.id);
+
+  // Map by path key for quick placement
+  const map = new Map();
+  map.set(pathKey(["Weapons"]), rootWeapons.id);
+  map.set(pathKey(["Weapons", "Melee Weapons"]), melee.id);
+  map.set(pathKey(["Weapons", "Ranged Weapons"]), ranged.id);
+
+  map.set(pathKey(["Armor"]), rootArmor.id);
+  map.set(pathKey(["Armor", "Light Armor"]), light.id);
+  map.set(pathKey(["Armor", "Medium Armor"]), medium.id);
+  map.set(pathKey(["Armor", "Heavy Armor"]), heavy.id);
+
+  return map;
+}
+
+async function ensureFolder(pack, name, parentId) {
+  // Compendium folders are Folder docs with `pack: <pack.collection>` and `type: <documentName>`
+  // In v13, Folder is still the correct document for compendium folder trees.
+  const existing = game.folders.find(
+    (f) =>
+      f.pack === pack.collection &&
+      f.type === pack.documentName &&
+      f.name === name &&
+      (f.folder?.id ?? null) === (parentId ?? null)
+  );
+
+  if (existing) return existing;
+
+  return Folder.create({
+    name,
+    type: pack.documentName,
+    folder: parentId ?? null,
+    pack: pack.collection,
+    sorting: "a"
+  });
+}
+
+// -----------------------------
+// Create / Update helpers
+// -----------------------------
+function buildCreateData(seed, folderIdsByPath, systemId, seedVersion) {
+  const folderId = folderIdsByPath.get(pathKey(seed.folderPath)) ?? null;
+
+  const flags = {
+    [systemId]: {
+      seedKey: seed.seedKey,
+      seedVersion
+    }
+  };
+
+  // Keep description minimal; only set if provided
+  const system = duplicate(seed.system ?? {});
+
+  return {
+    name: seed.name,
+    type: "equipment",
+    folder: folderId,
+    system,
+    flags,
+    // Foundry stores HTML in system.description in many systems; your templates may differ.
+    // We only set if provided; otherwise omit.
+    ...(seed.description ? { system: { ...system, description: seed.description } } : {})
+  };
+}
+
+function buildNonDestructivePatch(doc, seed, folderIdsByPath, systemId, seedVersion) {
+  const patch = {};
+  let changed = false;
+
+  // Ensure folder placement (safe)
+  const desiredFolderId = folderIdsByPath.get(pathKey(seed.folderPath)) ?? null;
+  if (desiredFolderId && doc.folder?.id !== desiredFolderId) {
+    patch.folder = desiredFolderId;
+    changed = true;
+  }
+
+  // Flags: ensure seed identity exists (safe)
+  const existingSeedKey = getProperty(doc, `flags.${systemId}.seedKey`);
+  if (!existingSeedKey) {
+    patch.flags = patch.flags ?? {};
+    patch.flags[systemId] = {
+      ...(getProperty(doc, `flags.${systemId}`) ?? {}),
+      seedKey: seed.seedKey,
+      seedVersion
+    };
+    changed = true;
+  } else {
+    const existingVersion = getProperty(doc, `flags.${systemId}.seedVersion`);
+    if (!existingVersion) {
+      patch.flags = patch.flags ?? {};
+      patch.flags[systemId] = {
+        ...(getProperty(doc, `flags.${systemId}`) ?? {}),
+        seedVersion
+      };
+      changed = true;
+    }
+  }
+
+  // Minimal system fields: only fill if missing
+  // rankKey: if blank/undefined, set to normal (starter assumption)
+  const currentRankKey = getProperty(doc, "system.rankKey");
+  if (!currentRankKey && getProperty(seed, "system.rankKey")) {
+    patch.system = patch.system ?? {};
+    patch.system.rankKey = seed.system.rankKey;
+    changed = true;
+  }
+
+  // Weapon classification
+  const seedWeaponCategory = getProperty(seed, "system.weapon.category");
+  if (seedWeaponCategory) {
+    const curWeaponCategory = getProperty(doc, "system.weapon.category");
+    if (!curWeaponCategory) {
+      patch.system = patch.system ?? {};
+      patch.system.weapon = patch.system.weapon ?? {};
+      patch.system.weapon.category = seedWeaponCategory;
+      changed = true;
+    }
+    // weaponType is allowed to stay blank; only set if missing and seed provides something non-empty
+    const seedWeaponType = (getProperty(seed, "system.weapon.weaponType") ?? "").trim();
+    const curWeaponType = (getProperty(doc, "system.weapon.weaponType") ?? "").trim();
+    if (!curWeaponType && seedWeaponType) {
+      patch.system = patch.system ?? {};
+      patch.system.weapon = patch.system.weapon ?? {};
+      patch.system.weapon.weaponType = seedWeaponType;
+      changed = true;
+    }
+  }
+
+  // Armor classification
+  const seedArmorType = getProperty(seed, "system.armor.armorType");
+  if (seedArmorType) {
+    const curArmorType = getProperty(doc, "system.armor.armorType");
+    if (!curArmorType) {
+      patch.system = patch.system ?? {};
+      patch.system.armor = patch.system.armor ?? {};
+      patch.system.armor.armorType = seedArmorType;
+      changed = true;
+    }
+
+    const seedArmorClassKey = (getProperty(seed, "system.armor.armorClassKey") ?? "").trim();
+    const curArmorClassKey = (getProperty(doc, "system.armor.armorClassKey") ?? "").trim();
+    if (!curArmorClassKey && seedArmorClassKey) {
+      patch.system = patch.system ?? {};
+      patch.system.armor = patch.system.armor ?? {};
+      patch.system.armor.armorClassKey = seedArmorClassKey;
+      changed = true;
+    }
+  }
+
+  // Description: only set if empty and seed provides one
+  const seedDesc = (seed.description ?? "").trim();
+  const curDesc = (getProperty(doc, "system.description") ?? "").trim();
+  if (!curDesc && seedDesc) {
+    patch.system = patch.system ?? {};
+    patch.system.description = seedDesc;
+    changed = true;
+  }
+
+  return changed ? patch : null;
+}
+
+function findBestNameMatch(byName, seed) {
+  const n = seed.name.trim().toLowerCase();
+  const candidates = byName.get(n);
+  if (!candidates?.length) return null;
+
+  // If multiple items share the same name, try to disambiguate by category/type presence
+  const wantWeaponCategory = getProperty(seed, "system.weapon.category");
+  const wantArmorType = getProperty(seed, "system.armor.armorType");
+
+  if (wantWeaponCategory) {
+    const exact = candidates.find((c) => true); // index does not include system; cannot disambiguate here
+    return exact ?? candidates[0];
+  }
+
+  if (wantArmorType) {
+    const exact = candidates.find((c) => true);
+    return exact ?? candidates[0];
+  }
+
+  return candidates[0];
+}
+
+// -----------------------------
+// Small utilities
+// -----------------------------
+function pathKey(parts) {
+  return parts.join(" / ");
+}
+
+function capitalize(s) {
+  return (s ?? "").charAt(0).toUpperCase() + (s ?? "").slice(1);
+}
+
+/**
+ * Safe property getter compatible with Foundry utils conventions.
+ * Works for both index entries and full documents.
+ */
+function getProperty(obj, path) {
+  try {
+    return foundry.utils.getProperty(obj, path);
+  } catch {
+    // fallback for environments where foundry.utils may not be accessible yet
+    return path.split(".").reduce((o, k) => (o ? o[k] : undefined), obj);
+  }
+}
+
+function duplicate(data) {
+  try {
+    return foundry.utils.duplicate(data);
+  } catch {
+    return structuredClone(data);
+  }
+}
