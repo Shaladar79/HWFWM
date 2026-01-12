@@ -1,34 +1,38 @@
-export function registerEquipmentPackFolderBootstrap() {
-  Hooks.once("ready", async () => {
-    const pack = game.packs.get("hwfwm-system.equipment");
-    if (!pack) return;
+// scripts/init/compendiums/equipment-pack.mjs
 
-    if (pack.documentName !== "Item") return;
+export async function bootstrapEquipmentPackFolders({
+  systemId = "hwfwm-system",
+  packName = "equipment"
+} = {}) {
+  if (!game?.user?.isGM) return;
 
-    // Root folders
-    const weapons = await ensureFolder(pack, "Weapons", null);
-    const armor = await ensureFolder(pack, "Armor", null);
+  const packId = `${systemId}.${packName}`;
+  const pack = game.packs.get(packId);
+  if (!pack) {
+    console.warn(`[${systemId}] Equipment folders: pack not found: ${packId}`);
+    return;
+  }
+  if (pack.documentName !== "Item") return;
 
-    // Weapon subfolders
-    await ensureFolder(pack, "Melee Weapons", weapons.id);
-    await ensureFolder(pack, "Ranged Weapons", weapons.id);
+  const weapons = await ensureFolder(pack, "Weapons", null);
+  const armor = await ensureFolder(pack, "Armor", null);
 
-    // Armor subfolders
-    await ensureFolder(pack, "Light Armor", armor.id);
-    await ensureFolder(pack, "Medium Armor", armor.id);
-    await ensureFolder(pack, "Heavy Armor", armor.id);
-  });
+  await ensureFolder(pack, "Melee Weapons", weapons.id);
+  await ensureFolder(pack, "Ranged Weapons", weapons.id);
+
+  await ensureFolder(pack, "Light Armor", armor.id);
+  await ensureFolder(pack, "Medium Armor", armor.id);
+  await ensureFolder(pack, "Heavy Armor", armor.id);
 }
 
 async function ensureFolder(pack, name, parentId) {
   const existing = game.folders.find(
-    f =>
+    (f) =>
       f.pack === pack.collection &&
       f.type === pack.documentName &&
       f.name === name &&
       (f.folder?.id ?? null) === (parentId ?? null)
   );
-
   if (existing) return existing;
 
   return Folder.create({
