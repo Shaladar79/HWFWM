@@ -4,42 +4,65 @@
 // - Creates ONLY the required folder hierarchy inside the equipment compendium.
 // - Idempotent (safe to run multiple times)
 // - Non-destructive (never deletes/renames anything)
-//
-// Pack: hwfwm-system.equipment
-// Folders (authoritative):
-//   Weapons
-//     - Melee Weapons
-//     - Ranged Weapons
-//   Armor
-//     - Light Armor
-//     - Medium Armor
-//     - Heavy Armor
 
 const SYSTEM_ID = "hwfwm-system";
 const PACK_NAME = "equipment";
-const PACK_KEY = `${SYSTEM_ID}.${PACK_NAME}`;
+const EXPECTED_PACK_KEY = `${SYSTEM_ID}.${PACK_NAME}`;
+
+/**
+ * Resolve the compendium pack robustly.
+ * Some installs/environments can yield a collection key that doesn't match our expectation,
+ * so we also locate by pack metadata.
+ */
+function resolveEquipmentPack() {
+  // 1) Fast path: expected collection key.
+  let pack = game.packs.get(EXPECTED_PACK_KEY);
+  if (pack) return pack;
+
+  // 2) Robust path: search by metadata.
+  const packs = Array.from(game.packs ?? []);
+  pack =
+    packs.find((p) => {
+      const m = p?.metadata ?? {};
+      // Common v13 metadata fields we can rely on:
+      // - m.name (pack name from system.json)
+      // - m.type ("Item")
+      // - m.system or m.packageName or m.package (varies by build)
+      const pkg =
+        m.system ??
+        m.packageName ??
+        m.package ??
+        m.packageId ??
+        m.id ??
+        null;
+
+      const isRightPackName = m.name === PACK_NAME;
+      const isItemPack = m.type === "Item";
+      const isOurSystem = pkg === SYSTEM_ID;
+
+      return isRightPackName && isItemPack && isOurSystem;
+    }) ??
+    // 3) Fallback: if the pkg field isn't populated as expected, at least match pack name+type
+    // AND the collection key ends with ".equipment".
+    packs.find((p) => {
+      const m = p?.metadata ?? {};
+      return m.name === PACK_NAME && m.type === "Item" && (p.collection ?? "").endsWith(`.${PACK_NAME}`);
+    });
+
+  return pack ?? null;
+}
 
 /**
  * Attempt to load compendium folders in a v13-safe way.
- * Different Foundry versions/patches expose slightly different helpers,
- * so we probe a couple of options.
  */
 async function loadPackFolders(pack) {
-  // Most common: pack.folders is a collection-like object.
   if (pack?.folders) {
-    // Some builds expose getDocuments; some already have contents.
     if (typeof pack.folders.getDocuments === "function") {
       return await pack.folders.getDocuments();
     }
-    if (Array.isArray(pack.folders.contents)) {
-      return pack.folders.contents;
-    }
-    if (Array.isArray(pack.folders)) {
-      return pack.folders;
-    }
+    if (Array.isArray(pack.folders.contents)) return pack.folders.contents;
+    if (Array.isArray(pack.folders)) return pack.folders;
   }
-
-  // Fallback: if folders are not directly accessible, return empty and rely on create-by-name attempts.
   return [];
 }
 
@@ -52,24 +75,15 @@ function findFolderByName(folders, name, parentId) {
   });
 }
 
-/**
- * Create or resolve a folder by (name + parent).
- * Uses Folder documents inside the compendium pack (not world folders).
- */
 async function ensureFolder(pack, allFolders, name, parentId = null) {
   const existing = findFolderByName(allFolders, name, parentId);
   if (existing) return existing;
 
-  // NOTE: Compendium folder docs are created via Folder.create with { pack: pack.collection }.
-  // Folder "type" should match the compendium document type: "Item".
   const data = {
     name,
     type: "Item",
     sorting: "a"
   };
-
-  // Parent pointer key can be either `folder` (id) or `folder` object depending on internals;
-  // use id string for stability.
   if (parentId) data.folder = parentId;
 
   const created = await Folder.create(data, { pack: pack.collection });
@@ -77,29 +91,29 @@ async function ensureFolder(pack, allFolders, name, parentId = null) {
   return created;
 }
 
-/**
- * Ensure the Equipment compendium exists and has the authoritative folder structure.
- */
 export async function ensureEquipmentPackFolders() {
-  const pack = game.packs.get(PACK_KEY);
+  const pack = resolveEquipmentPack();
 
   if (!pack) {
-    console.warn(`[HWFWM] Equipment pack not found: ${PACK_KEY}. Did system.json define it?`);
-    return;
-  }
-
-  // If the pack is locked, we cannot create folders.
-  if (pack.locked) {
+    const keys = Array.from(game.packs ?? []).map((p) => p.collection).sort();
     console.warn(
-      `[HWFWM] Equipment pack is locked (${PACK_KEY}). Unlock the compendium to allow folder creation.`
+      `[HWFWM] Equipment pack not found. Expected key: ${EXPECTED_PACK_KEY}. ` +
+        `Check system.json pack name/type/system and that packs/equipment.db exists. ` +
+        `Known packs:`,
+      keys
     );
     return;
   }
 
-  // Load known folders (best-effort).
+  if (pack.locked) {
+    console.warn(
+      `[HWFWM] Equipment pack is locked (${pack.collection}). Unlock the compendium to allow folder creation.`
+    );
+    return;
+  }
+
   const folders = await loadPackFolders(pack);
 
-  // Authoritative hierarchy
   const weapons = await ensureFolder(pack, folders, "Weapons", null);
   await ensureFolder(pack, folders, "Melee Weapons", weapons.id);
   await ensureFolder(pack, folders, "Ranged Weapons", weapons.id);
@@ -109,18 +123,13 @@ export async function ensureEquipmentPackFolders() {
   await ensureFolder(pack, folders, "Medium Armor", armor.id);
   await ensureFolder(pack, folders, "Heavy Armor", armor.id);
 
-  console.log(`[HWFWM] Equipment compendium folders ensured for ${PACK_KEY}.`);
+  console.log(`[HWFWM] Equipment compendium folders ensured for ${pack.collection}.`);
 }
 
-/**
- * Call this from your system entrypoint (system.mjs) once.
- * Kept as a function to avoid side effects on import.
- */
 export function registerEquipmentPackFolderBootstrap() {
   Hooks.once("ready", () => {
-    // Fire-and-forget is acceptable here; failures are logged and non-fatal.
     ensureEquipmentPackFolders().catch((err) => {
-      console.error(`[HWFWM] Failed to ensure Equipment pack folders for ${PACK_KEY}:`, err);
+      console.error(`[HWFWM] Failed to ensure Equipment pack folders:`, err);
     });
   });
 }
