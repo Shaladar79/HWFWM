@@ -143,13 +143,11 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
     context.affinityOptions = toOptions(affinityCatalog);
     context.resistanceOptions = toOptions(resistanceCatalog);
 
-    // ----- Safe normalization -----
+    // ----- Safe normalization (UI-facing only; document class computes derived values) -----
     const sys = context.system;
 
     // Persistent item rank
-    sys.itemRank = ITEM_RANK_KEYS.includes(String(sys.itemRank ?? ""))
-      ? String(sys.itemRank)
-      : "normal";
+    sys.itemRank = ITEM_RANK_KEYS.includes(String(sys.itemRank ?? "")) ? String(sys.itemRank) : "normal";
 
     sys.equipped = !!sys.equipped;
 
@@ -168,21 +166,28 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
     sys.weapon.weaponType ??= "";
     if (sys.weapon.category) {
       const allowed = WEAPON_TYPES_BY_CATEGORY[sys.weapon.category] ?? [];
-      if (!allowed.includes(String(sys.weapon.weaponType ?? ""))) {
-        sys.weapon.weaponType = "";
-      }
-    } else {
-      if (String(sys.weapon.weaponType ?? "")) sys.weapon.weaponType = "";
+      if (!allowed.includes(String(sys.weapon.weaponType ?? ""))) sys.weapon.weaponType = "";
+    } else if (String(sys.weapon.weaponType ?? "")) {
+      sys.weapon.weaponType = "";
     }
 
-    // Legacy fields (kept for backward compatibility with older items/sheets)
+    // Legacy fields: keep present so older items don’t explode (not rendered/edited anymore)
     sys.weapon.damagePerSuccess ??= 0;
     sys.weapon.actionCost ??= 0;
 
-    // NEW persisted bonus fields (used by the updated sheet)
-    // If missing, default from legacy field values at runtime.
+    // Persisted bonus fields used by the updated sheet
+    // NOTE: default from legacy runtime-only if missing.
     sys.weapon.bonusDamagePerSuccess ??= sys.weapon.damagePerSuccess ?? 0;
     sys.weapon.actionCostMod ??= sys.weapon.actionCost ?? 0;
+
+    // Derived fields are computed by HwfwmItem.normalizeEquipmentSystem()
+    // but ensure keys exist so the template never renders "undefined".
+    sys.weapon.baseDamagePerSuccess ??= 0;
+    sys.weapon.rankMultiplier ??= 1;
+    sys.weapon.totalDamagePerSuccess ??= 0;
+
+    sys.weapon.baseActionCost ??= 0;
+    sys.weapon.totalActionCost ??= 0;
 
     // Range stays editable for now
     sys.weapon.range ??= 0;
@@ -199,21 +204,26 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
     sys.armor.armorName ??= "";
     if (sys.armor.armorType) {
       const allowedArmor = ARMOR_TYPES_BY_CLASS[sys.armor.armorType] ?? [];
-      if (!allowedArmor.includes(String(sys.armor.armorName ?? ""))) {
-        sys.armor.armorName = "";
-      }
-    } else {
-      if (String(sys.armor.armorName ?? "")) sys.armor.armorName = "";
+      if (!allowedArmor.includes(String(sys.armor.armorName ?? ""))) sys.armor.armorName = "";
+    } else if (String(sys.armor.armorName ?? "")) {
+      sys.armor.armorName = "";
     }
 
-    // Legacy field (kept for backward compatibility)
+    // Legacy field: keep present (not rendered/edited anymore)
     sys.armor.value ??= 0;
 
-    // NEW persisted bonus field (used by the updated sheet)
+    // Persisted bonus field used by the updated sheet
     sys.armor.bonusArmor ??= sys.armor.value ?? 0;
 
+    // Derived fields (computed by document class) – ensure present
+    sys.armor.baseArmor ??= 0;
+    sys.armor.rankMultiplier ??= 1;
+    sys.armor.totalArmor ??= 0;
+
+    // Misc
     sys.misc.armor ??= 0;
 
+    // Adjustments
     sys.adjustments ??= {};
     sys.adjustments.attributes ??= {};
     sys.adjustments.resources ??= {};
@@ -274,13 +284,7 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
     context.weaponTypeOptions = this._toOptionsFromStrings(weaponTypes);
 
     context.armorClassOptions = this._toOptionsFromKeys(ARMOR_CLASS_KEYS, (k) =>
-      k === "light"
-        ? "Light"
-        : k === "medium"
-          ? "Medium"
-          : k === "heavy"
-            ? "Heavy"
-            : this._titleCaseKey(k)
+      k === "light" ? "Light" : k === "medium" ? "Medium" : k === "heavy" ? "Heavy" : this._titleCaseKey(k)
     );
 
     const armorTypes =
@@ -289,10 +293,8 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
         : [];
     context.armorTypeOptions = this._toOptionsFromStrings(armorTypes);
 
-    // NEW: damage type options for the Weapon section dropdowns (was missing before)
-    context.damageTypeOptions = this._toOptionsFromKeys(DAMAGE_TYPE_KEYS, (k) =>
-      this._titleCaseKey(k)
-    );
+    // Damage type options for dropdowns
+    context.damageTypeOptions = this._toOptionsFromKeys(DAMAGE_TYPE_KEYS, (k) => this._titleCaseKey(k));
 
     context.system = sys;
     return context;
@@ -310,7 +312,7 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
     el.removeEventListener("click", this._boundClick);
     el.addEventListener("click", this._boundClick);
 
-    // Change delegation (force-save array row edits reliably)
+    // Change delegation (force-save array row edits reliably + dependent dropdowns)
     this._boundChange ??= this._handleChange.bind(this);
     el.removeEventListener("change", this._boundChange);
     el.addEventListener("change", this._boundChange);
@@ -424,6 +426,13 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
       if (!allowed.includes(currentName)) {
         await this.document.update({ "system.armor.armorName": "" });
       }
+      return;
+    }
+
+    // NEW: when rank changes, force a refresh so derived fields (multiplier/totals) visibly update immediately.
+    // (Derived values are computed in the Item document class; this just ensures the sheet re-renders promptly.)
+    if (name === "system.itemRank") {
+      this.render(false);
       return;
     }
   }
