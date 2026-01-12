@@ -10,51 +10,52 @@ const PACK_NAME = "equipment";
 const EXPECTED_PACK_KEY = `${SYSTEM_ID}.${PACK_NAME}`;
 
 /**
+ * v13-safe way to get an array of all compendium packs.
+ * game.packs is a Foundry Collection; the reliable property is .contents.
+ */
+function getAllPacks() {
+  if (game.packs?.contents) return game.packs.contents;
+  // Fallback if contents isn't present for some reason
+  if (typeof game.packs?.values === "function") return Array.from(game.packs.values());
+  // Last resort
+  return [];
+}
+
+/**
  * Resolve the compendium pack robustly.
- * Some installs/environments can yield a collection key that doesn't match our expectation,
- * so we also locate by pack metadata.
  */
 function resolveEquipmentPack() {
   // 1) Fast path: expected collection key.
-  let pack = game.packs.get(EXPECTED_PACK_KEY);
+  const direct = game.packs.get(EXPECTED_PACK_KEY);
+  if (direct) return direct;
+
+  const packs = getAllPacks();
+
+  // 2) Metadata-based match (preferred).
+  let pack = packs.find((p) => {
+    const m = p?.metadata ?? {};
+    const pkg =
+      m.system ??
+      m.packageName ??
+      m.package ??
+      m.packageId ??
+      m.id ??
+      null;
+
+    return m.name === PACK_NAME && m.type === "Item" && pkg === SYSTEM_ID;
+  });
+
   if (pack) return pack;
 
-  // 2) Robust path: search by metadata.
-  const packs = Array.from(game.packs ?? []);
-  pack =
-    packs.find((p) => {
-      const m = p?.metadata ?? {};
-      // Common v13 metadata fields we can rely on:
-      // - m.name (pack name from system.json)
-      // - m.type ("Item")
-      // - m.system or m.packageName or m.package (varies by build)
-      const pkg =
-        m.system ??
-        m.packageName ??
-        m.package ??
-        m.packageId ??
-        m.id ??
-        null;
-
-      const isRightPackName = m.name === PACK_NAME;
-      const isItemPack = m.type === "Item";
-      const isOurSystem = pkg === SYSTEM_ID;
-
-      return isRightPackName && isItemPack && isOurSystem;
-    }) ??
-    // 3) Fallback: if the pkg field isn't populated as expected, at least match pack name+type
-    // AND the collection key ends with ".equipment".
-    packs.find((p) => {
-      const m = p?.metadata ?? {};
-      return m.name === PACK_NAME && m.type === "Item" && (p.collection ?? "").endsWith(`.${PACK_NAME}`);
-    });
+  // 3) Fallback: match by name+type and collection suffix.
+  pack = packs.find((p) => {
+    const m = p?.metadata ?? {};
+    return m.name === PACK_NAME && m.type === "Item" && (p.collection ?? "").endsWith(`.${PACK_NAME}`);
+  });
 
   return pack ?? null;
 }
 
-/**
- * Attempt to load compendium folders in a v13-safe way.
- */
 async function loadPackFolders(pack) {
   if (pack?.folders) {
     if (typeof pack.folders.getDocuments === "function") {
@@ -79,11 +80,7 @@ async function ensureFolder(pack, allFolders, name, parentId = null) {
   const existing = findFolderByName(allFolders, name, parentId);
   if (existing) return existing;
 
-  const data = {
-    name,
-    type: "Item",
-    sorting: "a"
-  };
+  const data = { name, type: "Item", sorting: "a" };
   if (parentId) data.folder = parentId;
 
   const created = await Folder.create(data, { pack: pack.collection });
@@ -95,12 +92,15 @@ export async function ensureEquipmentPackFolders() {
   const pack = resolveEquipmentPack();
 
   if (!pack) {
-    const keys = Array.from(game.packs ?? []).map((p) => p.collection).sort();
+    const keys = getAllPacks().map((p) => p.collection).sort();
     console.warn(
       `[HWFWM] Equipment pack not found. Expected key: ${EXPECTED_PACK_KEY}. ` +
-        `Check system.json pack name/type/system and that packs/equipment.db exists. ` +
-        `Known packs:`,
+        `Known packs (${keys.length}):`,
       keys
+    );
+    console.warn(
+      `[HWFWM] Verify: (1) system.json has packs[] entry name="${PACK_NAME}" type="Item" system="${SYSTEM_ID}", ` +
+        `(2) the file packs/${PACK_NAME}.db exists in the installed system folder.`
     );
     return;
   }
