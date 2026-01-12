@@ -61,7 +61,7 @@ function buildSeedCatalog() {
     weapon("melee", "Warhammer", "warhammer"),
     weapon("melee", "Spear", "spear"),
     weapon("melee", "Halberd", "halberd"),
-    weapon("melee", "Lance", "lance"),          
+    weapon("melee", "Lance", "lance"),
     weapon("melee", "Staff", "staff")
   );
 
@@ -76,7 +76,7 @@ function buildSeedCatalog() {
     weapon("ranged", "Javelin", "javelin")
   );
 
-   // Armor: Light
+  // Armor: Light
   entries.push(
     armor("light", "Padded Armor", "padded"),
     armor("light", "Robe", "robe"),
@@ -101,6 +101,7 @@ function buildSeedCatalog() {
     armor("heavy", "Half Plate", "half-plate"),
     armor("heavy", "Plate Armor", "plate")
   );
+
   return entries;
 }
 
@@ -270,13 +271,23 @@ function buildNonDestructivePatch(doc, seed, folderIdsByPath, systemId, seedVers
   const patch = {};
   let changed = false;
 
+  // -----------------------------------------
+  // Determine if THIS existing item is seeded.
+  // We only "enforce" placement for seeded docs.
+  // -----------------------------------------
+  const existingSeedKey = getProperty(doc, `flags.${systemId}.seedKey`);
+  const isSeeded = !!existingSeedKey;
+
+  // -----------------------------------------
+  // Folder placement: AUTHORITATIVE for seeded
+  // -----------------------------------------
   const desiredFolderId = folderIdsByPath.get(pathKey(seed.folderPath)) ?? null;
-  if (desiredFolderId && doc.folder?.id !== desiredFolderId) {
+  if (isSeeded && desiredFolderId && doc.folder?.id !== desiredFolderId) {
     patch.folder = desiredFolderId;
     changed = true;
   }
 
-  const existingSeedKey = getProperty(doc, `flags.${systemId}.seedKey`);
+  // Flags: ensure seed identity exists (safe)
   if (!existingSeedKey) {
     patch.flags = patch.flags ?? {};
     patch.flags[systemId] = {
@@ -297,6 +308,7 @@ function buildNonDestructivePatch(doc, seed, folderIdsByPath, systemId, seedVers
     }
   }
 
+  // Minimal system fields: only fill if missing
   const currentRankKey = getProperty(doc, "system.rankKey");
   if (!currentRankKey && getProperty(seed, "system.rankKey")) {
     patch.system = patch.system ?? {};
@@ -304,6 +316,7 @@ function buildNonDestructivePatch(doc, seed, folderIdsByPath, systemId, seedVers
     changed = true;
   }
 
+  // Weapon classification (fill missing only)
   const seedWeaponCategory = getProperty(seed, "system.weapon.category");
   if (seedWeaponCategory) {
     const curWeaponCategory = getProperty(doc, "system.weapon.category");
@@ -324,6 +337,7 @@ function buildNonDestructivePatch(doc, seed, folderIdsByPath, systemId, seedVers
     }
   }
 
+  // Armor classification (fill missing only)
   const seedArmorType = getProperty(seed, "system.armor.armorType");
   if (seedArmorType) {
     const curArmorType = getProperty(doc, "system.armor.armorType");
@@ -344,6 +358,7 @@ function buildNonDestructivePatch(doc, seed, folderIdsByPath, systemId, seedVers
     }
   }
 
+  // Description: only set if empty and seed provides one
   const seedDesc = (seed.description ?? "").trim();
   const curDesc = (getProperty(doc, "system.description") ?? "").trim();
   if (!curDesc && seedDesc) {
