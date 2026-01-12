@@ -2,7 +2,7 @@ import { HWFWM_CONFIG } from "./config/index.mjs";
 import { HwfwmActorSheet } from "./scripts/sheets/actor/actor-sheet.mjs";
 import { HwfwmActor } from "./scripts/documents/actor.mjs";
 
-// NEW: Item document class (normalization + wiring for item fields)
+// Item document class (normalization + derived data wiring)
 import { HwfwmItem } from "./config/items.mjs";
 
 // Item sheet classes
@@ -19,10 +19,8 @@ Hooks.once("init", async () => {
   // Register system-wide config namespace
   CONFIG["hwfwm-system"] = HWFWM_CONFIG;
 
-  // Register Actor document class (derived data engine)
+  // Register Actor + Item document classes (derived data engines)
   CONFIG.Actor.documentClass = HwfwmActor;
-
-  // NEW: Register Item document class (runtime normalization + field wiring)
   CONFIG.Item.documentClass = HwfwmItem;
 
   // ---------------------------------------------------------
@@ -30,11 +28,11 @@ Hooks.once("init", async () => {
   // ---------------------------------------------------------
   Handlebars.registerHelper("eq", (a, b) => a === b);
 
-  // Needed by treasures.hbs (you are using {{or ...}} and {{not ...}})
+  // Needed by templates (you are using {{or ...}} and {{not ...}})
   Handlebars.registerHelper("or", (...args) => args.slice(0, -1).some(Boolean));
   Handlebars.registerHelper("not", (v) => !v);
 
-  // Preload actor sheet templates + partials
+  // Preload actor + item sheet templates
   // V13+: loadTemplates is namespaced under foundry.applications.handlebars
   await foundry.applications.handlebars.loadTemplates([
     "systems/hwfwm-system/templates/actor/actor-sheet.hbs",
@@ -70,7 +68,10 @@ Hooks.once("init", async () => {
   const ActorsCollection = foundry.documents.collections.Actors;
   const ItemsCollection = foundry.documents.collections.Items;
 
-  // Register our sheet for PC actors only
+  // ---------------------------------------------------------
+  // Actor Sheets
+  // ---------------------------------------------------------
+  ActorsCollection.unregisterSheet("core", foundry.applications.sheets.ActorSheetV2);
   ActorsCollection.registerSheet("hwfwm-system", HwfwmActorSheet, {
     types: ["pc"],
     makeDefault: true,
@@ -80,6 +81,8 @@ Hooks.once("init", async () => {
   // ---------------------------------------------------------
   // Item Sheets
   // ---------------------------------------------------------
+  ItemsCollection.unregisterSheet("core", foundry.applications.sheets.ItemSheetV2);
+
   ItemsCollection.registerSheet("hwfwm-system", HwfwmFeatureSheet, {
     types: ["feature"],
     makeDefault: true,
