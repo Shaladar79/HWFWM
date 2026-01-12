@@ -83,7 +83,7 @@ export const ARMOR_TYPES_BY_CLASS = Object.freeze({
 });
 
 /* -------------------------------------------- */
-/* NEW: Canonical base tables + rank scaling      */
+/* Canonical base tables + rank scaling          */
 /* -------------------------------------------- */
 
 /**
@@ -239,6 +239,10 @@ export function normalizeConsumableSystem(system) {
 /**
  * Normalizes equipment system data in-place (runtime-only).
  * Keeps array-backed repeatable rows untouched (equipment sheet handles those).
+ *
+ * Data safety note:
+ * - Bonus fields are player-editable and should be persisted in template.json.
+ * - Derived fields are computed each prepareDerivedData run; they do not need persistence.
  */
 export function normalizeEquipmentSystem(system) {
   if (!system || typeof system !== "object") return;
@@ -272,24 +276,21 @@ export function normalizeEquipmentSystem(system) {
   system.weapon.damagePerSuccess = coerceNumberOrZero(system.weapon.damagePerSuccess);
   system.weapon.actionCost = coerceNumberOrZero(system.weapon.actionCost);
 
+  // Capture raw bonus fields BEFORE coercion so we can safely detect "missing" (undefined)
+  const rawBonusDps = system.weapon.bonusDamagePerSuccess;
+  const rawActionMod = system.weapon.actionCostMod;
+
   // Player-editable (persisted) bonus fields
   system.weapon.bonusDamagePerSuccess = coerceNumberOrZero(system.weapon.bonusDamagePerSuccess);
   system.weapon.actionCostMod = coerceNumberOrZero(system.weapon.actionCostMod);
 
-  // If an older item has values in legacy fields but bonus fields are absent,
-  // mirror them into bonus fields at runtime so old data still "works" without a migration.
-  // (This does not persist changes by itself.)
-  if (
-    (system.weapon.bonusDamagePerSuccess === 0 || system.weapon.bonusDamagePerSuccess === null) &&
-    system.weapon.damagePerSuccess !== 0
-  ) {
+  // Legacy mapping (runtime-only):
+  // Only map legacy → bonus when the bonus field was actually missing (undefined),
+  // so a legitimate 0 bonus is never overwritten.
+  if (rawBonusDps === undefined && system.weapon.damagePerSuccess !== 0) {
     system.weapon.bonusDamagePerSuccess = system.weapon.damagePerSuccess;
   }
-
-  if (
-    (system.weapon.actionCostMod === 0 || system.weapon.actionCostMod === null) &&
-    system.weapon.actionCost !== 0
-  ) {
+  if (rawActionMod === undefined && system.weapon.actionCost !== 0) {
     system.weapon.actionCostMod = system.weapon.actionCost;
   }
 
@@ -315,10 +316,7 @@ export function normalizeEquipmentSystem(system) {
   system.weapon.totalDamagePerSuccess =
     (system.weapon.baseDamagePerSuccess + bonusDamage) * system.weapon.rankMultiplier;
 
-  system.weapon.totalActionCost = Math.max(
-    0,
-    system.weapon.baseActionCost + actionCostMod
-  );
+  system.weapon.totalActionCost = Math.max(0, system.weapon.baseActionCost + actionCostMod);
 
   // Armor subtree
   if (!system.armor || typeof system.armor !== "object") system.armor = {};
@@ -339,15 +337,14 @@ export function normalizeEquipmentSystem(system) {
   // Legacy field (currently editable armor number)
   system.armor.value = coerceNumberOrZero(system.armor.value);
 
+  // Capture raw bonus field BEFORE coercion so we can detect "missing"
+  const rawBonusArmor = system.armor.bonusArmor;
+
   // Player-editable (persisted) bonus field
   system.armor.bonusArmor = coerceNumberOrZero(system.armor.bonusArmor);
 
-  // If older item used system.armor.value, mirror it into bonusArmor at runtime
-  // so existing items retain their entered armor without a migration.
-  if (
-    (system.armor.bonusArmor === 0 || system.armor.bonusArmor === null) &&
-    system.armor.value !== 0
-  ) {
+  // Legacy mapping (runtime-only): only when missing
+  if (rawBonusArmor === undefined && system.armor.value !== 0) {
     system.armor.bonusArmor = system.armor.value;
   }
 
