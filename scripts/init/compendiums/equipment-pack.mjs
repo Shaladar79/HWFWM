@@ -130,8 +130,9 @@ export async function seedEquipmentCompendium({
   const folderIdsByPath = await ensureEquipmentFolders(pack);
 
   // Build a fast lookup of existing documents by seedKey and by name
+  // Include folder to make name-based fallback safer.
   const index = await pack.getIndex({
-    fields: ["name", `flags.${systemId}.seedKey`]
+    fields: ["name", "folder", `flags.${systemId}.seedKey`]
   });
 
   /** @type {Map<string, any>} */
@@ -142,6 +143,7 @@ export async function seedEquipmentCompendium({
   for (const e of index) {
     const k = getProperty(e, `flags.${systemId}.seedKey`);
     if (k) bySeedKey.set(k, e);
+
     const n = (e.name ?? "").trim().toLowerCase();
     if (!byName.has(n)) byName.set(n, []);
     byName.get(n).push(e);
@@ -153,16 +155,15 @@ export async function seedEquipmentCompendium({
   const toUpdate = [];
 
   for (const seed of catalog) {
-    const existingIndexEntry = bySeedKey.get(seed.seedKey) ?? findBestNameMatch(byName, seed);
+    const existingIndexEntry =
+      bySeedKey.get(seed.seedKey) ?? findBestNameMatch(byName, seed, folderIdsByPath, systemId);
 
     if (!existingIndexEntry) {
-      // Create new
       toCreate.push(buildCreateData(seed, folderIdsByPath, systemId, seedVersion));
       continue;
     }
 
-    // Update only missing fields; never stomp user edits
-    const doc = await pack.getDocument(existingIndexEntry._id);
+    const doc = await getPackDocument(pack, existingIndexEntry._id);
     if (!doc) continue;
 
     const patch = buildNonDestructivePatch(doc, seed, folderIdsByPath, systemId, seedVersion);
@@ -205,7 +206,6 @@ async function ensureEquipmentFolders(pack) {
   const medium = await ensureFolder(pack, "Medium Armor", rootArmor.id);
   const heavy = await ensureFolder(pack, "Heavy Armor", rootArmor.id);
 
-  // Map by path key for quick placement
   const map = new Map();
   map.set(pathKey(["Weapons"]), rootWeapons.id);
   map.set(pathKey(["Weapons", "Melee Weapons"]), melee.id);
@@ -221,7 +221,6 @@ async function ensureEquipmentFolders(pack) {
 
 async function ensureFolder(pack, name, parentId) {
   // Compendium folders are Folder docs with `pack: <pack.collection>` and `type: <documentName>`
-  // In v13, Folder is still the correct document for compendium folder trees.
   const existing = game.folders.find(
     (f) =>
       f.pack === pack.collection &&
@@ -254,18 +253,17 @@ function buildCreateData(seed, folderIdsByPath, systemId, seedVersion) {
     }
   };
 
-  // Keep description minimal; only set if provided
+  // Single system object (avoid double "system" assignment via spread)
   const system = duplicate(seed.system ?? {});
+  const desc = (seed.description ?? "").trim();
+  if (desc) system.description = desc;
 
   return {
     name: seed.name,
     type: "equipment",
     folder: folderId,
     system,
-    flags,
-    // Foundry stores HTML in system.description in many systems; your templates may differ.
-    // We only set if provided; otherwise omit.
-    ...(seed.description ? { system: { ...system, description: seed.description } } : {})
+    flags
   };
 }
 
@@ -273,14 +271,12 @@ function buildNonDestructivePatch(doc, seed, folderIdsByPath, systemId, seedVers
   const patch = {};
   let changed = false;
 
-  // Ensure folder placement (safe)
   const desiredFolderId = folderIdsByPath.get(pathKey(seed.folderPath)) ?? null;
   if (desiredFolderId && doc.folder?.id !== desiredFolderId) {
     patch.folder = desiredFolderId;
     changed = true;
   }
 
-  // Flags: ensure seed identity exists (safe)
   const existingSeedKey = getProperty(doc, `flags.${systemId}.seedKey`);
   if (!existingSeedKey) {
     patch.flags = patch.flags ?? {};
@@ -302,8 +298,6 @@ function buildNonDestructivePatch(doc, seed, folderIdsByPath, systemId, seedVers
     }
   }
 
-  // Minimal system fields: only fill if missing
-  // rankKey: if blank/undefined, set to normal (starter assumption)
   const currentRankKey = getProperty(doc, "system.rankKey");
   if (!currentRankKey && getProperty(seed, "system.rankKey")) {
     patch.system = patch.system ?? {};
@@ -311,7 +305,6 @@ function buildNonDestructivePatch(doc, seed, folderIdsByPath, systemId, seedVers
     changed = true;
   }
 
-  // Weapon classification
   const seedWeaponCategory = getProperty(seed, "system.weapon.category");
   if (seedWeaponCategory) {
     const curWeaponCategory = getProperty(doc, "system.weapon.category");
@@ -321,7 +314,7 @@ function buildNonDestructivePatch(doc, seed, folderIdsByPath, systemId, seedVers
       patch.system.weapon.category = seedWeaponCategory;
       changed = true;
     }
-    // weaponType is allowed to stay blank; only set if missing and seed provides something non-empty
+
     const seedWeaponType = (getProperty(seed, "system.weapon.weaponType") ?? "").trim();
     const curWeaponType = (getProperty(doc, "system.weapon.weaponType") ?? "").trim();
     if (!curWeaponType && seedWeaponType) {
@@ -332,7 +325,6 @@ function buildNonDestructivePatch(doc, seed, folderIdsByPath, systemId, seedVers
     }
   }
 
-  // Armor classification
   const seedArmorType = getProperty(seed, "system.armor.armorType");
   if (seedArmorType) {
     const curArmorType = getProperty(doc, "system.armor.armorType");
@@ -353,7 +345,6 @@ function buildNonDestructivePatch(doc, seed, folderIdsByPath, systemId, seedVers
     }
   }
 
-  // Description: only set if empty and seed provides one
   const seedDesc = (seed.description ?? "").trim();
   const curDesc = (getProperty(doc, "system.description") ?? "").trim();
   if (!curDesc && seedDesc) {
@@ -365,26 +356,27 @@ function buildNonDestructivePatch(doc, seed, folderIdsByPath, systemId, seedVers
   return changed ? patch : null;
 }
 
-function findBestNameMatch(byName, seed) {
+/**
+ * Safer fallback: only adopt by-name items if they do NOT already have a seedKey,
+ * and if folder is compatible (or unset).
+ */
+function findBestNameMatch(byName, seed, folderIdsByPath, systemId) {
   const n = seed.name.trim().toLowerCase();
   const candidates = byName.get(n);
   if (!candidates?.length) return null;
 
-  // If multiple items share the same name, try to disambiguate by category/type presence
-  const wantWeaponCategory = getProperty(seed, "system.weapon.category");
-  const wantArmorType = getProperty(seed, "system.armor.armorType");
+  const desiredFolderId = folderIdsByPath.get(pathKey(seed.folderPath)) ?? null;
 
-  if (wantWeaponCategory) {
-    const exact = candidates.find((c) => true); // index does not include system; cannot disambiguate here
-    return exact ?? candidates[0];
+  // Prefer a candidate with no seedKey, and compatible folder (or no folder)
+  for (const c of candidates) {
+    const hasSeed = !!getProperty(c, `flags.${systemId}.seedKey`);
+    if (hasSeed) continue;
+
+    const cFolder = c.folder ?? null;
+    if (!cFolder || !desiredFolderId || cFolder === desiredFolderId) return c;
   }
 
-  if (wantArmorType) {
-    const exact = candidates.find((c) => true);
-    return exact ?? candidates[0];
-  }
-
-  return candidates[0];
+  return null;
 }
 
 // -----------------------------
@@ -398,15 +390,10 @@ function capitalize(s) {
   return (s ?? "").charAt(0).toUpperCase() + (s ?? "").slice(1);
 }
 
-/**
- * Safe property getter compatible with Foundry utils conventions.
- * Works for both index entries and full documents.
- */
 function getProperty(obj, path) {
   try {
     return foundry.utils.getProperty(obj, path);
   } catch {
-    // fallback for environments where foundry.utils may not be accessible yet
     return path.split(".").reduce((o, k) => (o ? o[k] : undefined), obj);
   }
 }
@@ -417,4 +404,23 @@ function duplicate(data) {
   } catch {
     return structuredClone(data);
   }
+}
+
+/**
+ * v13-safe pack document fetch. pack.getDocument is not always reliable across versions/modules.
+ */
+async function getPackDocument(pack, id) {
+  // Preferred
+  if (typeof pack.getDocument === "function") {
+    const doc = await pack.getDocument(id);
+    if (doc) return doc;
+  }
+
+  // Fallback
+  if (typeof pack.getDocuments === "function") {
+    const docs = await pack.getDocuments({ _id: id });
+    return docs?.[0] ?? null;
+  }
+
+  return null;
 }
