@@ -104,19 +104,89 @@
           </select>
         </div>
 
+        <!-- Damage Group -->
         <div class="hwfwm-field">
-          <div class="hwfwm-label" style="color:#000;">Damage per Success</div>
-          <input type="number" name="system.weapon.damagePerSuccess" value="{{system.weapon.damagePerSuccess}}" step="1" placeholder="0" />
+          <div class="hwfwm-label" style="color:#000;">Base Damage / Success</div>
+          <input
+            type="number"
+            value="{{system.weapon.baseDamagePerSuccess}}"
+            step="1"
+            readonly
+            placeholder="0"
+          />
         </div>
 
+        <div class="hwfwm-field">
+          <div class="hwfwm-label" style="color:#000;">Bonus Damage / Success</div>
+          <input
+            type="number"
+            name="system.weapon.bonusDamagePerSuccess"
+            value="{{system.weapon.bonusDamagePerSuccess}}"
+            step="1"
+            placeholder="0"
+          />
+        </div>
+
+        <div class="hwfwm-field">
+          <div class="hwfwm-label" style="color:#000;">Rank Multiplier</div>
+          <input
+            type="number"
+            value="{{system.weapon.rankMultiplier}}"
+            step="0.01"
+            readonly
+            placeholder="1"
+          />
+        </div>
+
+        <div class="hwfwm-field">
+          <div class="hwfwm-label" style="color:#000;">Total Damage / Success</div>
+          <input
+            type="number"
+            value="{{system.weapon.totalDamagePerSuccess}}"
+            step="1"
+            readonly
+            placeholder="0"
+          />
+        </div>
+
+        <!-- Keep Range editable (for now) -->
         <div class="hwfwm-field">
           <div class="hwfwm-label" style="color:#000;">Range</div>
           <input type="number" name="system.weapon.range" value="{{system.weapon.range}}" step="1" placeholder="0" />
         </div>
 
+        <!-- Action Cost Group -->
         <div class="hwfwm-field">
-          <div class="hwfwm-label" style="color:#000;">Action Cost</div>
-          <input type="number" name="system.weapon.actionCost" value="{{system.weapon.actionCost}}" step="1" placeholder="0" />
+          <div class="hwfwm-label" style="color:#000;">Base Action Cost</div>
+          <input
+            type="number"
+            value="{{system.weapon.baseActionCost}}"
+            step="1"
+            readonly
+            placeholder="0"
+          />
+        </div>
+
+        <div class="hwfwm-field">
+          <div class="hwfwm-label" style="color:#000;">Action Cost Modifier</div>
+          <input
+            type="number"
+            name="system.weapon.actionCostMod"
+            value="{{system.weapon.actionCostMod}}"
+            step="1"
+            placeholder="0"
+          />
+        </div>
+
+        <div class="hwfwm-field">
+          <div class="hwfwm-label" style="color:#000;">Total Action Cost</div>
+          <input
+            type="number"
+            value="{{system.weapon.totalActionCost}}"
+            step="1"
+            readonly
+            placeholder="0"
+          />
         </div>
 
         <div class="hwfwm-field" style="grid-column: 1 / -1;">
@@ -194,8 +264,47 @@
         </div>
 
         <div class="hwfwm-field">
-          <div class="hwfwm-label" style="color:#000;">Armor</div>
-          <input type="number" name="system.armor.value" value="{{system.armor.value}}" step="1" placeholder="0" />
+          <div class="hwfwm-label" style="color:#000;">Base Armor</div>
+          <input
+            type="number"
+            value="{{system.armor.baseArmor}}"
+            step="1"
+            readonly
+            placeholder="0"
+          />
+        </div>
+
+        <div class="hwfwm-field">
+          <div class="hwfwm-label" style="color:#000;">Bonus Armor</div>
+          <input
+            type="number"
+            name="system.armor.bonusArmor"
+            value="{{system.armor.bonusArmor}}"
+            step="1"
+            placeholder="0"
+          />
+        </div>
+
+        <div class="hwfwm-field">
+          <div class="hwfwm-label" style="color:#000;">Rank Multiplier</div>
+          <input
+            type="number"
+            value="{{system.armor.rankMultiplier}}"
+            step="0.01"
+            readonly
+            placeholder="1"
+          />
+        </div>
+
+        <div class="hwfwm-field">
+          <div class="hwfwm-label" style="color:#000;">Total Armor</div>
+          <input
+            type="number"
+            value="{{system.armor.totalArmor}}"
+            step="1"
+            readonly
+            placeholder="0"
+          />
         </div>
       </div>
     </div>
