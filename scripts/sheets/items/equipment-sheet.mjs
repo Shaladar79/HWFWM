@@ -4,6 +4,7 @@ const { HandlebarsApplicationMixin } = foundry.applications.api;
 
 import {
   ITEM_RANK_KEYS,
+  DAMAGE_TYPE_KEYS,
   WEAPON_CATEGORY_KEYS,
   WEAPON_TYPES_BY_CATEGORY,
   ARMOR_CLASS_KEYS,
@@ -145,7 +146,7 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
     // ----- Safe normalization -----
     const sys = context.system;
 
-    // Persistent item rank (new)
+    // Persistent item rank
     sys.itemRank = ITEM_RANK_KEYS.includes(String(sys.itemRank ?? ""))
       ? String(sys.itemRank)
       : "normal";
@@ -174,9 +175,18 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
       if (String(sys.weapon.weaponType ?? "")) sys.weapon.weaponType = "";
     }
 
+    // Legacy fields (kept for backward compatibility with older items/sheets)
     sys.weapon.damagePerSuccess ??= 0;
-    sys.weapon.range ??= 0;
     sys.weapon.actionCost ??= 0;
+
+    // NEW persisted bonus fields (used by the updated sheet)
+    // If missing, default from legacy field values at runtime.
+    sys.weapon.bonusDamagePerSuccess ??= sys.weapon.damagePerSuccess ?? 0;
+    sys.weapon.actionCostMod ??= sys.weapon.actionCost ?? 0;
+
+    // Range stays editable for now
+    sys.weapon.range ??= 0;
+
     sys.weapon.damageType1 ??= "";
     sys.weapon.damageType2 ??= "";
     sys.weapon.damageType3 ??= "";
@@ -186,7 +196,6 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
       ? String(sys.armor.armorType)
       : "";
 
-    // New dependent field
     sys.armor.armorName ??= "";
     if (sys.armor.armorType) {
       const allowedArmor = ARMOR_TYPES_BY_CLASS[sys.armor.armorType] ?? [];
@@ -197,7 +206,11 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
       if (String(sys.armor.armorName ?? "")) sys.armor.armorName = "";
     }
 
+    // Legacy field (kept for backward compatibility)
     sys.armor.value ??= 0;
+
+    // NEW persisted bonus field (used by the updated sheet)
+    sys.armor.bonusArmor ??= sys.armor.value ?? 0;
 
     sys.misc.armor ??= 0;
 
@@ -261,7 +274,13 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
     context.weaponTypeOptions = this._toOptionsFromStrings(weaponTypes);
 
     context.armorClassOptions = this._toOptionsFromKeys(ARMOR_CLASS_KEYS, (k) =>
-      k === "light" ? "Light" : k === "medium" ? "Medium" : k === "heavy" ? "Heavy" : this._titleCaseKey(k)
+      k === "light"
+        ? "Light"
+        : k === "medium"
+          ? "Medium"
+          : k === "heavy"
+            ? "Heavy"
+            : this._titleCaseKey(k)
     );
 
     const armorTypes =
@@ -269,6 +288,11 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
         ? ARMOR_TYPES_BY_CLASS[sys.armor.armorType]
         : [];
     context.armorTypeOptions = this._toOptionsFromStrings(armorTypes);
+
+    // NEW: damage type options for the Weapon section dropdowns (was missing before)
+    context.damageTypeOptions = this._toOptionsFromKeys(DAMAGE_TYPE_KEYS, (k) =>
+      this._titleCaseKey(k)
+    );
 
     context.system = sys;
     return context;
@@ -370,7 +394,7 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
       return;
     }
 
-    // NEW: dependent dropdown behavior (weapon type depends on weapon category)
+    // Dependent dropdown behavior (weapon type depends on weapon category)
     if (name === "system.weapon.category") {
       const selected =
         target instanceof HTMLSelectElement || target instanceof HTMLInputElement
@@ -387,7 +411,7 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
       return;
     }
 
-    // NEW: dependent dropdown behavior (armor type depends on armor class)
+    // Dependent dropdown behavior (armor type depends on armor class)
     if (name === "system.armor.armorType") {
       const selected =
         target instanceof HTMLSelectElement || target instanceof HTMLInputElement
