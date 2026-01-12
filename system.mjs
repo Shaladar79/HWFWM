@@ -13,6 +13,11 @@ import { HwfwmEquipmentSheet } from "./scripts/sheets/items/equipment-sheet.mjs"
 import { HwfwmConsumableSheet } from "./scripts/sheets/items/consumable-sheet.mjs";
 import { HwfwmMiscItemSheet } from "./scripts/sheets/items/miscitem-sheet.mjs";
 
+// NEW: Equipment compendium folder bootstrap
+import {
+  registerEquipmentPackFolderBootstrap
+} from "./scripts/init/compendiums/equipment-pack.mjs";
+
 Hooks.once("init", async () => {
   console.log("HWFWM System | Initialized");
 
@@ -119,3 +124,6 @@ Hooks.once("init", async () => {
     label: "HWFWM Misc Item Sheet"
   });
 });
+
+// NEW: register once-ready hook for Equipment compendium folder creation
+registerEquipmentPackFolderBootstrap();
