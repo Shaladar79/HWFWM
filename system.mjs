@@ -13,12 +13,10 @@ import { HwfwmEquipmentSheet } from "./scripts/sheets/items/equipment-sheet.mjs"
 import { HwfwmConsumableSheet } from "./scripts/sheets/items/consumable-sheet.mjs";
 import { HwfwmMiscItemSheet } from "./scripts/sheets/items/miscitem-sheet.mjs";
 
-// NEW: Equipment compendium folder bootstrap
-import {
-  registerEquipmentPackFolderBootstrap
-} from "./scripts/init/compendiums/equipment-pack.mjs";
+// Equipment compendium folder bootstrap (AWAITABLE)
+import { bootstrapEquipmentPackFolders } from "./scripts/init/compendiums/equipment-pack.mjs";
 
-// NEW: Equipment compendium item seeding (idempotent, non-destructive)
+// Equipment compendium item seeding (idempotent, non-destructive)
 import { seedEquipmentCompendium } from "./scripts/init/compendiums/equipment-seed.mjs";
 
 Hooks.once("init", async () => {
@@ -128,10 +126,8 @@ Hooks.once("init", async () => {
   });
 });
 
-// NEW: register once-ready hook for Equipment compendium folder creation
-registerEquipmentPackFolderBootstrap();
-
-// NEW: seed Equipment compendium items (idempotent, non-destructive)
+// Single ready hook: folders FIRST (awaited), then seed (awaited)
 Hooks.once("ready", async () => {
+  await bootstrapEquipmentPackFolders();
   await seedEquipmentCompendium();
 });
