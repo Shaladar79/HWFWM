@@ -61,6 +61,7 @@ function buildSeedCatalog() {
     weapon("melee", "Warhammer", "warhammer"),
     weapon("melee", "Spear", "spear"),
     weapon("melee", "Halberd", "halberd"),
+    weapon("melee", "Lance", "lance"),          
     weapon("melee", "Staff", "staff")
   );
 
@@ -75,29 +76,31 @@ function buildSeedCatalog() {
     weapon("ranged", "Javelin", "javelin")
   );
 
-  // Armor: Light
+   // Armor: Light
   entries.push(
     armor("light", "Padded Armor", "padded"),
-    armor("light", "Leather Armor", "leather"),
-    armor("light", "Studded Leather", "studded-leather")
+    armor("light", "Robe", "robe"),
+    armor("light", "Combat Robe", "combat-robe")
   );
 
   // Armor: Medium
   entries.push(
+    armor("medium", "Leather Armor", "leather"),
+    armor("medium", "Studded Leather", "studded-leather"),
     armor("medium", "Hide Armor", "hide"),
     armor("medium", "Chain Shirt", "chain-shirt"),
-    armor("medium", "Scale Mail", "scale-mail"),
-    armor("medium", "Breastplate", "breastplate")
+    armor("medium", "Chain Mail", "chain-mail")
   );
 
   // Armor: Heavy
   entries.push(
     armor("heavy", "Ring Mail", "ring-mail"),
-    armor("heavy", "Chain Mail", "chain-mail"),
+    armor("heavy", "Scale Mail", "scale-mail"),
+    armor("heavy", "Breastplate", "breastplate"),
     armor("heavy", "Splint Armor", "splint"),
+    armor("heavy", "Half Plate", "half-plate"),
     armor("heavy", "Plate Armor", "plate")
   );
-
   return entries;
 }
 
