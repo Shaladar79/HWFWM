@@ -18,6 +18,9 @@ import {
   registerEquipmentPackFolderBootstrap
 } from "./scripts/init/compendiums/equipment-pack.mjs";
 
+// NEW: Equipment compendium item seeding (idempotent, non-destructive)
+import { seedEquipmentCompendium } from "./scripts/init/compendiums/equipment-seed.mjs";
+
 Hooks.once("init", async () => {
   console.log("HWFWM System | Initialized");
 
@@ -127,3 +130,8 @@ Hooks.once("init", async () => {
 
 // NEW: register once-ready hook for Equipment compendium folder creation
 registerEquipmentPackFolderBootstrap();
+
+// NEW: seed Equipment compendium items (idempotent, non-destructive)
+Hooks.once("ready", async () => {
+  await seedEquipmentCompendium();
+});
