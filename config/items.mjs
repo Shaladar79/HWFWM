@@ -83,6 +83,81 @@ export const ARMOR_TYPES_BY_CLASS = Object.freeze({
 });
 
 /* -------------------------------------------- */
+/* NEW: Canonical base tables + rank scaling      */
+/* -------------------------------------------- */
+
+/**
+ * Rank multiplier applied to derived equipment totals.
+ * Placeholder values for now; structure/keys are authoritative.
+ */
+export const ITEM_RANK_MULTIPLIER = Object.freeze({
+  normal: 1.0,
+  iron: 1.0,
+  bronze: 1.0,
+  silver: 1.0,
+  gold: 1.0,
+  diamond: 1.0
+});
+
+/**
+ * Weapon base damage per success by weapon type (authoritative keys).
+ * Placeholder numbers for now; you will fill real values later.
+ */
+export const WEAPON_BASE_DAMAGE_BY_TYPE = Object.freeze({
+  Dagger: 0,
+  Sword: 0,
+  Axe: 0,
+  Mace: 0,
+  "Great Sword": 0,
+  "Battle Axe": 0,
+  Maul: 0,
+  Spear: 0,
+  Lance: 0,
+  Staff: 0,
+  Bow: 0,
+  Crossbow: 0,
+  Wand: 0,
+  Gun: 0
+});
+
+/**
+ * Weapon base action cost by weapon type (authoritative keys).
+ * Placeholder numbers for now; you will fill real values later.
+ */
+export const WEAPON_BASE_ACTION_COST_BY_TYPE = Object.freeze({
+  Dagger: 0,
+  Sword: 0,
+  Axe: 0,
+  Mace: 0,
+  "Great Sword": 0,
+  "Battle Axe": 0,
+  Maul: 0,
+  Spear: 0,
+  Lance: 0,
+  Staff: 0,
+  Bow: 0,
+  Crossbow: 0,
+  Wand: 0,
+  Gun: 0
+});
+
+/**
+ * Armor base value by armor name (authoritative keys).
+ * Placeholder numbers for now; you will fill real values later.
+ */
+export const ARMOR_BASE_BY_NAME = Object.freeze({
+  "Padded Armor": 0,
+  Robe: 0,
+  "Combat Robe": 0,
+  Leather: 0,
+  "Studded Leather": 0,
+  Chainmail: 0,
+  "Scale Mail": 0,
+  "Half-Plate": 0,
+  "Full Plate": 0
+});
+
+/* -------------------------------------------- */
 /* Helper coercion                               */
 /* -------------------------------------------- */
 
@@ -177,6 +252,9 @@ export function normalizeEquipmentSystem(system) {
   // Top-level equipment branch
   system.type = coerceEnum(system.type, EQUIPMENT_TYPE_KEYS, "weapon");
 
+  // Compute rank multiplier (derived)
+  const rankMult = ITEM_RANK_MULTIPLIER[system.itemRank] ?? 1;
+
   // Weapon subtree
   if (!system.weapon || typeof system.weapon !== "object") system.weapon = {};
 
@@ -190,13 +268,57 @@ export function normalizeEquipmentSystem(system) {
     system.weapon.weaponType = "";
   }
 
+  // Legacy fields (keep coerced for backward compatibility)
   system.weapon.damagePerSuccess = coerceNumberOrZero(system.weapon.damagePerSuccess);
-  system.weapon.range = coerceNumberOrZero(system.weapon.range);
   system.weapon.actionCost = coerceNumberOrZero(system.weapon.actionCost);
+
+  // Player-editable (persisted) bonus fields
+  system.weapon.bonusDamagePerSuccess = coerceNumberOrZero(system.weapon.bonusDamagePerSuccess);
+  system.weapon.actionCostMod = coerceNumberOrZero(system.weapon.actionCostMod);
+
+  // If an older item has values in legacy fields but bonus fields are absent,
+  // mirror them into bonus fields at runtime so old data still "works" without a migration.
+  // (This does not persist changes by itself.)
+  if (
+    (system.weapon.bonusDamagePerSuccess === 0 || system.weapon.bonusDamagePerSuccess === null) &&
+    system.weapon.damagePerSuccess !== 0
+  ) {
+    system.weapon.bonusDamagePerSuccess = system.weapon.damagePerSuccess;
+  }
+
+  if (
+    (system.weapon.actionCostMod === 0 || system.weapon.actionCostMod === null) &&
+    system.weapon.actionCost !== 0
+  ) {
+    system.weapon.actionCostMod = system.weapon.actionCost;
+  }
+
+  // Keep editable for now (per your requirements)
+  system.weapon.range = coerceNumberOrZero(system.weapon.range);
 
   system.weapon.damageType1 = (system.weapon.damageType1 ?? "").toString();
   system.weapon.damageType2 = (system.weapon.damageType2 ?? "").toString();
   system.weapon.damageType3 = (system.weapon.damageType3 ?? "").toString();
+
+  // Weapon derived values
+  const wt = (system.weapon.weaponType ?? "").toString();
+  const baseDamage = WEAPON_BASE_DAMAGE_BY_TYPE[wt] ?? 0;
+  const baseActionCost = WEAPON_BASE_ACTION_COST_BY_TYPE[wt] ?? 0;
+
+  const bonusDamage = coerceNumberOrZero(system.weapon.bonusDamagePerSuccess);
+  const actionCostMod = coerceNumberOrZero(system.weapon.actionCostMod);
+
+  system.weapon.baseDamagePerSuccess = coerceNumberOrZero(baseDamage);
+  system.weapon.baseActionCost = coerceNumberOrZero(baseActionCost);
+  system.weapon.rankMultiplier = coerceNumberOrZero(rankMult);
+
+  system.weapon.totalDamagePerSuccess =
+    (system.weapon.baseDamagePerSuccess + bonusDamage) * system.weapon.rankMultiplier;
+
+  system.weapon.totalActionCost = Math.max(
+    0,
+    system.weapon.baseActionCost + actionCostMod
+  );
 
   // Armor subtree
   if (!system.armor || typeof system.armor !== "object") system.armor = {};
@@ -214,7 +336,29 @@ export function normalizeEquipmentSystem(system) {
     system.armor.armorName = "";
   }
 
+  // Legacy field (currently editable armor number)
   system.armor.value = coerceNumberOrZero(system.armor.value);
+
+  // Player-editable (persisted) bonus field
+  system.armor.bonusArmor = coerceNumberOrZero(system.armor.bonusArmor);
+
+  // If older item used system.armor.value, mirror it into bonusArmor at runtime
+  // so existing items retain their entered armor without a migration.
+  if (
+    (system.armor.bonusArmor === 0 || system.armor.bonusArmor === null) &&
+    system.armor.value !== 0
+  ) {
+    system.armor.bonusArmor = system.armor.value;
+  }
+
+  // Armor derived values
+  const an = (system.armor.armorName ?? "").toString();
+  const baseArmor = ARMOR_BASE_BY_NAME[an] ?? 0;
+  const bonusArmor = coerceNumberOrZero(system.armor.bonusArmor);
+
+  system.armor.baseArmor = coerceNumberOrZero(baseArmor);
+  system.armor.rankMultiplier = coerceNumberOrZero(rankMult);
+  system.armor.totalArmor = (system.armor.baseArmor + bonusArmor) * system.armor.rankMultiplier;
 
   // Misc subtree
   if (!system.misc || typeof system.misc !== "object") system.misc = {};
