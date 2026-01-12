@@ -130,7 +130,7 @@ export async function seedEquipmentCompendium({
   const folderIdsByPath = await ensureEquipmentFolders(pack);
 
   // Build a fast lookup of existing documents by seedKey and by name
-  // Include folder to make name-based fallback safer.
+  // Include folder for safer name-based matching.
   const index = await pack.getIndex({
     fields: ["name", "folder", `flags.${systemId}.seedKey`]
   });
@@ -163,6 +163,7 @@ export async function seedEquipmentCompendium({
       continue;
     }
 
+    // Update only missing fields; never stomp user edits
     const doc = await getPackDocument(pack, existingIndexEntry._id);
     if (!doc) continue;
 
@@ -192,10 +193,6 @@ export async function seedEquipmentCompendium({
 // Folder helpers (compendium folders)
 // -----------------------------
 async function ensureEquipmentFolders(pack) {
-  // Locked structure:
-  // Weapons -> Melee Weapons, Ranged Weapons
-  // Armor -> Light Armor, Medium Armor, Heavy Armor
-
   const rootWeapons = await ensureFolder(pack, "Weapons", null);
   const rootArmor = await ensureFolder(pack, "Armor", null);
 
@@ -220,7 +217,6 @@ async function ensureEquipmentFolders(pack) {
 }
 
 async function ensureFolder(pack, name, parentId) {
-  // Compendium folders are Folder docs with `pack: <pack.collection>` and `type: <documentName>`
   const existing = game.folders.find(
     (f) =>
       f.pack === pack.collection &&
@@ -253,7 +249,7 @@ function buildCreateData(seed, folderIdsByPath, systemId, seedVersion) {
     }
   };
 
-  // Single system object (avoid double "system" assignment via spread)
+  // Single system object (avoid assigning "system" twice)
   const system = duplicate(seed.system ?? {});
   const desc = (seed.description ?? "").trim();
   if (desc) system.description = desc;
@@ -357,8 +353,9 @@ function buildNonDestructivePatch(doc, seed, folderIdsByPath, systemId, seedVers
 }
 
 /**
- * Safer fallback: only adopt by-name items if they do NOT already have a seedKey,
- * and if folder is compatible (or unset).
+ * Safer name fallback:
+ * - only adopt by-name items that do NOT already have a seedKey
+ * - and are in the desired folder (or have no folder yet)
  */
 function findBestNameMatch(byName, seed, folderIdsByPath, systemId) {
   const n = seed.name.trim().toLowerCase();
@@ -367,7 +364,6 @@ function findBestNameMatch(byName, seed, folderIdsByPath, systemId) {
 
   const desiredFolderId = folderIdsByPath.get(pathKey(seed.folderPath)) ?? null;
 
-  // Prefer a candidate with no seedKey, and compatible folder (or no folder)
   for (const c of candidates) {
     const hasSeed = !!getProperty(c, `flags.${systemId}.seedKey`);
     if (hasSeed) continue;
@@ -407,20 +403,17 @@ function duplicate(data) {
 }
 
 /**
- * v13-safe pack document fetch. pack.getDocument is not always reliable across versions/modules.
+ * v13-safe compendium doc fetch.
+ * pack.getDocument can be unreliable depending on version/modules; this provides a fallback.
  */
 async function getPackDocument(pack, id) {
-  // Preferred
   if (typeof pack.getDocument === "function") {
     const doc = await pack.getDocument(id);
     if (doc) return doc;
   }
-
-  // Fallback
   if (typeof pack.getDocuments === "function") {
     const docs = await pack.getDocuments({ _id: id });
     return docs?.[0] ?? null;
   }
-
   return null;
 }
