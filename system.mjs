@@ -19,6 +19,9 @@ import { bootstrapEquipmentPackFolders } from "./scripts/init/compendiums/equipm
 // Equipment compendium item seeding (idempotent, non-destructive)
 import { seedEquipmentCompendium } from "./scripts/init/compendiums/equipment-seed.mjs";
 
+// If you do NOT see this, system.mjs is not being loaded at all.
+console.log("HWFWM System | system.mjs module loaded");
+
 Hooks.once("init", async () => {
   console.log("HWFWM System | Initialized (init hook fired)");
 
@@ -129,6 +132,12 @@ Hooks.once("init", async () => {
 // Single ready hook: folders FIRST (awaited), then seed (awaited)
 Hooks.once("ready", async () => {
   console.log("HWFWM System | Ready hook fired (folders -> seed)");
+
+  // Only the GM should mutate compendiums.
+  if (!game?.user?.isGM) {
+    console.log("HWFWM System | Ready workflow skipped (not GM)");
+    return;
+  }
 
   try {
     console.time("HWFWM | equipment bootstrap+seed");
