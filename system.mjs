@@ -20,7 +20,7 @@ import { bootstrapEquipmentPackFolders } from "./scripts/init/compendiums/equipm
 import { seedEquipmentCompendium } from "./scripts/init/compendiums/equipment-seed.mjs";
 
 Hooks.once("init", async () => {
-  console.log("HWFWM System | Initialized");
+  console.log("HWFWM System | Initialized (init hook fired)");
 
   // Register system-wide config namespace
   CONFIG["hwfwm-system"] = HWFWM_CONFIG;
@@ -128,6 +128,22 @@ Hooks.once("init", async () => {
 
 // Single ready hook: folders FIRST (awaited), then seed (awaited)
 Hooks.once("ready", async () => {
-  await bootstrapEquipmentPackFolders();
-  await seedEquipmentCompendium();
+  console.log("HWFWM System | Ready hook fired (folders -> seed)");
+
+  try {
+    console.time("HWFWM | equipment bootstrap+seed");
+
+    console.time("HWFWM | equipment folders");
+    await bootstrapEquipmentPackFolders();
+    console.timeEnd("HWFWM | equipment folders");
+
+    console.time("HWFWM | equipment seeding");
+    await seedEquipmentCompendium();
+    console.timeEnd("HWFWM | equipment seeding");
+
+    console.timeEnd("HWFWM | equipment bootstrap+seed");
+    console.log("HWFWM System | Ready workflow complete");
+  } catch (err) {
+    console.error("HWFWM System | Ready workflow failed (folders/seed)", err);
+  }
 });
