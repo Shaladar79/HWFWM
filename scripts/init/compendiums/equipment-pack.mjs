@@ -21,19 +21,12 @@ export async function bootstrapEquipmentPackFolders({
     return;
   }
 
-  // v13 packs are often locked; unlock so we can create folders.
-  if (pack.locked) {
-    console.warn(`[${systemId}] Equipment folders: pack is locked, attempting to unlock: ${packId}`);
-    try {
-      await pack.configure({ locked: false });
-      console.log(`[${systemId}] Equipment folders: pack unlocked: ${packId}`);
-    } catch (err) {
-      console.error(`[${systemId}] Equipment folders: failed to unlock pack ${packId}`, err);
-      return;
-    }
-  }
+  // NOTE:
+  // Compendium "locked" is about document write operations inside the pack.
+  // Folder documents are separate and can be created without trying to configure the pack.
+  // Also, pack.configure({locked:false}) may be restricted depending on permissions/modules.
+  // So we avoid "unlock attempts" here and just ensure the folder tree.
 
-  // Create/ensure the locked folder structure
   const weapons = await ensureFolder(pack, "Weapons", null);
   const armor = await ensureFolder(pack, "Armor", null);
 
@@ -44,35 +37,52 @@ export async function bootstrapEquipmentPackFolders({
   const medium = await ensureFolder(pack, "Medium Armor", armor.id);
   const heavy = await ensureFolder(pack, "Heavy Armor", armor.id);
 
-  console.log(
-    `[${systemId}] Equipment folders: ensured folder tree in ${packId}`,
-    {
-      weapons: weapons?.id,
-      melee: melee?.id,
-      ranged: ranged?.id,
-      armor: armor?.id,
-      light: light?.id,
-      medium: medium?.id,
-      heavy: heavy?.id
-    }
-  );
+  console.log(`[${systemId}] Equipment folders: ensured folder tree in ${packId}`, {
+    weapons: weapons?.id,
+    melee: melee?.id,
+    ranged: ranged?.id,
+    armor: armor?.id,
+    light: light?.id,
+    medium: medium?.id,
+    heavy: heavy?.id,
+    packCollection: pack.collection
+  });
+}
+
+function getFolderCollection() {
+  // v13-safe: prefer canonical collection API.
+  return game?.collections?.get?.("Folder") ?? game?.folders ?? null;
 }
 
 async function ensureFolder(pack, name, parentId) {
-  const existing = game.folders.find(
-    (f) =>
+  const folders = getFolderCollection();
+  if (!folders) {
+    throw new Error("Folder collection is unavailable (game.collections.get('Folder') returned null).");
+  }
+
+  const existing = Array.from(folders.values()).find((f) => {
+    const fParentId = f.folder?.id ?? f.folder ?? null;
+    return (
       f.pack === pack.collection &&
       f.type === pack.documentName &&
       f.name === name &&
-      (f.folder?.id ?? null) === (parentId ?? null)
-  );
+      (fParentId ?? null) === (parentId ?? null)
+    );
+  });
+
   if (existing) return existing;
 
-  return Folder.create({
+  const created = await Folder.create({
     name,
     type: pack.documentName, // "Item"
     folder: parentId ?? null,
     pack: pack.collection,
     sorting: "a"
   });
+
+  console.log(
+    `[${pack.metadata?.system ?? "system"}] Equipment folders: created "${name}" (parent=${parentId ?? "null"}) in pack=${pack.collection}`
+  );
+
+  return created;
 }
