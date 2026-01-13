@@ -20,16 +20,12 @@ function buildSeedCatalog() {
   /** @type {Array<{seedKey:string, name:string, system:any, description?:string, folderPath:string[]}>} */
   const entries = [];
 
-  // Helper builders
   const weapon = (category, name, seedKeySuffix, description = "") => ({
     seedKey: `weapon.${category}.${seedKeySuffix}`,
     name,
     system: {
-      rankKey: "normal", // starter assumption; only applied if missing
-      weapon: {
-        category, // "melee" | "ranged"
-        weaponType: "" // intentionally blank for now
-      }
+      rankKey: "normal",
+      weapon: { category, weaponType: "" }
     },
     description,
     folderPath: ["Weapons", category === "melee" ? "Melee Weapons" : "Ranged Weapons"]
@@ -39,11 +35,8 @@ function buildSeedCatalog() {
     seedKey: `armor.${armorType}.${seedKeySuffix}`,
     name,
     system: {
-      rankKey: "normal", // starter assumption; only applied if missing
-      armor: {
-        armorType, // "light" | "medium" | "heavy"
-        armorClassKey: "" // intentionally blank for now (template may later require)
-      }
+      rankKey: "normal",
+      armor: { armorType, armorClassKey: "" }
     },
     description,
     folderPath: ["Armor", capitalize(armorType) + " Armor"]
@@ -132,23 +125,25 @@ export async function seedEquipmentCompendium({
     return;
   }
 
+  // If locked, unlock so we can create/update docs.
   if (pack.locked) {
-    console.warn(`[${systemId}] Equipment seed: pack is locked (showing folders only): ${packId}`);
-    return;
+    console.warn(`[${systemId}] Equipment seed: pack is locked, attempting to unlock: ${packId}`);
+    try {
+      await pack.configure({ locked: false });
+      console.log(`[${systemId}] Equipment seed: pack unlocked: ${packId}`);
+    } catch (err) {
+      console.error(`[${systemId}] Equipment seed: failed to unlock pack ${packId}`, err);
+      return;
+    }
   }
 
-  // Ensure folder hierarchy (compendium folders are Folder docs with pack=<pack.collection>)
+  // Ensure folder hierarchy and get folder IDs for placement
   const folderIdsByPath = await ensureEquipmentFolders(pack);
 
-  // Build a fast lookup of existing documents by seedKey and by name
-  // Include folder for safer name-based matching.
-  const index = await pack.getIndex({
-    fields: ["name", "folder", `flags.${systemId}.seedKey`]
-  });
+  // Build lookup of existing docs by seedKey and name
+  const index = await pack.getIndex({ fields: ["name", "folder", `flags.${systemId}.seedKey`] });
 
-  /** @type {Map<string, any>} */
   const bySeedKey = new Map();
-  /** @type {Map<string, any[]>} */
   const byName = new Map();
 
   for (const e of index) {
@@ -161,7 +156,6 @@ export async function seedEquipmentCompendium({
   }
 
   const catalog = buildSeedCatalog();
-
   const toCreate = [];
   const toUpdate = [];
 
@@ -174,7 +168,6 @@ export async function seedEquipmentCompendium({
       continue;
     }
 
-    // Update only missing fields; never stomp user edits
     const doc = await getPackDocument(pack, existingIndexEntry._id);
     if (!doc) continue;
 
@@ -195,6 +188,15 @@ export async function seedEquipmentCompendium({
   }
 
   if (toUpdate.length) {
+    // Log folder moves (only) for visibility
+    for (const u of toUpdate) {
+      if (Object.prototype.hasOwnProperty.call(u, "folder")) {
+        console.log(
+          `[${systemId}] Equipment seed: moving item ${u._id} to folder ${u.folder} (pack=${packId})`
+        );
+      }
+    }
+
     await Item.updateDocuments(toUpdate, { pack: pack.collection });
     console.log(`[${systemId}] Equipment seed: updated ${toUpdate.length} items in ${packId}`);
   }
@@ -208,15 +210,16 @@ export async function seedEquipmentCompendium({
 // Folder helpers (compendium folders)
 // -----------------------------
 async function ensureEquipmentFolders(pack) {
-  const rootWeapons = await ensureFolder(pack, "Weapons", null);
-  const rootArmor = await ensureFolder(pack, "Armor", null);
+  // IMPORTANT: Use Folder.collection (authoritative), NOT game.folders cache.
+  const rootWeapons = await ensureCompendiumFolder(pack, "Weapons", null);
+  const rootArmor = await ensureCompendiumFolder(pack, "Armor", null);
 
-  const melee = await ensureFolder(pack, "Melee Weapons", rootWeapons.id);
-  const ranged = await ensureFolder(pack, "Ranged Weapons", rootWeapons.id);
+  const melee = await ensureCompendiumFolder(pack, "Melee Weapons", rootWeapons.id);
+  const ranged = await ensureCompendiumFolder(pack, "Ranged Weapons", rootWeapons.id);
 
-  const light = await ensureFolder(pack, "Light Armor", rootArmor.id);
-  const medium = await ensureFolder(pack, "Medium Armor", rootArmor.id);
-  const heavy = await ensureFolder(pack, "Heavy Armor", rootArmor.id);
+  const light = await ensureCompendiumFolder(pack, "Light Armor", rootArmor.id);
+  const medium = await ensureCompendiumFolder(pack, "Medium Armor", rootArmor.id);
+  const heavy = await ensureCompendiumFolder(pack, "Heavy Armor", rootArmor.id);
 
   const map = new Map();
   map.set(pathKey(["Weapons"]), rootWeapons.id);
@@ -228,25 +231,39 @@ async function ensureEquipmentFolders(pack) {
   map.set(pathKey(["Armor", "Medium Armor"]), medium.id);
   map.set(pathKey(["Armor", "Heavy Armor"]), heavy.id);
 
+  console.log(`[${SYSTEM_ID}] Equipment seed: folder ids resolved`, {
+    weapons: rootWeapons.id,
+    melee: melee.id,
+    ranged: ranged.id,
+    armor: rootArmor.id,
+    light: light.id,
+    medium: medium.id,
+    heavy: heavy.id
+  });
+
   return map;
 }
 
-async function ensureFolder(pack, name, parentId) {
-  const existing = game.folders.find(
-    (f) =>
-      f.pack === pack.collection &&
-      f.type === pack.documentName &&
-      f.name === name &&
-      (f.folder?.id ?? null) === (parentId ?? null)
-  );
+async function ensureCompendiumFolder(pack, name, parentId) {
+  const packCollection = pack.collection; // e.g. "hwfwm-system.equipment"
+  const type = pack.documentName; // "Item"
+
+  // Look for existing folder in the *authoritative* folder collection
+  const existing = Folder.collection.find((f) => {
+    const samePack = f.pack === packCollection;
+    const sameType = f.type === type;
+    const sameName = f.name === name;
+    const sameParent = (f.folder?.id ?? null) === (parentId ?? null);
+    return samePack && sameType && sameName && sameParent;
+  });
 
   if (existing) return existing;
 
   return Folder.create({
     name,
-    type: pack.documentName,
+    type,
     folder: parentId ?? null,
-    pack: pack.collection,
+    pack: packCollection,
     sorting: "a"
   });
 }
@@ -258,13 +275,9 @@ function buildCreateData(seed, folderIdsByPath, systemId, seedVersion) {
   const folderId = folderIdsByPath.get(pathKey(seed.folderPath)) ?? null;
 
   const flags = {
-    [systemId]: {
-      seedKey: seed.seedKey,
-      seedVersion
-    }
+    [systemId]: { seedKey: seed.seedKey, seedVersion }
   };
 
-  // Single system object (avoid assigning "system" twice)
   const system = duplicate(seed.system ?? {});
   const desc = (seed.description ?? "").trim();
   if (desc) system.description = desc;
@@ -282,24 +295,16 @@ function buildNonDestructivePatch(doc, seed, folderIdsByPath, systemId, seedVers
   const patch = {};
   let changed = false;
 
-  // Seed identity (if present)
-  const existingSeedKey = getProperty(doc, `flags.${systemId}.seedKey`);
-  const isSeeded = !!existingSeedKey;
-
-  // We matched this doc to a seed entry (by seedKey or by name), so we treat it as managed.
-  // This allows us to fix folder placement even for older/unseeded items, while still not
-  // overwriting user-modified data fields.
-  const shouldManage = isSeeded || !existingSeedKey;
-
-  // Folder placement: AUTHORITATIVE for managed docs
+  // If this doc matches a seed entry, we manage its folder placement.
+  // We do NOT overwrite system data fields, only fill missing fields.
   const desiredFolderId = folderIdsByPath.get(pathKey(seed.folderPath)) ?? null;
-  if (shouldManage && desiredFolderId && doc.folder?.id !== desiredFolderId) {
+  if (desiredFolderId && doc.folder?.id !== desiredFolderId) {
     patch.folder = desiredFolderId;
     changed = true;
   }
 
-  // Flags: ensure seed identity exists (safe)
-  if (!existingSeedKey) {
+  const existingSeedKey = getProperty(doc, `flags.${systemId}.seedKey`);
+  if (!existingSeedKey || existingSeedKey !== seed.seedKey) {
     patch.flags = patch.flags ?? {};
     patch.flags[systemId] = {
       ...(getProperty(doc, `flags.${systemId}`) ?? {}),
@@ -319,7 +324,7 @@ function buildNonDestructivePatch(doc, seed, folderIdsByPath, systemId, seedVers
     }
   }
 
-  // Minimal system fields: only fill if missing
+  // Fill missing minimal system fields only
   const currentRankKey = getProperty(doc, "system.rankKey");
   if (!currentRankKey && getProperty(seed, "system.rankKey")) {
     patch.system = patch.system ?? {};
@@ -327,7 +332,6 @@ function buildNonDestructivePatch(doc, seed, folderIdsByPath, systemId, seedVers
     changed = true;
   }
 
-  // Weapon classification (fill missing only)
   const seedWeaponCategory = getProperty(seed, "system.weapon.category");
   if (seedWeaponCategory) {
     const curWeaponCategory = getProperty(doc, "system.weapon.category");
@@ -337,18 +341,8 @@ function buildNonDestructivePatch(doc, seed, folderIdsByPath, systemId, seedVers
       patch.system.weapon.category = seedWeaponCategory;
       changed = true;
     }
-
-    const seedWeaponType = (getProperty(seed, "system.weapon.weaponType") ?? "").trim();
-    const curWeaponType = (getProperty(doc, "system.weapon.weaponType") ?? "").trim();
-    if (!curWeaponType && seedWeaponType) {
-      patch.system = patch.system ?? {};
-      patch.system.weapon = patch.system.weapon ?? {};
-      patch.system.weapon.weaponType = seedWeaponType;
-      changed = true;
-    }
   }
 
-  // Armor classification (fill missing only)
   const seedArmorType = getProperty(seed, "system.armor.armorType");
   if (seedArmorType) {
     const curArmorType = getProperty(doc, "system.armor.armorType");
@@ -358,18 +352,8 @@ function buildNonDestructivePatch(doc, seed, folderIdsByPath, systemId, seedVers
       patch.system.armor.armorType = seedArmorType;
       changed = true;
     }
-
-    const seedArmorClassKey = (getProperty(seed, "system.armor.armorClassKey") ?? "").trim();
-    const curArmorClassKey = (getProperty(doc, "system.armor.armorClassKey") ?? "").trim();
-    if (!curArmorClassKey && seedArmorClassKey) {
-      patch.system = patch.system ?? {};
-      patch.system.armor = patch.system.armor ?? {};
-      patch.system.armor.armorClassKey = seedArmorClassKey;
-      changed = true;
-    }
   }
 
-  // Description: only set if empty and seed provides one
   const seedDesc = (seed.description ?? "").trim();
   const curDesc = (getProperty(doc, "system.description") ?? "").trim();
   if (!curDesc && seedDesc) {
@@ -381,11 +365,6 @@ function buildNonDestructivePatch(doc, seed, folderIdsByPath, systemId, seedVers
   return changed ? patch : null;
 }
 
-/**
- * Safer name fallback:
- * - only adopt by-name items that do NOT already have a seedKey
- * - and are in the desired folder (or have no folder yet)
- */
 function findBestNameMatch(byName, seed, folderIdsByPath, systemId) {
   const n = seed.name.trim().toLowerCase();
   const candidates = byName.get(n);
@@ -393,11 +372,12 @@ function findBestNameMatch(byName, seed, folderIdsByPath, systemId) {
 
   const desiredFolderId = folderIdsByPath.get(pathKey(seed.folderPath)) ?? null;
 
+  // Adopt ONLY if not already seeded, and folder matches (or is empty)
   for (const c of candidates) {
     const hasSeed = !!getProperty(c, `flags.${systemId}.seedKey`);
     if (hasSeed) continue;
 
-    const cFolder = c.folder ?? null;
+    const cFolder = c.folder ?? null; // index field: folder id or null
     if (!cFolder || !desiredFolderId || cFolder === desiredFolderId) return c;
   }
 
@@ -431,18 +411,12 @@ function duplicate(data) {
   }
 }
 
-/**
- * v13-safe compendium doc fetch.
- * pack.getDocument can be unreliable depending on version/modules; this provides a fallback.
- */
 async function getPackDocument(pack, id) {
   if (typeof pack.getDocument === "function") {
     const doc = await pack.getDocument(id);
     if (doc) return doc;
   }
-  if (typeof pack.getDocuments === "function") {
-    const docs = await pack.getDocuments({ _id: id });
-    return docs?.[0] ?? null;
-  }
-  return null;
+  // Fallback: load all then find (safe, small packs)
+  const docs = await pack.getDocuments();
+  return docs.find((d) => d.id === id) ?? null;
 }
