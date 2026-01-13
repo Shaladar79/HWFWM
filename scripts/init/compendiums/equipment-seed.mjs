@@ -2,11 +2,15 @@
 //
 // Equipment Compendium Seeder (Foundry v13)
 // - Idempotent: safe to run multiple times
-// - Non-destructive: does NOT overwrite user-modified fields (except folder placement for managed items)
+// - Non-destructive: does NOT overwrite user-modified fields (except folder placement for matched/managed items)
 // - Deterministic identity: flags.<systemId>.seedKey + seedVersion
 //
 // Seeds Item documents of type "equipment" into pack: <systemId>.equipment
 // Places items into compendium folders (Weapons/Melee, Weapons/Ranged, Armor/Light/Medium/Heavy)
+//
+// IMPORTANT:
+// - This file must NOT create world folders.
+// - Folder operations are hard-scoped to folders whose `pack === pack.collection`.
 
 const SYSTEM_ID = "hwfwm-system";
 const SEED_VERSION = 1;
@@ -129,19 +133,16 @@ export async function seedEquipmentCompendium({
     return;
   }
 
-  // If locked, attempt unlock so we can create/update docs.
+  // Do NOT attempt to unlock/configure packs here.
+  // If the compendium is locked, we cannot create/update Item docs (that’s expected).
   if (pack.locked) {
-    console.warn(`[${systemId}] Equipment seed: pack is locked, attempting to unlock: ${packId}`);
-    try {
-      await pack.configure({ locked: false });
-      console.log(`[${systemId}] Equipment seed: pack unlocked: ${packId}`);
-    } catch (err) {
-      console.error(`[${systemId}] Equipment seed: failed to unlock pack ${packId}`, err);
-      return;
-    }
+    console.warn(`[${systemId}] Equipment seed: pack is locked; skipping item writes: ${packId}`);
+    return;
   }
 
-  const folderIdsByPath = await ensureEquipmentFolders(pack);
+  // Ensure folder hierarchy (compendium folders are Folder docs with pack=<pack.collection>)
+  // This is safe and does NOT create world folders because ensureFolder is hard-scoped.
+  const folderIdsByPath = await ensureEquipmentFolders(pack, systemId);
 
   // Build lookup of existing docs by seedKey and name
   const index = await pack.getIndex({
@@ -209,27 +210,16 @@ export async function seedEquipmentCompendium({
 /* Folder helpers (compendium folders)           */
 /* -------------------------------------------- */
 
-function getFolderCollection() {
-  return game?.collections?.get?.("Folder") ?? game?.folders ?? null;
-}
+async function ensureEquipmentFolders(pack, systemId) {
+  const rootWeapons = await ensureFolder(pack, "Weapons", null, systemId);
+  const rootArmor = await ensureFolder(pack, "Armor", null, systemId);
 
-function getFolderId(value) {
-  // v13: sometimes string id, sometimes Folder doc
-  if (!value) return null;
-  if (typeof value === "string") return value;
-  return value?.id ?? null;
-}
+  const melee = await ensureFolder(pack, "Melee Weapons", rootWeapons.id, systemId);
+  const ranged = await ensureFolder(pack, "Ranged Weapons", rootWeapons.id, systemId);
 
-async function ensureEquipmentFolders(pack) {
-  const rootWeapons = await ensureFolder(pack, "Weapons", null);
-  const rootArmor = await ensureFolder(pack, "Armor", null);
-
-  const melee = await ensureFolder(pack, "Melee Weapons", rootWeapons.id);
-  const ranged = await ensureFolder(pack, "Ranged Weapons", rootWeapons.id);
-
-  const light = await ensureFolder(pack, "Light Armor", rootArmor.id);
-  const medium = await ensureFolder(pack, "Medium Armor", rootArmor.id);
-  const heavy = await ensureFolder(pack, "Heavy Armor", rootArmor.id);
+  const light = await ensureFolder(pack, "Light Armor", rootArmor.id, systemId);
+  const medium = await ensureFolder(pack, "Medium Armor", rootArmor.id, systemId);
+  const heavy = await ensureFolder(pack, "Heavy Armor", rootArmor.id, systemId);
 
   const map = new Map();
   map.set(pathKey(["Weapons"]), rootWeapons.id);
@@ -244,34 +234,42 @@ async function ensureEquipmentFolders(pack) {
   return map;
 }
 
-async function ensureFolder(pack, name, parentId) {
-  const folders = getFolderCollection();
-  if (!folders) {
-    throw new Error("Folder collection is unavailable (game.collections.get('Folder') returned null).");
-  }
+function getParentId(folder) {
+  return (
+    folder?.folder?.id ??
+    folder?.folder ??
+    folder?.parent?.id ??
+    folder?.parent ??
+    null
+  );
+}
 
-  const existing = Array.from(folders.values()).find((f) => {
-    const fParentId = getFolderId(f.folder);
-    return (
-      f.pack === pack.collection &&
-      f.type === pack.documentName &&
-      f.name === name &&
-      (fParentId ?? null) === (parentId ?? null)
-    );
+async function ensureFolder(pack, name, parentId, systemId) {
+  const folders = game?.folders;
+  if (!folders) throw new Error("game.folders is unavailable.");
+
+  // CRITICAL: Only consider folders that belong to THIS compendium pack.
+  const existing = Array.from(folders).find((f) => {
+    if (f.pack !== pack.collection) return false;
+    if (f.type !== pack.documentName) return false;
+    if (f.name !== name) return false;
+
+    const fParentId = getParentId(f);
+    return (fParentId ?? null) === (parentId ?? null);
   });
 
   if (existing) return existing;
 
   const created = await Folder.create({
     name,
-    type: pack.documentName,
-    folder: parentId ?? null,
-    pack: pack.collection,
+    type: pack.documentName,      // "Item"
+    folder: parentId ?? null,     // parent folder id
+    pack: pack.collection,        // e.g. "hwfwm-system.equipment"
     sorting: "a"
   });
 
   console.log(
-    `[${SYSTEM_ID}] Equipment folders: created "${name}" (parent=${parentId ?? "null"}) in pack=${pack.collection}`
+    `[${systemId}] Equipment folders: created "${name}" (parent=${parentId ?? "null"}) in pack=${pack.collection}`
   );
 
   return created;
@@ -308,8 +306,7 @@ function buildNonDestructivePatch(doc, seed, folderIdsByPath, systemId, seedVers
   const patch = {};
   let changed = false;
 
-  // Folder placement must work whether doc.folder is Folder or string id
-  const currentFolderId = getFolderId(doc.folder);
+  const currentFolderId = doc.folder?.id ?? doc.folder ?? null;
 
   // We matched this doc to a seed row (by seedKey or name), so folder placement is authoritative.
   const desiredFolderId = folderIdsByPath.get(pathKey(seed.folderPath)) ?? null;
@@ -395,7 +392,7 @@ function findBestNameMatch(byName, seed, folderIdsByPath, systemId) {
     const hasSeed = !!getProperty(c, `flags.${systemId}.seedKey`);
     if (hasSeed) continue;
 
-    const cFolderId = getFolderId(c.folder);
+    const cFolderId = c.folder?.id ?? c.folder ?? null;
     if (!cFolderId || !desiredFolderId || cFolderId === desiredFolderId) return c;
   }
 
