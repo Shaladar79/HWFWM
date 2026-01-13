@@ -10,6 +10,9 @@
 const SYSTEM_ID = "hwfwm-system";
 const SEED_VERSION = 1;
 
+/* -------------------------------------------- */
+/* Seed Catalog                                  */
+/* -------------------------------------------- */
 function buildSeedCatalog() {
   /** @type {Array<{seedKey:string, name:string, system:any, description?:string, folderPath:string[]}>} */
   const entries = [];
@@ -39,6 +42,9 @@ function buildSeedCatalog() {
   return entries;
 }
 
+/* -------------------------------------------- */
+/* Public entry point                            */
+/* -------------------------------------------- */
 export async function seedTalentsCompendium({
   packName = "talents",
   seedVersion = SEED_VERSION,
@@ -63,9 +69,16 @@ export async function seedTalentsCompendium({
     return;
   }
 
+  // If locked, attempt unlock so we can create/update docs.
   if (pack.locked) {
-    console.warn(`[${systemId}] Talents seed: pack is locked; skipping item writes: ${packId}`);
-    return;
+    console.warn(`[${systemId}] Talents seed: pack is locked, attempting to unlock: ${packId}`);
+    try {
+      await pack.configure({ locked: false });
+      console.log(`[${systemId}] Talents seed: pack unlocked: ${packId}`);
+    } catch (err) {
+      console.error(`[${systemId}] Talents seed: failed to unlock pack ${packId}`, err);
+      return;
+    }
   }
 
   const folderIdsByPath = await ensureTalentsFolders(pack);
@@ -92,17 +105,21 @@ export async function seedTalentsCompendium({
   const toUpdate = [];
 
   for (const seed of catalog) {
-    const existingIndexEntry = bySeedKey.get(seed.seedKey) ?? findBestNameMatch(byName, seed, systemId);
+    const desiredFolderId = folderIdsByPath.get(pathKey(seed.folderPath)) ?? null;
+
+    const existingIndexEntry =
+      bySeedKey.get(seed.seedKey) ??
+      findBestNameMatch(byName, seed, desiredFolderId, systemId);
 
     if (!existingIndexEntry) {
-      toCreate.push(buildCreateData(seed, folderIdsByPath, systemId, seedVersion));
+      toCreate.push(buildCreateData(seed, desiredFolderId, systemId, seedVersion));
       continue;
     }
 
     const doc = await getPackDocument(pack, existingIndexEntry._id);
     if (!doc) continue;
 
-    const patch = buildNonDestructivePatch(doc, seed, folderIdsByPath, systemId, seedVersion);
+    const patch = buildNonDestructivePatch(doc, seed, desiredFolderId, systemId, seedVersion);
     if (patch) {
       patch._id = doc.id;
       toUpdate.push(patch);
@@ -128,7 +145,20 @@ export async function seedTalentsCompendium({
   }
 }
 
-/* ---------------- Folder helpers (compendium-only) ---------------- */
+/* -------------------------------------------- */
+/* Folder helpers (compendium-only)              */
+/* -------------------------------------------- */
+
+function getFolderCollection() {
+  // v13-safe: prefer canonical collection API.
+  return game?.collections?.get?.("Folder") ?? game?.folders ?? null;
+}
+
+function getFolderId(value) {
+  if (!value) return null;
+  if (typeof value === "string") return value;
+  return value?.id ?? null;
+}
 
 async function ensureTalentsFolders(pack) {
   const root = await ensureFolder(pack, "Talents", null);
@@ -148,37 +178,44 @@ async function ensureTalentsFolders(pack) {
   return map;
 }
 
-function getParentId(folder) {
-  return folder?.folder?.id ?? folder?.folder ?? folder?.parent?.id ?? folder?.parent ?? null;
-}
-
 async function ensureFolder(pack, name, parentId) {
-  const folders = game?.folders;
-  if (!folders) throw new Error("game.folders is unavailable.");
+  const folders = getFolderCollection();
+  if (!folders) {
+    throw new Error("Folder collection is unavailable (game.collections.get('Folder') returned null).");
+  }
 
-  const existing = Array.from(folders).find((f) => {
-    if (f.pack !== pack.collection) return false;
-    if (f.type !== pack.documentName) return false;
-    if (f.name !== name) return false;
-    return (getParentId(f) ?? null) === (parentId ?? null);
+  const existing = Array.from(folders.values()).find((f) => {
+    const fParentId = getFolderId(f.folder);
+    return (
+      f.pack === pack.collection &&
+      f.type === pack.documentName &&
+      f.name === name &&
+      (fParentId ?? null) === (parentId ?? null)
+    );
   });
 
   if (existing) return existing;
 
-  return Folder.create({
+  const created = await Folder.create({
     name,
-    type: pack.documentName,
+    type: pack.documentName, // "Item"
     folder: parentId ?? null,
     pack: pack.collection,
     sorting: "a"
   });
+
+  console.log(
+    `[${SYSTEM_ID}] Talents folders: created "${name}" (parent=${parentId ?? "null"}) in pack=${pack.collection}`
+  );
+
+  return created;
 }
 
-/* ---------------- Create / Update helpers ---------------- */
+/* -------------------------------------------- */
+/* Create / Update helpers                       */
+/* -------------------------------------------- */
 
-function buildCreateData(seed, folderIdsByPath, systemId, seedVersion) {
-  const folderId = folderIdsByPath.get(pathKey(seed.folderPath)) ?? null;
-
+function buildCreateData(seed, desiredFolderId, systemId, seedVersion) {
   const flags = {
     [systemId]: {
       seedKey: seed.seedKey,
@@ -193,19 +230,18 @@ function buildCreateData(seed, folderIdsByPath, systemId, seedVersion) {
   return {
     name: seed.name,
     type: "talent",
-    folder: folderId,
+    folder: desiredFolderId,
     system,
     flags
   };
 }
 
-function buildNonDestructivePatch(doc, seed, folderIdsByPath, systemId, seedVersion) {
+function buildNonDestructivePatch(doc, seed, desiredFolderId, systemId, seedVersion) {
   const patch = {};
   let changed = false;
 
   // Folder placement is authoritative for matched seed rows
-  const currentFolderId = doc.folder?.id ?? doc.folder ?? null;
-  const desiredFolderId = folderIdsByPath.get(pathKey(seed.folderPath)) ?? null;
+  const currentFolderId = getFolderId(doc.folder);
   if (desiredFolderId && currentFolderId !== desiredFolderId) {
     patch.folder = desiredFolderId;
     changed = true;
@@ -260,21 +296,35 @@ function buildNonDestructivePatch(doc, seed, folderIdsByPath, systemId, seedVers
   return changed ? patch : null;
 }
 
-function findBestNameMatch(byName, seed, systemId) {
+/**
+ * Safer name fallback:
+ * - only adopt by-name items that do NOT already have a seedKey
+ * - prefer items already in the desired folder
+ * - allow items with no folder (common for early manual entries)
+ */
+function findBestNameMatch(byName, seed, desiredFolderId, systemId) {
   const n = seed.name.trim().toLowerCase();
   const candidates = byName.get(n);
   if (!candidates?.length) return null;
 
-  // Only adopt by-name items that do NOT already have a seedKey
+  let best = null;
+
   for (const c of candidates) {
     const hasSeed = !!getProperty(c, `flags.${systemId}.seedKey`);
-    if (!hasSeed) return c;
+    if (hasSeed) continue;
+
+    const cFolderId = getFolderId(c.folder);
+    if (desiredFolderId && cFolderId === desiredFolderId) return c;
+
+    if (!best && (!cFolderId || !desiredFolderId)) best = c;
   }
 
-  return null;
+  return best;
 }
 
-/* ---------------- Utilities ---------------- */
+/* -------------------------------------------- */
+/* Utilities                                     */
+/* -------------------------------------------- */
 
 function pathKey(parts) {
   return parts.join(" / ");
