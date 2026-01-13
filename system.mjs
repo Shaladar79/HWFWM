@@ -19,6 +19,10 @@ import { bootstrapEquipmentPackFolders } from "./scripts/init/compendiums/equipm
 // Equipment compendium item seeding (idempotent, non-destructive)
 import { seedEquipmentCompendium } from "./scripts/init/compendiums/equipment-seed.mjs";
 
+// NEW: Talents compendium folder bootstrap + seeding
+import { bootstrapTalentsPackFolders } from "./scripts/init/compendiums/talents-pack.mjs";
+import { seedTalentsCompendium } from "./scripts/init/compendiums/talents-seed.mjs";
+
 // If you do NOT see this, system.mjs is not being loaded at all.
 console.log("HWFWM System | system.mjs module loaded");
 
@@ -139,9 +143,37 @@ Hooks.once("init", async () => {
  *   await bootstrapEquipmentPackFolders();
  *   await seedEquipmentCompendium();
  *
- * Next step (in the next file) is to add talent-pack + talent-seed and then call THAT seeder here.
+ * Talents automation IS enabled below (folders -> seed), since this is the next compendium workflow.
  */
 
+// NEW: Talents ready hook: folders FIRST (awaited), then seed (awaited)
+Hooks.once("ready", async () => {
+  console.log("HWFWM System | Ready hook fired (talents folders -> talents seed)");
+
+  if (!game?.user?.isGM) {
+    console.log("HWFWM System | Talents workflow skipped (not GM)");
+    return;
+  }
+
+  try {
+    console.time("HWFWM | talents bootstrap+seed");
+
+    console.time("HWFWM | talents folders");
+    await bootstrapTalentsPackFolders();
+    console.timeEnd("HWFWM | talents folders");
+
+    console.time("HWFWM | talents seeding");
+    await seedTalentsCompendium();
+    console.timeEnd("HWFWM | talents seeding");
+
+    console.timeEnd("HWFWM | talents bootstrap+seed");
+    console.log("HWFWM System | Talents ready workflow complete");
+  } catch (err) {
+    console.error("HWFWM System | Talents ready workflow failed", err);
+  }
+});
+
+// (equipment ready hook remains intentionally disabled)
 // Hooks.once("ready", async () => {
 //   console.log("HWFWM System | Ready hook fired (folders -> seed)");
 
