@@ -21,22 +21,41 @@ export async function bootstrapEquipmentPackFolders({
     return;
   }
 
+  // v13 packs are often locked; unlock so we can create folders.
   if (pack.locked) {
-    console.warn(`[${systemId}] Equipment folders: pack is locked: ${packId}`);
-    return;
+    console.warn(`[${systemId}] Equipment folders: pack is locked, attempting to unlock: ${packId}`);
+    try {
+      await pack.configure({ locked: false });
+      console.log(`[${systemId}] Equipment folders: pack unlocked: ${packId}`);
+    } catch (err) {
+      console.error(`[${systemId}] Equipment folders: failed to unlock pack ${packId}`, err);
+      return;
+    }
   }
 
+  // Create/ensure the locked folder structure
   const weapons = await ensureFolder(pack, "Weapons", null);
   const armor = await ensureFolder(pack, "Armor", null);
 
-  await ensureFolder(pack, "Melee Weapons", weapons.id);
-  await ensureFolder(pack, "Ranged Weapons", weapons.id);
+  const melee = await ensureFolder(pack, "Melee Weapons", weapons.id);
+  const ranged = await ensureFolder(pack, "Ranged Weapons", weapons.id);
 
-  await ensureFolder(pack, "Light Armor", armor.id);
-  await ensureFolder(pack, "Medium Armor", armor.id);
-  await ensureFolder(pack, "Heavy Armor", armor.id);
+  const light = await ensureFolder(pack, "Light Armor", armor.id);
+  const medium = await ensureFolder(pack, "Medium Armor", armor.id);
+  const heavy = await ensureFolder(pack, "Heavy Armor", armor.id);
 
-  console.log(`[${systemId}] Equipment folders: ensured folder tree in ${packId}`);
+  console.log(
+    `[${systemId}] Equipment folders: ensured folder tree in ${packId}`,
+    {
+      weapons: weapons?.id,
+      melee: melee?.id,
+      ranged: ranged?.id,
+      armor: armor?.id,
+      light: light?.id,
+      medium: medium?.id,
+      heavy: heavy?.id
+    }
+  );
 }
 
 async function ensureFolder(pack, name, parentId) {
@@ -51,7 +70,7 @@ async function ensureFolder(pack, name, parentId) {
 
   return Folder.create({
     name,
-    type: pack.documentName,
+    type: pack.documentName, // "Item"
     folder: parentId ?? null,
     pack: pack.collection,
     sorting: "a"
