@@ -149,10 +149,16 @@
         "weapon": {
           "category": "",
           "weaponType": "",
+
           "damagePerSuccess": 0,
+
+          "baseDamagePerSuccess": 0,
+          "bonusDamagePerSuccess": 0,
+          "rankMultiplier": 1,
+          "totalDamagePerSuccess": 0,
+
           "range": 0,
           "actionCost": 0,
-          "bonusDamagePerSuccess": 0,
           "actionCostMod": 0,
           "damageType1": "",
           "damageType2": "",
@@ -161,8 +167,12 @@
         "armor": {
           "armorType": "",
           "armorName": "",
+
           "value": 0,
-          "bonusArmor": 0
+          "bonusArmor": 0,
+
+          "rankMultiplier": 1,
+          "totalArmor": 0
         },
         "misc": {
           "armor": 0
