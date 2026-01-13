@@ -8,11 +8,23 @@ export async function bootstrapEquipmentPackFolders({
 
   const packId = `${systemId}.${packName}`;
   const pack = game.packs.get(packId);
+
   if (!pack) {
     console.warn(`[${systemId}] Equipment folders: pack not found: ${packId}`);
     return;
   }
-  if (pack.documentName !== "Item") return;
+
+  if (pack.documentName !== "Item") {
+    console.warn(
+      `[${systemId}] Equipment folders: ${packId} is not an Item compendium (documentName=${pack.documentName})`
+    );
+    return;
+  }
+
+  if (pack.locked) {
+    console.warn(`[${systemId}] Equipment folders: pack is locked: ${packId}`);
+    return;
+  }
 
   const weapons = await ensureFolder(pack, "Weapons", null);
   const armor = await ensureFolder(pack, "Armor", null);
@@ -23,6 +35,8 @@ export async function bootstrapEquipmentPackFolders({
   await ensureFolder(pack, "Light Armor", armor.id);
   await ensureFolder(pack, "Medium Armor", armor.id);
   await ensureFolder(pack, "Heavy Armor", armor.id);
+
+  console.log(`[${systemId}] Equipment folders: ensured folder tree in ${packId}`);
 }
 
 async function ensureFolder(pack, name, parentId) {
