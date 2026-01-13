@@ -129,9 +129,16 @@ export async function seedEquipmentCompendium({
     return;
   }
 
+  // If locked, attempt unlock so we can create/update docs.
   if (pack.locked) {
-    console.warn(`[${systemId}] Equipment seed: pack is locked: ${packId}`);
-    return;
+    console.warn(`[${systemId}] Equipment seed: pack is locked, attempting to unlock: ${packId}`);
+    try {
+      await pack.configure({ locked: false });
+      console.log(`[${systemId}] Equipment seed: pack unlocked: ${packId}`);
+    } catch (err) {
+      console.error(`[${systemId}] Equipment seed: failed to unlock pack ${packId}`, err);
+      return;
+    }
   }
 
   const folderIdsByPath = await ensureEquipmentFolders(pack);
@@ -203,9 +210,14 @@ export async function seedEquipmentCompendium({
 /* -------------------------------------------- */
 
 function getFolderCollection() {
-  // Prefer the canonical collection API.
-  // In v13, game.collections.get("Folder") is reliable.
   return game?.collections?.get?.("Folder") ?? game?.folders ?? null;
+}
+
+function getFolderId(value) {
+  // v13: sometimes string id, sometimes Folder doc
+  if (!value) return null;
+  if (typeof value === "string") return value;
+  return value?.id ?? null;
 }
 
 async function ensureEquipmentFolders(pack) {
@@ -238,10 +250,8 @@ async function ensureFolder(pack, name, parentId) {
     throw new Error("Folder collection is unavailable (game.collections.get('Folder') returned null).");
   }
 
-  // Only look at folders that belong to THIS compendium pack.
-  // IMPORTANT: use pack.collection (e.g. "hwfwm-system.equipment"), not packId.
   const existing = Array.from(folders.values()).find((f) => {
-    const fParentId = f.folder?.id ?? f.folder ?? null;
+    const fParentId = getFolderId(f.folder);
     return (
       f.pack === pack.collection &&
       f.type === pack.documentName &&
@@ -298,15 +308,18 @@ function buildNonDestructivePatch(doc, seed, folderIdsByPath, systemId, seedVers
   const patch = {};
   let changed = false;
 
-  const existingSeedKey = getProperty(doc, `flags.${systemId}.seedKey`);
-  const shouldManage = true; // we matched this doc to a seed row; manage folder + identity safely
+  // Folder placement must work whether doc.folder is Folder or string id
+  const currentFolderId = getFolderId(doc.folder);
 
+  // We matched this doc to a seed row (by seedKey or name), so folder placement is authoritative.
   const desiredFolderId = folderIdsByPath.get(pathKey(seed.folderPath)) ?? null;
-  if (shouldManage && desiredFolderId && doc.folder?.id !== desiredFolderId) {
+  if (desiredFolderId && currentFolderId !== desiredFolderId) {
     patch.folder = desiredFolderId;
     changed = true;
   }
 
+  // Seed identity flags: safe to add
+  const existingSeedKey = getProperty(doc, `flags.${systemId}.seedKey`);
   if (!existingSeedKey) {
     patch.flags = patch.flags ?? {};
     patch.flags[systemId] = {
@@ -327,6 +340,7 @@ function buildNonDestructivePatch(doc, seed, folderIdsByPath, systemId, seedVers
     }
   }
 
+  // Minimal system fields: only fill if missing
   const currentRankKey = getProperty(doc, "system.rankKey");
   if (!currentRankKey && getProperty(seed, "system.rankKey")) {
     patch.system = patch.system ?? {};
@@ -334,6 +348,7 @@ function buildNonDestructivePatch(doc, seed, folderIdsByPath, systemId, seedVers
     changed = true;
   }
 
+  // Weapon classification (fill missing only)
   const seedWeaponCategory = getProperty(seed, "system.weapon.category");
   if (seedWeaponCategory) {
     const curWeaponCategory = getProperty(doc, "system.weapon.category");
@@ -345,6 +360,7 @@ function buildNonDestructivePatch(doc, seed, folderIdsByPath, systemId, seedVers
     }
   }
 
+  // Armor classification (fill missing only)
   const seedArmorType = getProperty(seed, "system.armor.armorType");
   if (seedArmorType) {
     const curArmorType = getProperty(doc, "system.armor.armorType");
@@ -356,6 +372,7 @@ function buildNonDestructivePatch(doc, seed, folderIdsByPath, systemId, seedVers
     }
   }
 
+  // Description: only set if empty and seed provides one
   const seedDesc = (seed.description ?? "").trim();
   const curDesc = (getProperty(doc, "system.description") ?? "").trim();
   if (!curDesc && seedDesc) {
@@ -378,8 +395,8 @@ function findBestNameMatch(byName, seed, folderIdsByPath, systemId) {
     const hasSeed = !!getProperty(c, `flags.${systemId}.seedKey`);
     if (hasSeed) continue;
 
-    const cFolder = c.folder ?? null;
-    if (!cFolder || !desiredFolderId || cFolder === desiredFolderId) return c;
+    const cFolderId = getFolderId(c.folder);
+    if (!cFolderId || !desiredFolderId || cFolderId === desiredFolderId) return c;
   }
 
   return null;
