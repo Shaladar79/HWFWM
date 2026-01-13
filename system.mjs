@@ -129,30 +129,42 @@ Hooks.once("init", async () => {
   });
 });
 
-// Single ready hook: folders FIRST (awaited), then seed (awaited)
-Hooks.once("ready", async () => {
-  console.log("HWFWM System | Ready hook fired (folders -> seed)");
+/**
+ * IMPORTANT CHANGE:
+ * We are disabling automatic equipment folder/bootstrap+seed on world entry because:
+ *  - you reported world-level folders being created repeatedly (symptom of folder creation targeting game.folders)
+ *  - equipment folder placement still needs community input/debugging
+ *
+ * You can still run these manually from the console as GM:
+ *   await bootstrapEquipmentPackFolders();
+ *   await seedEquipmentCompendium();
+ *
+ * Next step (in the next file) is to add talent-pack + talent-seed and then call THAT seeder here.
+ */
 
-  // Only the GM should mutate compendiums.
-  if (!game?.user?.isGM) {
-    console.log("HWFWM System | Ready workflow skipped (not GM)");
-    return;
-  }
+// Hooks.once("ready", async () => {
+//   console.log("HWFWM System | Ready hook fired (folders -> seed)");
 
-  try {
-    console.time("HWFWM | equipment bootstrap+seed");
+//   // Only the GM should mutate compendiums.
+//   if (!game?.user?.isGM) {
+//     console.log("HWFWM System | Ready workflow skipped (not GM)");
+//     return;
+//   }
 
-    console.time("HWFWM | equipment folders");
-    await bootstrapEquipmentPackFolders();
-    console.timeEnd("HWFWM | equipment folders");
+//   try {
+//     console.time("HWFWM | equipment bootstrap+seed");
 
-    console.time("HWFWM | equipment seeding");
-    await seedEquipmentCompendium();
-    console.timeEnd("HWFWM | equipment seeding");
+//     console.time("HWFWM | equipment folders");
+//     await bootstrapEquipmentPackFolders();
+//     console.timeEnd("HWFWM | equipment folders");
 
-    console.timeEnd("HWFWM | equipment bootstrap+seed");
-    console.log("HWFWM System | Ready workflow complete");
-  } catch (err) {
-    console.error("HWFWM System | Ready workflow failed (folders/seed)", err);
-  }
-});
+//     console.time("HWFWM | equipment seeding");
+//     await seedEquipmentCompendium();
+//     console.timeEnd("HWFWM | equipment seeding");
+
+//     console.timeEnd("HWFWM | equipment bootstrap+seed");
+//     console.log("HWFWM System | Ready workflow complete");
+//   } catch (err) {
+//     console.error("HWFWM System | Ready workflow failed (folders/seed)", err);
+//   }
+// });
