@@ -118,6 +118,8 @@ export async function seedEquipmentCompendium({
   const packId = `${systemId}.${packName}`;
   const pack = game.packs.get(packId);
 
+  console.log(`[${systemId}] Equipment seed: starting (pack=${packId}, seedVersion=${seedVersion})`);
+
   if (!pack) {
     console.warn(`[${systemId}] Equipment seed: pack not found: ${packId}`);
     return;
@@ -127,6 +129,11 @@ export async function seedEquipmentCompendium({
     console.warn(
       `[${systemId}] Equipment seed: pack ${packId} is not an Item compendium (documentName=${pack.documentName})`
     );
+    return;
+  }
+
+  if (pack.locked) {
+    console.warn(`[${systemId}] Equipment seed: pack is locked (showing folders only): ${packId}`);
     return;
   }
 
@@ -177,6 +184,10 @@ export async function seedEquipmentCompendium({
       toUpdate.push(patch);
     }
   }
+
+  console.log(
+    `[${systemId}] Equipment seed plan: create=${toCreate.length} update=${toUpdate.length} (pack=${packId})`
+  );
 
   if (toCreate.length) {
     await Item.createDocuments(toCreate, { pack: pack.collection, keepId: false });
@@ -271,18 +282,18 @@ function buildNonDestructivePatch(doc, seed, folderIdsByPath, systemId, seedVers
   const patch = {};
   let changed = false;
 
-  // -----------------------------------------
-  // Determine if THIS existing item is seeded.
-  // We only "enforce" placement for seeded docs.
-  // -----------------------------------------
+  // Seed identity (if present)
   const existingSeedKey = getProperty(doc, `flags.${systemId}.seedKey`);
   const isSeeded = !!existingSeedKey;
 
-  // -----------------------------------------
-  // Folder placement: AUTHORITATIVE for seeded
-  // -----------------------------------------
+  // We matched this doc to a seed entry (by seedKey or by name), so we treat it as managed.
+  // This allows us to fix folder placement even for older/unseeded items, while still not
+  // overwriting user-modified data fields.
+  const shouldManage = isSeeded || !existingSeedKey;
+
+  // Folder placement: AUTHORITATIVE for managed docs
   const desiredFolderId = folderIdsByPath.get(pathKey(seed.folderPath)) ?? null;
-  if (isSeeded && desiredFolderId && doc.folder?.id !== desiredFolderId) {
+  if (shouldManage && desiredFolderId && doc.folder?.id !== desiredFolderId) {
     patch.folder = desiredFolderId;
     changed = true;
   }
