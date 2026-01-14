@@ -12,6 +12,23 @@
  * IMPORTANT:
  * - This is NOT a migration system.
  * - Normalization here is runtime-only (keeps data consistent for UI + mechanics).
+ *
+ * Equipment Derived-Field Contract (Phase 1 foundation):
+ * - Weapon derived (read-only targets for sheets):
+ *   system.weapon.baseDamagePerSuccess   (from weaponType)
+ *   system.weapon.rankMultiplier         (from itemRank)
+ *   system.weapon.totalDamagePerSuccess  ((base + bonus) * rankMultiplier)
+ * - Weapon persisted (player editable):
+ *   system.weapon.bonusDamagePerSuccess
+ * - Armor derived:
+ *   system.armor.rankMultiplier          (from itemRank)
+ *   system.armor.totalArmor              ((baseArmor + bonusArmor) * rankMultiplier)
+ * - Armor persisted (player editable):
+ *   system.armor.bonusArmor
+ *
+ * Legacy compatibility:
+ * - We keep system.weapon.damagePerSuccess and system.weapon.actionCost populated
+ *   at runtime for any existing UI/templates still reading those fields.
  */
 
 /* -------------------------------------------- */
@@ -257,9 +274,12 @@ export function normalizeEquipmentSystem(system) {
   system.type = coerceEnum(system.type, EQUIPMENT_TYPE_KEYS, "weapon");
 
   // Compute rank multiplier (derived)
-  const rankMult = ITEM_RANK_MULTIPLIER[system.itemRank] ?? 1;
+  const rankMult = coerceNumberOrZero(ITEM_RANK_MULTIPLIER[system.itemRank] ?? 1);
 
-  // Weapon subtree
+  /* ---------------------------------------- */
+  /* Weapon subtree                            */
+  /* ---------------------------------------- */
+
   if (!system.weapon || typeof system.weapon !== "object") system.weapon = {};
 
   system.weapon.category = coerceEnum(system.weapon.category, WEAPON_CATEGORY_KEYS, "");
@@ -272,11 +292,11 @@ export function normalizeEquipmentSystem(system) {
     system.weapon.weaponType = "";
   }
 
-  // Legacy fields (keep coerced for backward compatibility)
+  // Legacy fields (coerce only; kept for compatibility)
   system.weapon.damagePerSuccess = coerceNumberOrZero(system.weapon.damagePerSuccess);
   system.weapon.actionCost = coerceNumberOrZero(system.weapon.actionCost);
 
-  // Capture raw bonus fields BEFORE coercion so we can safely detect "missing" (undefined)
+  // Capture raw bonus fields BEFORE coercion so we can detect "missing" (undefined)
   const rawBonusDps = system.weapon.bonusDamagePerSuccess;
   const rawActionMod = system.weapon.actionCostMod;
 
@@ -285,8 +305,8 @@ export function normalizeEquipmentSystem(system) {
   system.weapon.actionCostMod = coerceNumberOrZero(system.weapon.actionCostMod);
 
   // Legacy mapping (runtime-only):
-  // Only map legacy → bonus when the bonus field was actually missing (undefined),
-  // so a legitimate 0 bonus is never overwritten.
+  // If this item predates the bonus fields, treat legacy damagePerSuccess/actionCost
+  // as the "bonus" fields only when bonus fields are truly absent (undefined).
   if (rawBonusDps === undefined && system.weapon.damagePerSuccess !== 0) {
     system.weapon.bonusDamagePerSuccess = system.weapon.damagePerSuccess;
   }
@@ -294,31 +314,37 @@ export function normalizeEquipmentSystem(system) {
     system.weapon.actionCostMod = system.weapon.actionCost;
   }
 
-  // Keep editable for now (per your requirements)
+  // Keep editable for now (per your current schema)
   system.weapon.range = coerceNumberOrZero(system.weapon.range);
 
   system.weapon.damageType1 = (system.weapon.damageType1 ?? "").toString();
   system.weapon.damageType2 = (system.weapon.damageType2 ?? "").toString();
   system.weapon.damageType3 = (system.weapon.damageType3 ?? "").toString();
 
-  // Weapon derived values
+  // Weapon derived values (authoritative)
   const wt = (system.weapon.weaponType ?? "").toString();
-  const baseDamage = WEAPON_BASE_DAMAGE_BY_TYPE[wt] ?? 0;
-  const baseActionCost = WEAPON_BASE_ACTION_COST_BY_TYPE[wt] ?? 0;
+  const baseDamage = coerceNumberOrZero(WEAPON_BASE_DAMAGE_BY_TYPE[wt] ?? 0);
+  const baseActionCost = coerceNumberOrZero(WEAPON_BASE_ACTION_COST_BY_TYPE[wt] ?? 0);
 
   const bonusDamage = coerceNumberOrZero(system.weapon.bonusDamagePerSuccess);
   const actionCostMod = coerceNumberOrZero(system.weapon.actionCostMod);
 
-  system.weapon.baseDamagePerSuccess = coerceNumberOrZero(baseDamage);
-  system.weapon.baseActionCost = coerceNumberOrZero(baseActionCost);
-  system.weapon.rankMultiplier = coerceNumberOrZero(rankMult);
+  system.weapon.baseDamagePerSuccess = baseDamage;
+  system.weapon.rankMultiplier = rankMult;
+  system.weapon.totalDamagePerSuccess = (baseDamage + bonusDamage) * rankMult;
 
-  system.weapon.totalDamagePerSuccess =
-    (system.weapon.baseDamagePerSuccess + bonusDamage) * system.weapon.rankMultiplier;
+  // Action cost derived (not required by the Phase 1 manifest, but safe + useful)
+  system.weapon.baseActionCost = baseActionCost;
+  system.weapon.totalActionCost = Math.max(0, baseActionCost + actionCostMod);
 
-  system.weapon.totalActionCost = Math.max(0, system.weapon.baseActionCost + actionCostMod);
+  // Legacy sync (runtime-only): keep older UI/templates functional
+  system.weapon.damagePerSuccess = system.weapon.totalDamagePerSuccess;
+  system.weapon.actionCost = system.weapon.totalActionCost;
 
-  // Armor subtree
+  /* ---------------------------------------- */
+  /* Armor subtree                             */
+  /* ---------------------------------------- */
+
   if (!system.armor || typeof system.armor !== "object") system.armor = {};
 
   // armorType = armor class (light|medium|heavy)
@@ -334,7 +360,7 @@ export function normalizeEquipmentSystem(system) {
     system.armor.armorName = "";
   }
 
-  // Legacy field (currently editable armor number)
+  // Legacy editable field (left intact for now; sheet will eventually stop using it)
   system.armor.value = coerceNumberOrZero(system.armor.value);
 
   // Capture raw bonus field BEFORE coercion so we can detect "missing"
@@ -343,21 +369,24 @@ export function normalizeEquipmentSystem(system) {
   // Player-editable (persisted) bonus field
   system.armor.bonusArmor = coerceNumberOrZero(system.armor.bonusArmor);
 
-  // Legacy mapping (runtime-only): only when missing
+  // Legacy mapping (runtime-only): if item predates bonusArmor, use legacy value as bonus only when missing
   if (rawBonusArmor === undefined && system.armor.value !== 0) {
     system.armor.bonusArmor = system.armor.value;
   }
 
-  // Armor derived values
+  // Armor derived values (authoritative)
   const an = (system.armor.armorName ?? "").toString();
-  const baseArmor = ARMOR_BASE_BY_NAME[an] ?? 0;
+  const baseArmor = coerceNumberOrZero(ARMOR_BASE_BY_NAME[an] ?? 0);
   const bonusArmor = coerceNumberOrZero(system.armor.bonusArmor);
 
-  system.armor.baseArmor = coerceNumberOrZero(baseArmor);
-  system.armor.rankMultiplier = coerceNumberOrZero(rankMult);
-  system.armor.totalArmor = (system.armor.baseArmor + bonusArmor) * system.armor.rankMultiplier;
+  system.armor.baseArmor = baseArmor;
+  system.armor.rankMultiplier = rankMult;
+  system.armor.totalArmor = (baseArmor + bonusArmor) * rankMult;
 
-  // Misc subtree
+  /* ---------------------------------------- */
+  /* Misc subtree                              */
+  /* ---------------------------------------- */
+
   if (!system.misc || typeof system.misc !== "object") system.misc = {};
   system.misc.armor = coerceNumberOrZero(system.misc.armor);
 
