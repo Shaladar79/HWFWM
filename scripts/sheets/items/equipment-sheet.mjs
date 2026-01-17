@@ -143,7 +143,8 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
     context.affinityOptions = toOptions(affinityCatalog);
     context.resistanceOptions = toOptions(resistanceCatalog);
 
-    // ----- Safe normalization (UI-facing only; document class computes derived values) -----
+    // ----- UI-facing safety defaults only (NO DERIVED MATH HERE) -----
+    // The Item document class (HwfwmItem) is authoritative for derived fields.
     const sys = context.system;
 
     // Persistent item rank
@@ -171,23 +172,22 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
       sys.weapon.weaponType = "";
     }
 
-    // Legacy fields: keep present so older items don’t explode (not rendered/edited anymore)
-    sys.weapon.damagePerSuccess ??= 0;
-    sys.weapon.actionCost ??= 0;
+    // Ensure persisted bonus fields exist.
+    // DO NOT default these from legacy fields here (that is document-class responsibility).
+    sys.weapon.bonusDamagePerSuccess ??= 0;
+    sys.weapon.actionCostMod ??= 0;
 
-    // Persisted bonus fields used by the updated sheet
-    // NOTE: default from legacy runtime-only if missing.
-    sys.weapon.bonusDamagePerSuccess ??= sys.weapon.damagePerSuccess ?? 0;
-    sys.weapon.actionCostMod ??= sys.weapon.actionCost ?? 0;
-
-    // Derived fields are computed by HwfwmItem.normalizeEquipmentSystem()
-    // but ensure keys exist so the template never renders "undefined".
+    // Ensure derived keys exist so the template never renders "undefined".
     sys.weapon.baseDamagePerSuccess ??= 0;
     sys.weapon.rankMultiplier ??= 1;
     sys.weapon.totalDamagePerSuccess ??= 0;
 
     sys.weapon.baseActionCost ??= 0;
     sys.weapon.totalActionCost ??= 0;
+
+    // Legacy keys may still be referenced elsewhere; ensure they exist but do not set values here.
+    sys.weapon.damagePerSuccess ??= 0;
+    sys.weapon.actionCost ??= 0;
 
     // Range stays editable for now
     sys.weapon.range ??= 0;
@@ -209,16 +209,17 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
       sys.armor.armorName = "";
     }
 
-    // Legacy field: keep present (not rendered/edited anymore)
-    sys.armor.value ??= 0;
+    // Ensure persisted bonus field exists.
+    // DO NOT default from legacy value here (document-class responsibility).
+    sys.armor.bonusArmor ??= 0;
 
-    // Persisted bonus field used by the updated sheet
-    sys.armor.bonusArmor ??= sys.armor.value ?? 0;
-
-    // Derived fields (computed by document class) – ensure present
+    // Ensure derived keys exist
     sys.armor.baseArmor ??= 0;
     sys.armor.rankMultiplier ??= 1;
     sys.armor.totalArmor ??= 0;
+
+    // Legacy key present for safety
+    sys.armor.value ??= 0;
 
     // Misc
     sys.misc.armor ??= 0;
@@ -429,9 +430,16 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
       return;
     }
 
-    // NEW: when rank changes, force a refresh so derived fields (multiplier/totals) visibly update immediately.
-    // (Derived values are computed in the Item document class; this just ensures the sheet re-renders promptly.)
-    if (name === "system.itemRank") {
+    // Re-render after updates that commonly affect derived fields
+    // (Derived values are computed by the Item document class; we just want the UI to refresh promptly.)
+    if (
+      name === "system.itemRank" ||
+      name === "system.weapon.weaponType" ||
+      name === "system.weapon.bonusDamagePerSuccess" ||
+      name === "system.weapon.actionCostMod" ||
+      name === "system.armor.armorName" ||
+      name === "system.armor.bonusArmor"
+    ) {
       this.render(false);
       return;
     }
