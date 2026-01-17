@@ -22,10 +22,16 @@ export class HwfwmActor extends Actor {
     system.resources = system.resources ?? {};
     system.details = system.details ?? {};
     system.specialties = system.specialties ?? {}; // ✅ ensure exists (manual + granted merge surface)
+    system.defense = system.defense ?? { base: 0, mod: 0, total: 0 };
 
     const toNum = (v, fallback = 0) => {
       const n = Number(v);
       return Number.isFinite(n) ? n : fallback;
+    };
+
+    const clamp = (v, min, max) => {
+      const n = toNum(v, min);
+      return Math.min(Math.max(n, min), max);
     };
 
     // ---------------------------------------------
@@ -133,6 +139,7 @@ export class HwfwmActor extends Actor {
         role: roleMod,
         background: backgroundMod,
         roleByRankPct: 0, // will be applied after derived rank is computed
+        equipmentFlat: 0, // will be applied after equipment is aggregated
         derivedTotal: derivedModTotal
       };
 
@@ -276,20 +283,24 @@ export class HwfwmActor extends Actor {
     system.resources.stamina = system.resources.stamina ?? { value: 0, max: 0 };
     system.resources.trauma = system.resources.trauma ?? { value: 0, max: 0 };
 
+    // Ensure other status nodes exist for later phases / UI safety
+    system.resources.pace = system.resources.pace ?? { value: 0 };
+    system.resources.reaction = system.resources.reaction ?? { value: 0 };
+    system.resources.shielding = system.resources.shielding ?? { value: 0 };
+    system.resources.armor = system.resources.armor ?? { value: 0, max: 0 };
+    system.resources.naturalArmor ??= 0;
+
     const lfPre = BASE_RESOURCE_NORMAL + raceAdj.lifeForce + roleAdj.lifeForce + backgroundAdj.lifeForce;
     const manaPre = BASE_RESOURCE_NORMAL + raceAdj.mana + roleAdj.mana + backgroundAdj.mana;
     const stamPre = BASE_RESOURCE_NORMAL + raceAdj.stamina + roleAdj.stamina + backgroundAdj.stamina;
 
-    const lfMax = Math.max(0, Math.round(lfPre * mult));
-    const manaMax = Math.max(0, Math.round(manaPre * mult));
-    const stamMax = Math.max(0, Math.round(stamPre * mult));
-
-    system.resources.lifeForce.max = lfMax;
-    system.resources.mana.max = manaMax;
-    system.resources.stamina.max = stamMax;
+    let lfMax = Math.max(0, Math.round(lfPre * mult));
+    let manaMax = Math.max(0, Math.round(manaPre * mult));
+    let stamMax = Math.max(0, Math.round(stamPre * mult));
 
     system.resources.trauma.max = Math.max(0, toNum(RANK_TRAUMA?.[derivedRankKey], 0));
 
+    // Clamp current values
     system.resources.lifeForce.value = Math.min(toNum(system.resources.lifeForce.value, 0), lfMax);
     system.resources.mana.value = Math.min(toNum(system.resources.mana.value, 0), manaMax);
     system.resources.stamina.value = Math.min(toNum(system.resources.stamina.value, 0), stamMax);
@@ -298,11 +309,6 @@ export class HwfwmActor extends Actor {
     // -----------------------------
     // 4b) Recovery rates + Natural Armor (derived, read-only surfaces)
     // -----------------------------
-    // Ensure nested keys exist
-    system.resources.mana = system.resources.mana ?? { value: 0, max: 0 };
-    system.resources.stamina = system.resources.stamina ?? { value: 0, max: 0 };
-    system.resources.lifeForce = system.resources.lifeForce ?? { value: 0, max: 0 };
-
     const baseRec = RANK_BASE_RECOVERY?.[derivedRankKey] ?? {};
     const baseManaRec = toNum(baseRec.mana, 0);
     const baseStaminaRec = toNum(baseRec.stamina, 0);
@@ -329,7 +335,7 @@ export class HwfwmActor extends Actor {
       backgroundAdj.lifeForceRecovery +
       toNum(roleByRank?.status?.lifeForceRecovery, 0);
 
-    const naturalArmor =
+    let naturalArmor =
       raceAdj.naturalArmor +
       roleAdj.naturalArmor +
       backgroundAdj.naturalArmor +
@@ -352,12 +358,214 @@ export class HwfwmActor extends Actor {
     // -----------------------------
     // 5) Pace (race + rank + role-by-rank pace hook)
     // -----------------------------
-    system.resources.pace = system.resources.pace ?? { value: 0 };
-
     const paceRank = toNum(RANK_PACE_MOD?.[derivedRankKey], 0);
     system.resources.pace.value = Math.max(0, paceRank + raceAdj.pace + rolePaceBonus);
 
+    // -----------------------------
+    // 6) Equipment Integration (TEST-READY)
+    //    - Reads equipped equipment items
+    //    - Aggregates armor totals + adjustment deltas
+    //    - Applies equipment adjustments only when item.system.equipped === true
+    //    - Stores a debug snapshot under system._derived.equipment
+    // -----------------------------
+
+    const allItems = Array.isArray(this.items) ? this.items : [];
+    const equippedEquipment = allItems.filter((it) => {
+      if (!it || it.type !== "equipment") return false;
+      const eq = it.system?.equipped;
+      return eq === true; // strict: only true counts as equipped
+    });
+
+    const eqWeapons = [];
+    const eqArmors = [];
+    const eqMisc = [];
+
+    // Aggregates from equipment adjustments (only equipped)
+    const eqAttrFlat = { power: 0, speed: 0, spirit: 0, recovery: 0 };
+
+    // For max resources: pct + flat for LF/Mana/Stamina; flat for others
+    const eqResPct = { lifeForce: 0, mana: 0, stamina: 0 };
+    const eqResFlat = {
+      lifeForce: 0,
+      mana: 0,
+      stamina: 0,
+      trauma: 0,
+      pace: 0,
+      reaction: 0,
+      defense: 0,
+      naturalArmor: 0
+    };
+
+    // Armor totals from equipped items
+    let eqArmorTotal = 0; // from armor items (system.armor.totalArmor)
+    let eqMiscArmor = 0;  // from misc items (system.misc.armor)
+
+    // Convenience record for UI/testing
+    const packSummary = (it) => ({
+      id: it.id,
+      uuid: it.uuid,
+      name: it.name,
+      type: String(it.system?.type ?? ""),
+      itemRank: String(it.system?.itemRank ?? ""),
+      img: it.img
+    });
+
+    for (const it of equippedEquipment) {
+      const s = it.system ?? {};
+      const eqType = String(s.type ?? "");
+
+      if (eqType === "weapon") {
+        eqWeapons.push({
+          ...packSummary(it),
+          weaponType: String(s.weapon?.weaponType ?? ""),
+          damagePerSuccess: toNum(s.weapon?.totalDamagePerSuccess ?? s.weapon?.damagePerSuccess ?? 0, 0),
+          actionCost: toNum(s.weapon?.totalActionCost ?? s.weapon?.actionCost ?? 0, 0)
+        });
+      } else if (eqType === "armor") {
+        const armorVal = toNum(s.armor?.totalArmor ?? s.armor?.value ?? 0, 0);
+        eqArmorTotal += armorVal;
+
+        eqArmors.push({
+          ...packSummary(it),
+          armorType: String(s.armor?.armorType ?? ""),
+          armorName: String(s.armor?.armorName ?? ""),
+          totalArmor: armorVal
+        });
+      } else {
+        const miscArmor = toNum(s.misc?.armor ?? 0, 0);
+        eqMiscArmor += miscArmor;
+
+        eqMisc.push({
+          ...packSummary(it),
+          miscArmor
+        });
+      }
+
+      // Apply equipment adjustments (if any)
+      const adj = s.adjustments ?? {};
+      const adjAttrs = adj.attributes ?? {};
+      eqAttrFlat.power += toNum(adjAttrs.power?.flat ?? 0, 0);
+      eqAttrFlat.speed += toNum(adjAttrs.speed?.flat ?? 0, 0);
+      eqAttrFlat.spirit += toNum(adjAttrs.spirit?.flat ?? 0, 0);
+      eqAttrFlat.recovery += toNum(adjAttrs.recovery?.flat ?? 0, 0);
+
+      const adjRes = adj.resources ?? {};
+      // pct+flat resources
+      eqResPct.lifeForce += toNum(adjRes.lifeForce?.pct ?? 0, 0);
+      eqResFlat.lifeForce += toNum(adjRes.lifeForce?.flat ?? 0, 0);
+
+      eqResPct.mana += toNum(adjRes.mana?.pct ?? 0, 0);
+      eqResFlat.mana += toNum(adjRes.mana?.flat ?? 0, 0);
+
+      eqResPct.stamina += toNum(adjRes.stamina?.pct ?? 0, 0);
+      eqResFlat.stamina += toNum(adjRes.stamina?.flat ?? 0, 0);
+
+      // flat-only
+      eqResFlat.trauma += toNum(adjRes.trauma?.flat ?? 0, 0);
+      eqResFlat.pace += toNum(adjRes.pace?.flat ?? 0, 0);
+      eqResFlat.reaction += toNum(adjRes.reaction?.flat ?? 0, 0);
+      eqResFlat.defense += toNum(adjRes.defense?.flat ?? 0, 0);
+      eqResFlat.naturalArmor += toNum(adjRes.naturalArmor?.flat ?? 0, 0);
+    }
+
+    // 6a) Apply equipment flat attribute adjustments to totals (post-race/role/background)
+    for (const a of attrs) {
+      const node = system.attributes?.[a];
+      if (!node) continue;
+
+      const add = toNum(eqAttrFlat[a], 0);
+      if (!add) continue;
+
+      node.total = toNum(node.total, 0) + add;
+
+      node._derived = node._derived ?? {};
+      node._derived.modBreakdown = node._derived.modBreakdown ?? {};
+      node._derived.modBreakdown.equipmentFlat = add;
+    }
+
+    // 6b) Apply equipment resource adjustments
+    // We apply % then flat on the already-derived max values to keep the ordering stable.
+    const applyPctFlatToMax = (baseMax, pct, flat) => {
+      const m = toNum(baseMax, 0);
+      const p = toNum(pct, 0);
+      const f = toNum(flat, 0);
+      const scaled = m * (1 + (p / 100));
+      return Math.max(0, Math.round(scaled + f));
+    };
+
+    lfMax = applyPctFlatToMax(lfMax, eqResPct.lifeForce, eqResFlat.lifeForce);
+    manaMax = applyPctFlatToMax(manaMax, eqResPct.mana, eqResFlat.mana);
+    stamMax = applyPctFlatToMax(stamMax, eqResPct.stamina, eqResFlat.stamina);
+
+    // Clamp current values again after equipment adjustments
+    system.resources.lifeForce.max = lfMax;
+    system.resources.mana.max = manaMax;
+    system.resources.stamina.max = stamMax;
+
+    system.resources.lifeForce.value = clamp(system.resources.lifeForce.value, 0, lfMax);
+    system.resources.mana.value = clamp(system.resources.mana.value, 0, manaMax);
+    system.resources.stamina.value = clamp(system.resources.stamina.value, 0, stamMax);
+
+    // Flat-only resource effects
+    system.resources.trauma.max = Math.max(0, toNum(system.resources.trauma.max, 0) + toNum(eqResFlat.trauma, 0));
+    system.resources.trauma.value = clamp(system.resources.trauma.value, 0, system.resources.trauma.max);
+
+    system.resources.pace.value = Math.max(0, toNum(system.resources.pace.value, 0) + toNum(eqResFlat.pace, 0));
+    system.resources.reaction.value = Math.max(0, toNum(system.resources.reaction.value, 0) + toNum(eqResFlat.reaction, 0));
+
+    system.resources.naturalArmor = Math.max(
+      0,
+      toNum(system.resources.naturalArmor, 0) + toNum(eqResFlat.naturalArmor, 0)
+    );
+
+    // 6c) Armor total (equipped armor + misc armor)
+    const armorMax = Math.max(0, Math.round(eqArmorTotal + eqMiscArmor));
+    system.resources.armor.max = armorMax;
+
+    // Keep current armor value within max (if you want "armor as current", this supports it now)
+    system.resources.armor.value = clamp(system.resources.armor.value, 0, armorMax);
+
+    // 6d) Defense placeholder wiring (until your final defense formula is locked)
+    // If your system later defines defense.base from speed (or other), that should be set elsewhere.
+    // For now, we apply equipment defense flat as a modifier.
+    system.defense.base = toNum(system.defense.base, 0);
+    system.defense.mod = toNum(system.defense.mod, 0) + toNum(eqResFlat.defense, 0);
+    system.defense.total = system.defense.base + system.defense.mod;
+
+    // 6e) Store a debug snapshot for rapid testing/verification
+    system._derived.equipment = {
+      equippedCount: equippedEquipment.length,
+      weapons: eqWeapons,
+      armors: eqArmors,
+      misc: eqMisc,
+      totals: {
+        armorFromArmorItems: Math.round(eqArmorTotal),
+        armorFromMisc: Math.round(eqMiscArmor),
+        armorMax: system.resources.armor.max,
+        defenseFlat: Math.round(eqResFlat.defense),
+        naturalArmorFlat: Math.round(eqResFlat.naturalArmor),
+        paceFlat: Math.round(eqResFlat.pace),
+        reactionFlat: Math.round(eqResFlat.reaction),
+        resourcePct: {
+          lifeForce: Math.round(eqResPct.lifeForce),
+          mana: Math.round(eqResPct.mana),
+          stamina: Math.round(eqResPct.stamina)
+        },
+        resourceFlat: {
+          lifeForce: Math.round(eqResFlat.lifeForce),
+          mana: Math.round(eqResFlat.mana),
+          stamina: Math.round(eqResFlat.stamina)
+        },
+        attrFlat: {
+          power: Math.round(eqAttrFlat.power),
+          speed: Math.round(eqAttrFlat.speed),
+          spirit: Math.round(eqAttrFlat.spirit),
+          recovery: Math.round(eqAttrFlat.recovery)
+        }
+      }
+    };
+
+    // Avoid unused warning in some bundlers
     void backgroundKey;
   }
 }
-
