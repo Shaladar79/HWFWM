@@ -150,6 +150,9 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
     // Persistent item rank
     sys.itemRank = ITEM_RANK_KEYS.includes(String(sys.itemRank ?? "")) ? String(sys.itemRank) : "normal";
 
+    // Legendary flag: safe boolean default for templates
+    sys.legendary = !!sys.legendary;
+
     sys.equipped = !!sys.equipped;
 
     sys.description ??= "";
@@ -297,6 +300,10 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
     // Damage type options for dropdowns
     context.damageTypeOptions = this._toOptionsFromKeys(DAMAGE_TYPE_KEYS, (k) => this._titleCaseKey(k));
 
+    // Legendary UI gating (Iron+ only)
+    context._ui.canBeLegendary = sys.itemRank !== "normal";
+    if (!context._ui.canBeLegendary) sys.legendary = false;
+
     context.system = sys;
     return context;
   }
@@ -430,10 +437,24 @@ export class HwfwmEquipmentSheet extends HandlebarsApplicationMixin(
       return;
     }
 
+    // Enforce legendary rule at UI level too: if rank becomes Normal, clear legendary.
+    if (name === "system.itemRank") {
+      const newRank =
+        target instanceof HTMLSelectElement || target instanceof HTMLInputElement
+          ? String(target.value ?? "normal")
+          : "normal";
+
+      if (newRank === "normal" && this.document.system?.legendary) {
+        await this.document.update({ "system.legendary": false });
+      }
+
+      this.render(false);
+      return;
+    }
+
     // Re-render after updates that commonly affect derived fields
     // (Derived values are computed by the Item document class; we just want the UI to refresh promptly.)
     if (
-      name === "system.itemRank" ||
       name === "system.weapon.weaponType" ||
       name === "system.weapon.bonusDamagePerSuccess" ||
       name === "system.weapon.actionCostMod" ||
