@@ -71,6 +71,16 @@
             <option value="diamond" {{#if (eq system.itemRank "diamond")}}selected{{/if}}>Diamond</option>
           </select>
         </div>
+
+        {{#if _ui.canBeLegendary}}
+        <div class="hwfwm-field" style="grid-column: 1 / -1;">
+          <div class="hwfwm-label" style="color:#000;">Legendary</div>
+          <label style="display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" name="system.legendary" {{#if system.legendary}}checked{{/if}} />
+            <span style="color:#000;">This is a legendary item (can be ranked up via reforging)</span>
+          </label>
+        </div>
+        {{/if}}
       </div>
     </div>
 
