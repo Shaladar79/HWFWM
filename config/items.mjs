@@ -109,11 +109,11 @@ export const ARMOR_TYPES_BY_CLASS = Object.freeze({
  */
 export const ITEM_RANK_MULTIPLIER = Object.freeze({
   normal: 1.0,
-  iron: 1.0,
-  bronze: 1.0,
-  silver: 1.0,
-  gold: 1.0,
-  diamond: 1.0
+  iron: 1.5,
+  bronze: 2.2,
+  silver: 2.8,
+  gold: 3.5,
+  diamond: 5.0
 });
 
 /**
@@ -121,20 +121,20 @@ export const ITEM_RANK_MULTIPLIER = Object.freeze({
  * Placeholder numbers for now; you will fill real values later.
  */
 export const WEAPON_BASE_DAMAGE_BY_TYPE = Object.freeze({
-  Dagger: 0,
-  Sword: 0,
-  Axe: 0,
-  Mace: 0,
-  "Great Sword": 0,
-  "Battle Axe": 0,
-  Maul: 0,
-  Spear: 0,
-  Lance: 0,
-  Staff: 0,
-  Bow: 0,
-  Crossbow: 0,
-  Wand: 0,
-  Gun: 0
+  Dagger: 1,
+  Sword: 2,
+  Axe: 3,
+  Mace: 2,
+  "Great Sword": 4,
+  "Battle Axe": 5,
+  Maul: 4,
+  Spear: 3,
+  Lance: 4,
+  Staff: 2,
+  Bow: 2,
+  Crossbow: 3,
+  Wand: 2,
+  Gun: 3
 });
 
 /**
@@ -142,20 +142,20 @@ export const WEAPON_BASE_DAMAGE_BY_TYPE = Object.freeze({
  * Placeholder numbers for now; you will fill real values later.
  */
 export const WEAPON_BASE_ACTION_COST_BY_TYPE = Object.freeze({
-  Dagger: 0,
-  Sword: 0,
-  Axe: 0,
-  Mace: 0,
-  "Great Sword": 0,
-  "Battle Axe": 0,
-  Maul: 0,
-  Spear: 0,
-  Lance: 0,
-  Staff: 0,
-  Bow: 0,
-  Crossbow: 0,
-  Wand: 0,
-  Gun: 0
+  Dagger: 2,
+  Sword: 3,
+  Axe: 4,
+  Mace: 4,
+  "Great Sword": 5,
+  "Battle Axe": 6,
+  Maul: 6,
+  Spear: 3,
+  Lance: 4,
+  Staff: 2,
+  Bow: 3,
+  Crossbow: 5,
+  Wand: 2,
+  Gun: 3
 });
 
 /**
@@ -163,15 +163,15 @@ export const WEAPON_BASE_ACTION_COST_BY_TYPE = Object.freeze({
  * Placeholder numbers for now; you will fill real values later.
  */
 export const ARMOR_BASE_BY_NAME = Object.freeze({
-  "Padded Armor": 0,
-  Robe: 0,
-  "Combat Robe": 0,
-  Leather: 0,
-  "Studded Leather": 0,
-  Chainmail: 0,
-  "Scale Mail": 0,
-  "Half-Plate": 0,
-  "Full Plate": 0
+  "Padded Armor": 5,
+  Robe: 5,
+  "Combat Robe": 10,
+  Leather: 15,
+  "Studded Leather": 20,
+  Chainmail: 30,
+  "Scale Mail": 35,
+  "Half-Plate": 40,
+  "Full Plate": 50
 });
 
 /* -------------------------------------------- */
@@ -269,6 +269,12 @@ export function normalizeEquipmentSystem(system) {
   system.description = (system.description ?? "").toString();
   system.notes = (system.notes ?? "").toString();
   system.equipped = coerceBoolean(system.equipped);
+
+  // Legendary flag:
+  // - Persisted in template.json
+  // - Valid only for Iron+; Normal rank cannot be legendary
+  system.legendary = coerceBoolean(system.legendary);
+  if (system.itemRank === "normal") system.legendary = false;
 
   // Top-level equipment branch
   system.type = coerceEnum(system.type, EQUIPMENT_TYPE_KEYS, "weapon");
