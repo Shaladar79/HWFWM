@@ -112,7 +112,13 @@
 
         <div class="hwfwm-field">
           <div class="hwfwm-label" style="color:#000;">Bonus Damage / Success</div>
-          <input type="number" name="system.weapon.bonusDamagePerSuccess" value="{{system.weapon.bonusDamagePerSuccess}}" step="1" placeholder="0" />
+          <input
+            type="number"
+            name="system.weapon.bonusDamagePerSuccess"
+            value="{{system.weapon.bonusDamagePerSuccess}}"
+            step="1"
+            placeholder="0"
+          />
         </div>
 
         <div class="hwfwm-field">
@@ -139,7 +145,13 @@
 
         <div class="hwfwm-field">
           <div class="hwfwm-label" style="color:#000;">Action Cost Modifier</div>
-          <input type="number" name="system.weapon.actionCostMod" value="{{system.weapon.actionCostMod}}" step="1" placeholder="0" />
+          <input
+            type="number"
+            name="system.weapon.actionCostMod"
+            value="{{system.weapon.actionCostMod}}"
+            step="1"
+            placeholder="0"
+          />
         </div>
 
         <div class="hwfwm-field">
@@ -187,6 +199,22 @@
             </div>
           </div>
         </div>
+
+        <!-- Optional: legacy visibility block, hidden by default (helps debugging without altering calculations) -->
+        <details style="grid-column: 1 / -1; margin-top: 6px;">
+          <summary style="cursor:pointer; color:#000;">Legacy Fields (Debug)</summary>
+          <div class="hwfwm-grid" style="margin-top: 8px;">
+            <div class="hwfwm-field">
+              <div class="hwfwm-label" style="color:#000;">damagePerSuccess (legacy)</div>
+              <input type="number" value="{{system.weapon.damagePerSuccess}}" step="1" readonly placeholder="0" />
+            </div>
+            <div class="hwfwm-field">
+              <div class="hwfwm-label" style="color:#000;">actionCost (legacy)</div>
+              <input type="number" value="{{system.weapon.actionCost}}" step="1" readonly placeholder="0" />
+            </div>
+          </div>
+        </details>
+
       </div>
     </div>
     {{/if}}
@@ -240,6 +268,18 @@
           <div class="hwfwm-label" style="color:#000;">Total Armor</div>
           <input type="number" value="{{system.armor.totalArmor}}" step="1" readonly placeholder="0" />
         </div>
+
+        <!-- Optional: legacy visibility block, hidden by default (helps debugging without altering calculations) -->
+        <details style="grid-column: 1 / -1; margin-top: 6px;">
+          <summary style="cursor:pointer; color:#000;">Legacy Fields (Debug)</summary>
+          <div class="hwfwm-grid" style="margin-top: 8px;">
+            <div class="hwfwm-field">
+              <div class="hwfwm-label" style="color:#000;">value (legacy)</div>
+              <input type="number" value="{{system.armor.value}}" step="1" readonly placeholder="0" />
+            </div>
+          </div>
+        </details>
+
       </div>
     </div>
     {{/if}}
