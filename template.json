@@ -144,6 +144,7 @@
         "type": "weapon",
         "equipped": false,
         "itemRank": "normal",
+        "legendary": false,
         "description": "",
         "notes": "",
         "weapon": {
