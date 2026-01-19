@@ -557,9 +557,16 @@ export class HwfwmActor extends Actor {
     //    - Passive always-on modifiers (no "equipped" checkbox)
     //    - Mirrors equipment adjustment model
     //    - Grants are recorded to system._derived.grants for now (non-persisted)
+    //
+    // Rules:
+    // - Only apply talents that are enabled !== false
+    // - Stacking mechanics are a later phase; for now, we sum all enabled talent adjustments.
     // -----------------------------
-
-    const talents = allItems.filter((it) => it && it.type === "talent");
+    const talents = allItems.filter((it) => {
+      if (!it || it.type !== "talent") return false;
+      const enabled = it.system?.enabled;
+      return enabled !== false; // default true if missing
+    });
 
     const tAttrFlat = { power: 0, speed: 0, spirit: 0, recovery: 0 };
 
@@ -651,7 +658,7 @@ export class HwfwmActor extends Actor {
       node._derived.modBreakdown.talentFlat = add;
     }
 
-    // 7b) Apply talent resource adjustments (% then flat)
+    // 7b) Apply talent resource adjustments (% then flat) on top of equipment-adjusted values
     lfMax = applyPctFlatToMax(lfMax, tResPct.lifeForce, tResFlat.lifeForce);
     manaMax = applyPctFlatToMax(manaMax, tResPct.mana, tResFlat.mana);
     stamMax = applyPctFlatToMax(stamMax, tResPct.stamina, tResFlat.stamina);
@@ -669,6 +676,7 @@ export class HwfwmActor extends Actor {
 
     system.resources.pace.value = Math.max(0, toNum(system.resources.pace.value, 0) + toNum(tResFlat.pace, 0));
 
+    // Reaction remains player-editable; store derived-only contribution
     system.resources.reaction._derived = system.resources.reaction._derived ?? {};
     system.resources.reaction._derived.talentFlat = toNum(tResFlat.reaction, 0);
 
