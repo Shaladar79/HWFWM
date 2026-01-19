@@ -142,15 +142,42 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
     signal
   });
 
+  // ---------------------------------------------------------------------------
+  // Treasures subtabs: only "equipment" and "inventory" are valid now.
+  // If a legacy actor has "consumables" persisted, force-fallback to "equipment"
+  // and persist the correction.
+  // ---------------------------------------------------------------------------
+  const sanitizeTreasuresTab = (tab) => {
+    const t = String(tab ?? "").trim();
+    return t === "inventory" ? "inventory" : "equipment";
+  };
+
+  // Ensure sheet state is sane before activateTabGroup reads it
+  sheet._activeSubTabs.treasures = sanitizeTreasuresTab(
+    sheet._activeSubTabs.treasures ?? sheet.document?.system?._ui?.treasuresSubTab ?? "equipment"
+  );
+
+  // If actor has legacy persisted value, correct it once
+  const persistedTreasuresTab = sanitizeTreasuresTab(sheet.document?.system?._ui?.treasuresSubTab ?? "equipment");
+  if ((sheet.document?.system?._ui?.treasuresSubTab ?? "equipment") !== persistedTreasuresTab) {
+    sheet.document?.update?.({ "system._ui.treasuresSubTab": persistedTreasuresTab }).catch(() => {});
+  }
+
   activateTabGroup(sheet, root, {
     group: "treasures",
     navSelector: '.hwfwm-tabs[data-group="treasures"]',
     defaultTab: "equipment",
     getPersisted: () => sheet._activeSubTabs.treasures,
     setPersisted: (t) => {
-      sheet._activeSubTabs.treasures = t;
-      const current = sheet.document?.system?._ui?.treasuresSubTab ?? "equipment";
-      if (current !== t) sheet.document?.update?.({ "system._ui.treasuresSubTab": t }).catch(() => {});
+      const safe = sanitizeTreasuresTab(t);
+      sheet._activeSubTabs.treasures = safe;
+
+      const currentRaw = sheet.document?.system?._ui?.treasuresSubTab ?? "equipment";
+      const currentSafe = sanitizeTreasuresTab(currentRaw);
+
+      if (currentSafe !== safe) {
+        sheet.document?.update?.({ "system._ui.treasuresSubTab": safe }).catch(() => {});
+      }
     },
     signal
   });
