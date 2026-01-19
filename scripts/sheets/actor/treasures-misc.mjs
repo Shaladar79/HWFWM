@@ -24,6 +24,65 @@ export function getFlatMiscCatalog() {
   return out;
 }
 
+/**
+ * Per-actor stored shape (backward compatible):
+ * system.treasures.miscItems.<key> = {
+ *   name, quantity, notes,
+ *   equipped?, rank?,
+ *   weightOverride?, valueOverride?
+ * }
+ *
+ * Catalog remains authoritative for static metadata (group/category, baseWeight, baseValue, tags, description, etc).
+ */
+
+/** Coerce helpers */
+function toStr(v) {
+  return String(v ?? "").trim();
+}
+
+function toNumClamp0(v) {
+  const n = Number(v);
+  return Number.isFinite(n) ? Math.max(0, n) : 0;
+}
+
+function toBool(v) {
+  if (typeof v === "boolean") return v;
+  const s = String(v ?? "").trim().toLowerCase();
+  return s === "true" || s === "1" || s === "on" || s === "yes";
+}
+
+function normalizeOptionalNumber(v) {
+  // Accept blank as "no override"
+  const s = String(v ?? "").trim();
+  if (s === "") return null;
+  const n = Number(s);
+  return Number.isFinite(n) ? Math.max(0, n) : null;
+}
+
+function ensureMiscEntryShape(existing, key, catalogEntry) {
+  const entryName = existing?.name ?? catalogEntry?.name ?? key;
+
+  return {
+    name: entryName,
+    quantity: toNumClamp0(existing?.quantity ?? 1),
+    notes: toStr(existing?.notes ?? catalogEntry?.notes ?? ""),
+
+    // New per-actor fields (optional)
+    equipped: toBool(existing?.equipped ?? false),
+    rank: toStr(existing?.rank ?? ""),
+
+    // Overrides (optional; null means "use catalog/base display value")
+    weightOverride:
+      existing?.weightOverride === null || existing?.weightOverride === undefined
+        ? null
+        : normalizeOptionalNumber(existing?.weightOverride),
+    valueOverride:
+      existing?.valueOverride === null || existing?.valueOverride === undefined
+        ? null
+        : normalizeOptionalNumber(existing?.valueOverride)
+  };
+}
+
 export function openAddMiscDialog(sheet) {
   const catalog = getFlatMiscCatalog();
 
@@ -35,8 +94,6 @@ export function openAddMiscDialog(sheet) {
     { value: "Quintessence", label: "Quintessence" },
     { value: "Other", label: "Other" }
   ];
-
-  const toStr = (v) => String(v ?? "").trim();
 
   const rowsForGroup = (groupName) =>
     Object.entries(catalog)
@@ -119,9 +176,7 @@ export function openAddMiscDialog(sheet) {
 
             // CRITICAL: read the selected ITEM KEY (miscKey), not the type (miscType)
             const key = toStr(form.querySelector('select[name="miscKey"]')?.value);
-            const qtyRaw = form.querySelector('input[name="miscQty"]')?.value ?? "1";
-            const qtyNum = Number(qtyRaw);
-            const qty = Number.isFinite(qtyNum) ? Math.max(0, qtyNum) : 0;
+            const qty = toNumClamp0(form.querySelector('input[name="miscQty"]')?.value ?? "1");
 
             // If nothing selected, do nothing
             if (!key || qty <= 0) return;
@@ -137,23 +192,18 @@ export function openAddMiscDialog(sheet) {
             }
 
             const current = foundry.utils.deepClone(sheet.document?.system?.treasures?.miscItems ?? {});
+            const existing = current[key];
 
-            if (current[key]) {
-              const existingQty = Number(current[key]?.quantity ?? 0);
-              const safeExistingQty = Number.isFinite(existingQty) ? existingQty : 0;
+            // Backward compatible merge:
+            // - keep name/notes if already customized on actor
+            // - accumulate quantity
+            // - initialize new per-actor fields with sane defaults
+            const normalized = ensureMiscEntryShape(existing, key, entry);
 
-              current[key] = {
-                name: current[key]?.name ?? entry.name ?? key,
-                notes: current[key]?.notes ?? entry.notes ?? "",
-                quantity: safeExistingQty + qty
-              };
-            } else {
-              current[key] = {
-                name: entry.name ?? key,
-                quantity: qty,
-                notes: entry.notes ?? ""
-              };
-            }
+            const existingQty = toNumClamp0(existing?.quantity ?? 0);
+            normalized.quantity = existing ? existingQty + qty : qty;
+
+            current[key] = normalized;
 
             await sheet.document.update({ "system.treasures.miscItems": current });
           }
@@ -167,7 +217,7 @@ export function openAddMiscDialog(sheet) {
 }
 
 export async function removeMiscByKey(sheet, key) {
-  const k = (key ?? "").trim();
+  const k = toStr(key);
   if (!k) return;
 
   const current = foundry.utils.deepClone(sheet.document?.system?.treasures?.miscItems ?? {});
@@ -177,18 +227,25 @@ export async function removeMiscByKey(sheet, key) {
   await sheet.document.update({ "system.treasures.miscItems": current });
 }
 
+/**
+ * Update a misc item field (inline edit).
+ * Supports both "weight"/"value" (template-friendly) and "weightOverride"/"valueOverride" (storage).
+ */
 export async function updateMiscField(sheet, { key, field, value }) {
-  const k = (key ?? "").trim();
-  if (!k) return;
+  const k = toStr(key);
+  const f = toStr(field);
+  if (!k || !f) return;
+
+  const catalog = getFlatMiscCatalog();
+  const catEntry = catalog[k] ?? null;
 
   const current = foundry.utils.deepClone(sheet.document?.system?.treasures?.miscItems ?? {});
-  if (!current[k]) current[k] = { name: k, quantity: 1, notes: "" };
+  current[k] = ensureMiscEntryShape(current[k], k, catEntry);
 
-  if (field === "quantity") {
-    const n = Number(value);
-    const qty = Number.isFinite(n) ? n : 0;
+  // Quantity: clamp >=0, auto-remove at 0
+  if (f === "quantity") {
+    const qty = toNumClamp0(value);
 
-    // Auto-remove at 0
     if (qty <= 0) {
       delete current[k];
       await sheet.document.update({ "system.treasures.miscItems": current });
@@ -200,6 +257,34 @@ export async function updateMiscField(sheet, { key, field, value }) {
     return;
   }
 
-  current[k][field] = value;
+  // Common string fields
+  if (f === "name" || f === "notes" || f === "rank") {
+    current[k][f] = toStr(value);
+    await sheet.document.update({ "system.treasures.miscItems": current });
+    return;
+  }
+
+  // Boolean fields
+  if (f === "equipped") {
+    current[k].equipped = toBool(value);
+    await sheet.document.update({ "system.treasures.miscItems": current });
+    return;
+  }
+
+  // Override numeric fields (null when blank)
+  if (f === "weight" || f === "weightOverride") {
+    current[k].weightOverride = normalizeOptionalNumber(value);
+    await sheet.document.update({ "system.treasures.miscItems": current });
+    return;
+  }
+
+  if (f === "value" || f === "valueOverride") {
+    current[k].valueOverride = normalizeOptionalNumber(value);
+    await sheet.document.update({ "system.treasures.miscItems": current });
+    return;
+  }
+
+  // Fallback: store trimmed string for unknown future fields (non-breaking)
+  current[k][f] = typeof value === "string" ? value.trim() : value;
   await sheet.document.update({ "system.treasures.miscItems": current });
 }
