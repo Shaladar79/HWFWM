@@ -68,6 +68,11 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
     ? Number(sys.resources.naturalArmor)
     : 0;
 
+  // ✅ NEW: ensure _derived exists so templates can safely read system._derived.*
+  sys._derived = sys._derived ?? {};
+  // ✅ NEW: ensure consumables derived snapshot exists (actor.mjs should populate; context provides safe defaults)
+  sys._derived.consumables = sys._derived.consumables ?? { totalCount: 0, readiedCount: 0, readiedItems: [] };
+
   context.system = sys;
 
   // ---------------------------------------------------------------------------
