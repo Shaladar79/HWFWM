@@ -37,12 +37,16 @@
   {{!-- Subtabs always below coins --}}
   <nav class="hwfwm-tabs hwfwm-tabs--sub" data-group="treasures">
     <a class="hwfwm-tab {{#if (or (eq system._ui.treasuresSubTab "equipment") (not system._ui.treasuresSubTab))}}is-active{{/if}}" data-tab="equipment">Equipment</a>
+    {{!-- NOTE: keep existing subtab for legacy, but it will no longer be "readied-only" --}}
     <a class="hwfwm-tab {{#if (eq system._ui.treasuresSubTab "consumables")}}is-active{{/if}}" data-tab="consumables">Consumables</a>
     <a class="hwfwm-tab {{#if (eq system._ui.treasuresSubTab "inventory")}}is-active{{/if}}" data-tab="inventory">Inventory</a>
   </nav>
 
-  {{!-- EQUIPMENT SUBTAB: shows only equipped equipment --}}
+  {{!-- EQUIPMENT SUBTAB: shows only equipped equipment + readied consumables (derived, not duplicated) --}}
   <section class="tab" data-group="treasures" data-tab="equipment">
+
+    {{!-- Equipped Equipment --}}
+    <div class="hwfwm-res-separator">Equipped Equipment</div>
     {{#if equippedEquipment.length}}
       <div class="hwfwm-treasure-list">
         {{#each equippedEquipment as |it|}}
@@ -59,16 +63,22 @@
     {{else}}
       <div class="hwfwm-muted">No equipped items yet.</div>
     {{/if}}
-  </section>
 
-  {{!-- CONSUMABLES SUBTAB: shows only readied consumables --}}
-  <section class="tab" data-group="treasures" data-tab="consumables">
-    {{#if readiedConsumables.length}}
+    {{!-- Readied Consumables (Derived Snapshot) --}}
+    <div class="hwfwm-res-separator">Readied Consumables</div>
+    {{#if system._derived.consumables.readiedCount}}
       <div class="hwfwm-treasure-list">
-        {{#each readiedConsumables as |it|}}
+        {{#each system._derived.consumables.readiedItems as |it|}}
           <div class="hwfwm-treasure-row">
             <div class="hwfwm-treasure-name">{{it.name}}</div>
-            <div class="hwfwm-treasure-meta">Qty: {{it.quantity}}</div>
+
+            <div class="hwfwm-treasure-meta">
+              {{#if it.quantity}}Qty: {{it.quantity}}{{/if}}
+              {{#if it.category}}&nbsp;|&nbsp;Cat: {{it.category}}{{/if}}
+              {{#if it.itemRank}}&nbsp;|&nbsp;Rank: {{it.itemRank}}{{/if}}
+              {{#if it.actionCost}}&nbsp;|&nbsp;AC: {{it.actionCost}}{{/if}}
+            </div>
+
             <div class="hwfwm-itemlist__actions">
               <button type="button" class="hwfwm-itembtn" data-action="open-item" data-item-id="{{it.id}}">Edit</button>
               <button type="button" class="hwfwm-itembtn hwfwm-itembtn--danger" data-action="delete-item" data-item-id="{{it.id}}">Delete</button>
@@ -78,6 +88,29 @@
       </div>
     {{else}}
       <div class="hwfwm-muted">No readied consumables yet.</div>
+    {{/if}}
+  </section>
+
+  {{!-- CONSUMABLES SUBTAB: now becomes "all consumables" (inventory view), not readied-only --}}
+  <section class="tab" data-group="treasures" data-tab="consumables">
+    {{#if allConsumables.length}}
+      <div class="hwfwm-treasure-list">
+        {{#each allConsumables as |it|}}
+          <div class="hwfwm-treasure-row">
+            <div class="hwfwm-treasure-name">{{it.name}}</div>
+            <div class="hwfwm-treasure-meta">
+              {{#if it.quantity}}Qty: {{it.quantity}}{{else}}Qty: 0{{/if}}
+              {{#if it.readied}}&nbsp;|&nbsp;Readied{{/if}}
+            </div>
+            <div class="hwfwm-itemlist__actions">
+              <button type="button" class="hwfwm-itembtn" data-action="open-item" data-item-id="{{it.id}}">Edit</button>
+              <button type="button" class="hwfwm-itembtn hwfwm-itembtn--danger" data-action="delete-item" data-item-id="{{it.id}}">Delete</button>
+            </div>
+          </div>
+        {{/each}}
+      </div>
+    {{else}}
+      <div class="hwfwm-muted">No consumables yet.</div>
     {{/if}}
   </section>
 
