@@ -133,16 +133,15 @@ export class HwfwmActor extends Actor {
 
       node.base = base;
 
-      // Preserve node.mod as the user-editable/manual value.
-      // Add derived breakdown for visibility/debugging without persisting new schema.
       node._derived = node._derived ?? {};
       node._derived.modBreakdown = {
         manual: manualMod,
         race: raceMod,
         role: roleMod,
         background: backgroundMod,
-        roleByRankPct: 0, // will be applied after derived rank is computed
-        equipmentFlat: 0, // will be applied after equipment is aggregated
+        roleByRankPct: 0,
+        equipmentFlat: 0,
+        talentFlat: 0,
         derivedTotal: derivedModTotal
       };
 
@@ -185,7 +184,7 @@ export class HwfwmActor extends Actor {
     // 2b) Apply ROLE_BY_RANK attributePct (direct additive %)
     // -----------------------------
     const roleByRank = resolveRoleByRankBonuses(roleKey, derivedRankKey);
-    system._derived.roleByRank = roleByRank?.node ?? null; // exposed for UI/debugging if desired
+    system._derived.roleByRank = roleByRank?.node ?? null;
 
     for (const a of attrs) {
       const node = system.attributes?.[a];
@@ -210,7 +209,6 @@ export class HwfwmActor extends Actor {
       stamina: toNum(raceAdjRaw.stamina, 0),
       pace: toNum(raceAdjRaw.pace, 0),
 
-      // optional, config-driven recovery + natural armor contributions
       manaRecovery: toNum(raceAdjRaw.manaRecovery, 0),
       staminaRecovery: toNum(raceAdjRaw.staminaRecovery, 0),
       lifeForceRecovery: toNum(raceAdjRaw.lifeForceRecovery, 0),
@@ -222,7 +220,6 @@ export class HwfwmActor extends Actor {
       mana: toNum(roleAdjRaw.mana, 0),
       stamina: toNum(roleAdjRaw.stamina, 0),
 
-      // optional, config-driven recovery + natural armor contributions
       manaRecovery: toNum(roleAdjRaw.manaRecovery, 0),
       staminaRecovery: toNum(roleAdjRaw.staminaRecovery, 0),
       lifeForceRecovery: toNum(roleAdjRaw.lifeForceRecovery, 0),
@@ -231,13 +228,11 @@ export class HwfwmActor extends Actor {
 
     const rolePaceBonus = roleByRank.status.pace;
 
-    // Background baseline adjustments (no by-rank behavior)
     const backgroundAdj = {
       lifeForce: toNum(backgroundAdjRaw.lifeForce, 0),
       mana: toNum(backgroundAdjRaw.mana, 0),
       stamina: toNum(backgroundAdjRaw.stamina, 0),
 
-      // optional, config-driven recovery + natural armor contributions
       manaRecovery: toNum(backgroundAdjRaw.manaRecovery, 0),
       staminaRecovery: toNum(backgroundAdjRaw.staminaRecovery, 0),
       lifeForceRecovery: toNum(backgroundAdjRaw.lifeForceRecovery, 0),
@@ -513,18 +508,18 @@ export class HwfwmActor extends Actor {
     const defenseManualMod = toNum(system.defense.mod, 0);
     const defenseEquipFlat = toNum(eqResFlat.defense, 0);
 
-    system.defense.base = defenseBase; // keep normalized
-    system.defense.mod = defenseManualMod; // DO NOT overwrite with derived
+    system.defense.base = defenseBase;
+    system.defense.mod = defenseManualMod; // keep manual only
     system.defense.total = defenseBase + defenseManualMod + defenseEquipFlat;
 
     system.defense._derived = system.defense._derived ?? {};
     system.defense._derived.modBreakdown = {
       base: defenseBase,
       manual: defenseManualMod,
-      equipmentFlat: defenseEquipFlat
+      equipmentFlat: defenseEquipFlat,
+      talentFlat: 0
     };
 
-    // 6e) Store a debug snapshot for rapid testing/verification
     system._derived.equipment = {
       equippedCount: equippedEquipment.length,
       weapons: eqWeapons,
@@ -556,6 +551,168 @@ export class HwfwmActor extends Actor {
         }
       }
     };
+
+    // -----------------------------
+    // 7) Talent Integration (TEST-READY)
+    //    - Passive always-on modifiers (no "equipped" checkbox)
+    //    - Mirrors equipment adjustment model
+    //    - Grants are recorded to system._derived.grants for now (non-persisted)
+    // -----------------------------
+
+    const talents = allItems.filter((it) => it && it.type === "talent");
+
+    const tAttrFlat = { power: 0, speed: 0, spirit: 0, recovery: 0 };
+
+    const tResPct = { lifeForce: 0, mana: 0, stamina: 0 };
+    const tResFlat = {
+      lifeForce: 0,
+      mana: 0,
+      stamina: 0,
+      trauma: 0,
+      pace: 0,
+      reaction: 0,
+      defense: 0,
+      naturalArmor: 0
+    };
+
+    const granted = {
+      specialties: [],
+      affinities: [],
+      aptitudes: [],
+      resistances: []
+    };
+
+    const talentSummary = (it) => ({
+      id: it.id,
+      uuid: it.uuid,
+      name: it.name,
+      img: it.img
+    });
+
+    const talentList = [];
+
+    for (const it of talents) {
+      const s = it.system ?? {};
+      talentList.push(talentSummary(it));
+
+      // Adjustments
+      const adj = s.adjustments ?? {};
+      const adjAttrs = adj.attributes ?? {};
+      tAttrFlat.power += toNum(adjAttrs.power?.flat ?? 0, 0);
+      tAttrFlat.speed += toNum(adjAttrs.speed?.flat ?? 0, 0);
+      tAttrFlat.spirit += toNum(adjAttrs.spirit?.flat ?? 0, 0);
+      tAttrFlat.recovery += toNum(adjAttrs.recovery?.flat ?? 0, 0);
+
+      const adjRes = adj.resources ?? {};
+      tResPct.lifeForce += toNum(adjRes.lifeForce?.pct ?? 0, 0);
+      tResFlat.lifeForce += toNum(adjRes.lifeForce?.flat ?? 0, 0);
+
+      tResPct.mana += toNum(adjRes.mana?.pct ?? 0, 0);
+      tResFlat.mana += toNum(adjRes.mana?.flat ?? 0, 0);
+
+      tResPct.stamina += toNum(adjRes.stamina?.pct ?? 0, 0);
+      tResFlat.stamina += toNum(adjRes.stamina?.flat ?? 0, 0);
+
+      tResFlat.trauma += toNum(adjRes.trauma?.flat ?? 0, 0);
+      tResFlat.pace += toNum(adjRes.pace?.flat ?? 0, 0);
+      tResFlat.reaction += toNum(adjRes.reaction?.flat ?? 0, 0);
+      tResFlat.defense += toNum(adjRes.defense?.flat ?? 0, 0);
+      tResFlat.naturalArmor += toNum(adjRes.naturalArmor?.flat ?? 0, 0);
+
+      // Grants (derived-only for now)
+      const g = s.grants ?? {};
+
+      const spType = String(g.specialty?.type ?? "").trim();
+      const spKey = String(g.specialty?.key ?? "").trim();
+      if (spType && spKey) granted.specialties.push({ type: spType, key: spKey, from: it.id });
+
+      const affKey = String(g.affinity?.key ?? "").trim();
+      if (affKey) granted.affinities.push({ key: affKey, from: it.id });
+
+      const aptKey = String(g.aptitude?.key ?? "").trim();
+      if (aptKey) granted.aptitudes.push({ key: aptKey, from: it.id });
+
+      const resKey = String(g.resistance?.key ?? "").trim();
+      if (resKey) granted.resistances.push({ key: resKey, from: it.id });
+    }
+
+    // 7a) Apply talent flat attribute adjustments (post-equipment)
+    for (const a of attrs) {
+      const node = system.attributes?.[a];
+      if (!node) continue;
+
+      const add = toNum(tAttrFlat[a], 0);
+      if (!add) continue;
+
+      node.total = toNum(node.total, 0) + add;
+
+      node._derived = node._derived ?? {};
+      node._derived.modBreakdown = node._derived.modBreakdown ?? {};
+      node._derived.modBreakdown.talentFlat = add;
+    }
+
+    // 7b) Apply talent resource adjustments (% then flat)
+    lfMax = applyPctFlatToMax(lfMax, tResPct.lifeForce, tResFlat.lifeForce);
+    manaMax = applyPctFlatToMax(manaMax, tResPct.mana, tResFlat.mana);
+    stamMax = applyPctFlatToMax(stamMax, tResPct.stamina, tResFlat.stamina);
+
+    system.resources.lifeForce.max = lfMax;
+    system.resources.mana.max = manaMax;
+    system.resources.stamina.max = stamMax;
+
+    system.resources.lifeForce.value = clamp(system.resources.lifeForce.value, 0, lfMax);
+    system.resources.mana.value = clamp(system.resources.mana.value, 0, manaMax);
+    system.resources.stamina.value = clamp(system.resources.stamina.value, 0, stamMax);
+
+    system.resources.trauma.max = Math.max(0, toNum(system.resources.trauma.max, 0) + toNum(tResFlat.trauma, 0));
+    system.resources.trauma.value = clamp(system.resources.trauma.value, 0, system.resources.trauma.max);
+
+    system.resources.pace.value = Math.max(0, toNum(system.resources.pace.value, 0) + toNum(tResFlat.pace, 0));
+
+    system.resources.reaction._derived = system.resources.reaction._derived ?? {};
+    system.resources.reaction._derived.talentFlat = toNum(tResFlat.reaction, 0);
+
+    system.resources.naturalArmor = Math.max(
+      0,
+      toNum(system.resources.naturalArmor, 0) + toNum(tResFlat.naturalArmor, 0)
+    );
+
+    // Defense totals: base + manual + equipment + talent
+    const defenseTalentFlat = toNum(tResFlat.defense, 0);
+    system.defense.total = defenseBase + defenseManualMod + defenseEquipFlat + defenseTalentFlat;
+    system.defense._derived.modBreakdown.talentFlat = defenseTalentFlat;
+
+    // Debug snapshot
+    system._derived.talents = {
+      count: talents.length,
+      items: talentList,
+      totals: {
+        defenseFlat: Math.round(defenseTalentFlat),
+        naturalArmorFlat: Math.round(tResFlat.naturalArmor),
+        paceFlat: Math.round(tResFlat.pace),
+        reactionFlat: Math.round(tResFlat.reaction),
+        resourcePct: {
+          lifeForce: Math.round(tResPct.lifeForce),
+          mana: Math.round(tResPct.mana),
+          stamina: Math.round(tResPct.stamina)
+        },
+        resourceFlat: {
+          lifeForce: Math.round(tResFlat.lifeForce),
+          mana: Math.round(tResFlat.mana),
+          stamina: Math.round(tResFlat.stamina),
+          trauma: Math.round(tResFlat.trauma)
+        },
+        attrFlat: {
+          power: Math.round(tAttrFlat.power),
+          speed: Math.round(tAttrFlat.speed),
+          spirit: Math.round(tAttrFlat.spirit),
+          recovery: Math.round(tAttrFlat.recovery)
+        }
+      }
+    };
+
+    system._derived.grants = system._derived.grants ?? {};
+    system._derived.grants.talents = granted;
 
     void backgroundKey;
   }
