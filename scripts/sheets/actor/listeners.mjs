@@ -225,21 +225,29 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
 
         const field = target.dataset.itemField;
 
-        // ✅ checkbox-safe handling
-        // Only treat checkboxes as boolean payloads if data-bool="true" is present.
+        // Coercion helpers
+        const coerceBool = (v) => {
+          if (v === true) return true;
+          if (v === false) return false;
+          const s = String(v ?? "").trim().toLowerCase();
+          if (["1", "true", "yes", "y", "on"].includes(s)) return true;
+          if (["0", "false", "no", "n", "off", ""].includes(s)) return false;
+          return false;
+        };
+
+        // ✅ checkbox-safe + data-bool safe handling (critical for equipment equipped boolean)
         let value;
-        if (
-          target instanceof HTMLInputElement &&
-          target.type === "checkbox" &&
-          String(target.dataset?.bool ?? "") === "true"
-        ) {
+        const wantsBool = String(target.dataset?.bool ?? "").trim().toLowerCase() === "true";
+
+        if (target instanceof HTMLInputElement && target.type === "checkbox") {
           value = target.checked === true;
+        } else if (wantsBool) {
+          value = coerceBool(target.value);
         } else {
           value = target.value;
 
           if (target instanceof HTMLInputElement && target.type === "number") {
-            // Normalize empty to 0
-            const n = value === "" ? 0 : Number(value);
+            const n = Number(value);
             value = Number.isFinite(n) ? n : 0;
           }
         }
@@ -255,6 +263,12 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
         }
 
         await item.update({ [field]: value });
+
+        // ✅ For test clarity: after equip/readied toggles, force sheet refresh.
+        if (field === "system.equipped" || field === "system.readied") {
+          sheet.render(false);
+        }
+
         return;
       }
 
@@ -270,7 +284,7 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
 
         let value = target.value;
         if (target instanceof HTMLInputElement && target.type === "number") {
-          const n = value === "" ? 0 : Number(value);
+          const n = Number(value);
           value = Number.isFinite(n) ? n : 0;
         }
 
@@ -322,7 +336,7 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
         "remove-resistance",
         "lock-choices",
 
-        // NEW: item list actions used by Traits > Features template
+        // item list actions used by Traits/Treasures templates
         "open-item",
         "delete-item",
         "create-talent"
