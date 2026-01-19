@@ -369,11 +369,11 @@ export class HwfwmActor extends Actor {
     //    - Stores a debug snapshot under system._derived.equipment
     // -----------------------------
 
-    const allItems = Array.isArray(this.items) ? this.items : [];
+    // Foundry v13: this.items is a Collection; use .contents for iteration.
+    const allItems = Array.isArray(this.items?.contents) ? this.items.contents : [];
     const equippedEquipment = allItems.filter((it) => {
       if (!it || it.type !== "equipment") return false;
-      const eq = it.system?.equipped;
-      return eq === true; // strict: only true counts as equipped
+      return it.system?.equipped === true; // strict: only true counts as equipped
     });
 
     const eqWeapons = [];
@@ -463,7 +463,10 @@ export class HwfwmActor extends Actor {
       // flat-only
       eqResFlat.trauma += toNum(adjRes.trauma?.flat ?? 0, 0);
       eqResFlat.pace += toNum(adjRes.pace?.flat ?? 0, 0);
+
+      // Reaction is not fully defined yet; treat as derived baseline (0) + equipment.
       eqResFlat.reaction += toNum(adjRes.reaction?.flat ?? 0, 0);
+
       eqResFlat.defense += toNum(adjRes.defense?.flat ?? 0, 0);
       eqResFlat.naturalArmor += toNum(adjRes.naturalArmor?.flat ?? 0, 0);
     }
@@ -511,7 +514,9 @@ export class HwfwmActor extends Actor {
     system.resources.trauma.value = clamp(system.resources.trauma.value, 0, system.resources.trauma.max);
 
     system.resources.pace.value = Math.max(0, toNum(system.resources.pace.value, 0) + toNum(eqResFlat.pace, 0));
-    system.resources.reaction.value = Math.max(0, toNum(system.resources.reaction.value, 0) + toNum(eqResFlat.reaction, 0));
+
+    // Reaction: deterministic baseline (0 for now) + equipment.
+    system.resources.reaction.value = Math.max(0, toNum(eqResFlat.reaction, 0));
 
     system.resources.naturalArmor = Math.max(
       0,
@@ -525,12 +530,17 @@ export class HwfwmActor extends Actor {
     // Keep current armor value within max (if you want "armor as current", this supports it now)
     system.resources.armor.value = clamp(system.resources.armor.value, 0, armorMax);
 
-    // 6d) Defense placeholder wiring (until your final defense formula is locked)
-    // If your system later defines defense.base from speed (or other), that should be set elsewhere.
-    // For now, we apply equipment defense flat as a modifier.
+    // 6d) Defense wiring (pre-formula): treat existing mod as manual/base, then add equipment once.
+    const manualDefenseMod = toNum(system.defense.mod, 0);
     system.defense.base = toNum(system.defense.base, 0);
-    system.defense.mod = toNum(system.defense.mod, 0) + toNum(eqResFlat.defense, 0);
+    system.defense.mod = manualDefenseMod + toNum(eqResFlat.defense, 0);
     system.defense.total = system.defense.base + system.defense.mod;
+
+    system.defense._derived = system.defense._derived ?? {};
+    system.defense._derived.modBreakdown = {
+      manual: manualDefenseMod,
+      equipmentFlat: toNum(eqResFlat.defense, 0)
+    };
 
     // 6e) Store a debug snapshot for rapid testing/verification
     system._derived.equipment = {
