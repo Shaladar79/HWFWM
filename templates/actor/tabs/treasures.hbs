@@ -41,7 +41,7 @@
     <a class="hwfwm-tab {{#if (eq system._ui.treasuresSubTab "inventory")}}is-active{{/if}}" data-tab="inventory">Inventory</a>
   </nav>
 
-  {{!-- EQUIPMENT SUBTAB: shows only Equipped=yes equipment --}}
+  {{!-- EQUIPMENT SUBTAB: shows only equipped equipment --}}
   <section class="tab" data-group="treasures" data-tab="equipment">
     {{#if equippedEquipment.length}}
       <div class="hwfwm-treasure-list">
@@ -61,7 +61,7 @@
     {{/if}}
   </section>
 
-  {{!-- CONSUMABLES SUBTAB: shows only Readied=yes consumables --}}
+  {{!-- CONSUMABLES SUBTAB: shows only readied consumables --}}
   <section class="tab" data-group="treasures" data-tab="consumables">
     {{#if readiedConsumables.length}}
       <div class="hwfwm-treasure-list">
@@ -108,16 +108,24 @@
               data-item-field="name"
             />
 
-            <select data-item-id="{{it.id}}" data-item-field="system.category">
+            {{!-- IMPORTANT: equipment uses system.type (weapon|armor|misc) --}}
+            <select data-item-id="{{it.id}}" data-item-field="system.type">
               <option value="weapon" {{#if (eq it.category "weapon")}}selected{{/if}}>Weapon</option>
               <option value="armor" {{#if (eq it.category "armor")}}selected{{/if}}>Armor</option>
               <option value="misc" {{#if (eq it.category "misc")}}selected{{/if}}>Misc</option>
             </select>
 
-            <select data-item-id="{{it.id}}" data-item-field="system.equipped">
-              <option value="no" {{#if (eq it.equipped "no")}}selected{{/if}}>No</option>
-              <option value="yes" {{#if (eq it.equipped "yes")}}selected{{/if}}>Yes</option>
-            </select>
+            {{!-- IMPORTANT: equipped is boolean --}}
+            <label style="display:flex; align-items:center; justify-content:center; gap:8px;">
+              <input
+                type="checkbox"
+                data-bool="true"
+                data-item-id="{{it.id}}"
+                data-item-field="system.equipped"
+                {{#if it.equipped}}checked{{/if}}
+              />
+              <span class="hwfwm-muted">Equipped</span>
+            </label>
 
             <div class="hwfwm-itemlist__actions">
               <button type="button" class="hwfwm-itembtn" data-action="open-item" data-item-id="{{it.id}}">Edit</button>
@@ -159,10 +167,17 @@
               data-item-field="system.quantity"
             />
 
-            <select data-item-id="{{it.id}}" data-item-field="system.readied">
-              <option value="no" {{#if (eq it.readied "no")}}selected{{/if}}>No</option>
-              <option value="yes" {{#if (eq it.readied "yes")}}selected{{/if}}>Yes</option>
-            </select>
+            {{!-- IMPORTANT: readied is boolean --}}
+            <label style="display:flex; align-items:center; justify-content:center; gap:8px;">
+              <input
+                type="checkbox"
+                data-bool="true"
+                data-item-id="{{it.id}}"
+                data-item-field="system.readied"
+                {{#if it.readied}}checked{{/if}}
+              />
+              <span class="hwfwm-muted">Readied</span>
+            </label>
 
             <div class="hwfwm-itemlist__actions">
               <button type="button" class="hwfwm-itembtn" data-action="open-item" data-item-id="{{it.id}}">Edit</button>
@@ -230,4 +245,3 @@
 
   </section>
 </div>
-
