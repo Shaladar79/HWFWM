@@ -6,12 +6,15 @@ import {
   RANK_RESOURCE_MULTIPLIER,
   RANK_TRAUMA,
   RANK_PACE_MOD,
-  RANK_BASE_RECOVERY // ✅ NEW import
+  RANK_BASE_RECOVERY
 } from "../../config/ranks.mjs";
 
 import { RACE_ADJUSTMENTS } from "../../config/races.mjs";
-import { ROLE_ADJUSTMENTS, ROLE_BY_RANK } from "../../config/roles.mjs"; // ✅ add ROLE_BY_RANK
-import { BACKGROUND_ADJUSTMENTS, BACKGROUND_GRANTED_SPECIALTIES } from "../../config/backgrounds.mjs"; // ✅ wire background baseline + granted specialties
+import { ROLE_ADJUSTMENTS, ROLE_BY_RANK } from "../../config/roles.mjs";
+import {
+  BACKGROUND_ADJUSTMENTS,
+  BACKGROUND_GRANTED_SPECIALTIES
+} from "../../config/backgrounds.mjs";
 
 export class HwfwmActor extends Actor {
   prepareDerivedData() {
@@ -21,7 +24,7 @@ export class HwfwmActor extends Actor {
     system.attributes = system.attributes ?? {};
     system.resources = system.resources ?? {};
     system.details = system.details ?? {};
-    system.specialties = system.specialties ?? {}; // ✅ ensure exists (manual + granted merge surface)
+    system.specialties = system.specialties ?? {};
     system.defense = system.defense ?? { base: 0, mod: 0, total: 0 };
 
     const toNum = (v, fallback = 0) => {
@@ -39,25 +42,15 @@ export class HwfwmActor extends Actor {
 
     // ---------------------------------------------
     // Resolve Race / Role / Background RAW nodes early
-    // (so attribute totals can include their mods)
     // ---------------------------------------------
     const raceKey = String(system.details?.raceKey ?? "outworlder");
     const roleKey = String(system.details?.roleKey ?? "");
     const backgroundKey = String(system.details?.backgroundKey ?? "");
 
-    const raceAdjRaw =
-      RACE_ADJUSTMENTS?.[raceKey] ?? RACE_ADJUSTMENTS?.outworlder ?? {};
+    const raceAdjRaw = RACE_ADJUSTMENTS?.[raceKey] ?? RACE_ADJUSTMENTS?.outworlder ?? {};
     const roleAdjRaw = ROLE_ADJUSTMENTS?.[roleKey] ?? {};
     const backgroundAdjRaw = BACKGROUND_ADJUSTMENTS?.[backgroundKey] ?? {};
 
-    /**
-     * Flexible attribute-mod resolver.
-     * Supports these common shapes without requiring schema changes:
-     *  - adj.attributes.power
-     *  - adj.attributeMods.power
-     *  - adj.power
-     *  - adj.powerMod
-     */
     const getAttrAdj = (adjRaw, attrKey) => {
       if (!adjRaw || !attrKey) return 0;
 
@@ -81,8 +74,6 @@ export class HwfwmActor extends Actor {
       return ROLE_BY_RANK?.[rKey]?.[rankKey] ?? null;
     };
 
-    // Placeholder-ready resolver:
-    // Today: uses node.status.* and ALSO exposes node.attributePct (applied after derived rank is known)
     const resolveRoleByRankBonuses = (rKey, rankKey) => {
       const node = getRoleByRankNode(rKey, rankKey);
       const status = node?.status ?? {};
@@ -97,9 +88,6 @@ export class HwfwmActor extends Actor {
         },
         status: {
           pace: toNum(status.pace, 0),
-
-          // placeholder-ready surfaces for recovery + natural armor.
-          // These will remain 0 unless ROLE_BY_RANK provides them.
           manaRecovery: toNum(status.manaRecovery, 0),
           staminaRecovery: toNum(status.staminaRecovery, 0),
           lifeForceRecovery: toNum(status.lifeForceRecovery, 0),
@@ -110,7 +98,6 @@ export class HwfwmActor extends Actor {
 
     // -----------------------------
     // 1) Attributes derived math
-    //    (Includes Race/Role/Background attribute adjustments)
     // -----------------------------
     const NUM_TO_TOTAL = 2;
     const attrs = ["power", "speed", "spirit", "recovery"];
@@ -121,10 +108,8 @@ export class HwfwmActor extends Actor {
       const base = toNum(RANK_BASE_ATTRIBUTES?.[rankKey], 0);
       const num = toNum(node.num, 0);
 
-      // Manual mod entered on the sheet
       const manualMod = toNum(node.mod, 0);
 
-      // Derived mods from config (read-only, deterministic)
       const raceMod = getAttrAdj(raceAdjRaw, a);
       const roleMod = getAttrAdj(roleAdjRaw, a);
       const backgroundMod = getAttrAdj(backgroundAdjRaw, a);
@@ -181,7 +166,7 @@ export class HwfwmActor extends Actor {
     system._derived.rankTierTotal = tierTotal;
 
     // -----------------------------
-    // 2b) Apply ROLE_BY_RANK attributePct (direct additive %)
+    // 2b) Apply ROLE_BY_RANK attributePct
     // -----------------------------
     const roleByRank = resolveRoleByRankBonuses(roleKey, derivedRankKey);
     system._derived.roleByRank = roleByRank?.node ?? null;
@@ -251,7 +236,6 @@ export class HwfwmActor extends Actor {
     system._derived.specialtiesGranted = system._derived.specialtiesGranted ?? {};
     system._derived.specialtiesGranted.background = grantedByBackground;
 
-    // ✅ CLEANUP: remove stale derived-only background specialties that are no longer granted
     for (const [k, v] of Object.entries(system.specialties ?? {})) {
       if (!v || typeof v !== "object") continue;
 
@@ -262,12 +246,9 @@ export class HwfwmActor extends Actor {
 
       if (!isDerivedBackground) continue;
 
-      if (!bgGrantedSet.has(k)) {
-        delete system.specialties[k];
-      }
+      if (!bgGrantedSet.has(k)) delete system.specialties[k];
     }
 
-    // ✅ ADD: ensure currently granted keys exist (without overwriting user-managed entries)
     for (const key of bgGrantedSet) {
       if (system.specialties?.[key]) continue;
 
@@ -316,7 +297,7 @@ export class HwfwmActor extends Actor {
     );
 
     // -----------------------------
-    // 4b) Recovery rates + Natural Armor (derived, read-only surfaces)
+    // 4b) Recovery rates + Natural Armor (derived, read-only)
     // -----------------------------
     const baseRec = RANK_BASE_RECOVERY?.[derivedRankKey] ?? {};
     const baseManaRec = toNum(baseRec.mana, 0);
@@ -344,7 +325,7 @@ export class HwfwmActor extends Actor {
       backgroundAdj.lifeForceRecovery +
       toNum(roleByRank?.status?.lifeForceRecovery, 0);
 
-    let naturalArmor =
+    const naturalArmor =
       raceAdj.naturalArmor +
       roleAdj.naturalArmor +
       backgroundAdj.naturalArmor +
@@ -372,6 +353,7 @@ export class HwfwmActor extends Actor {
     // 6) Equipment Integration (TEST-READY)
     // -----------------------------
     const allItems = Array.isArray(this.items?.contents) ? this.items.contents : [];
+
     const equippedEquipment = allItems.filter((it) => {
       if (!it || it.type !== "equipment") return false;
       return coerceBool(it.system?.equipped);
@@ -462,7 +444,6 @@ export class HwfwmActor extends Actor {
       eqResFlat.naturalArmor += toNum(adjRes.naturalArmor?.flat ?? 0, 0);
     }
 
-    // 6a) Apply equipment flat attribute adjustments
     for (const a of attrs) {
       const node = system.attributes?.[a];
       if (!node) continue;
@@ -477,7 +458,6 @@ export class HwfwmActor extends Actor {
       node._derived.modBreakdown.equipmentFlat = add;
     }
 
-    // 6b) Apply equipment resource adjustments
     const applyPctFlatToMax = (baseMax, pct, flat) => {
       const m = toNum(baseMax, 0);
       const p = toNum(pct, 0);
@@ -506,8 +486,6 @@ export class HwfwmActor extends Actor {
 
     system.resources.pace.value = Math.max(0, toNum(system.resources.pace.value, 0) + toNum(eqResFlat.pace, 0));
 
-    // IMPORTANT: do NOT overwrite reaction.value (it is editable on the sheet).
-    // We only record equipment contribution for now.
     system.resources.reaction._derived = system.resources.reaction._derived ?? {};
     system.resources.reaction._derived.equipmentFlat = toNum(eqResFlat.reaction, 0);
 
@@ -516,18 +494,16 @@ export class HwfwmActor extends Actor {
       toNum(system.resources.naturalArmor, 0) + toNum(eqResFlat.naturalArmor, 0)
     );
 
-    // 6c) Armor total (equipped armor + misc armor)
     const armorMax = Math.max(0, Math.round(eqArmorTotal + eqMiscArmor));
     system.resources.armor.max = armorMax;
     system.resources.armor.value = clamp(system.resources.armor.value, 0, armorMax);
 
-    // 6d) Defense wiring (NO STACKING): base + manual + equipment
     const defenseBase = toNum(system.defense.base, 0);
     const defenseManualMod = toNum(system.defense.mod, 0);
     const defenseEquipFlat = toNum(eqResFlat.defense, 0);
 
     system.defense.base = defenseBase;
-    system.defense.mod = defenseManualMod; // keep manual only
+    system.defense.mod = defenseManualMod;
     system.defense.total = defenseBase + defenseManualMod + defenseEquipFlat;
 
     system.defense._derived = system.defense._derived ?? {};
@@ -572,9 +548,6 @@ export class HwfwmActor extends Actor {
 
     // -----------------------------
     // 6e) Consumables Integration (Derived "Readied Consumables" snapshot)
-    //    - Items are NOT duplicated
-    //    - Stored on actor as Items of type "consumable"
-    //    - Equipment tab renders system._derived.consumables.readiedItems
     // -----------------------------
     const allConsumables = allItems.filter((it) => it?.type === "consumable");
     const readied = allConsumables.filter((it) => coerceBool(it.system?.readied));
@@ -599,12 +572,11 @@ export class HwfwmActor extends Actor {
         img: it.img,
 
         itemRank: String(s.itemRank ?? ""),
-        category: String(s.category ?? ""), // "damage" vs "recovery" (or whatever your schema uses)
+        category: String(s.category ?? ""),
 
         quantity: toNum(s.quantity, 0),
         readied: coerceBool(s.readied),
 
-        // "Damage" surfaces
         actionCost: toNum(s.actionCost, 0),
         damagePerSuccess: toNum(s.damagePerSuccess, 0),
         damageTypes: pickDamageTypes(s),
@@ -612,11 +584,9 @@ export class HwfwmActor extends Actor {
         damageType2: String(s.damageType2 ?? ""),
         damageType3: String(s.damageType3 ?? ""),
 
-        // "Recovery" surfaces
         recoveryType: String(s.recoveryType ?? ""),
         recoveredPerRank: toNum(s.recoveredPerRank, 0),
 
-        // Text surfaces (for UI hover / later automation)
         description: String(s.description ?? ""),
         notes: String(s.notes ?? "")
       };
@@ -630,18 +600,11 @@ export class HwfwmActor extends Actor {
 
     // -----------------------------
     // 7) Talent Integration (TEST-READY)
-    //    - Passive always-on modifiers (no "equipped" checkbox)
-    //    - Mirrors equipment adjustment model
-    //    - Grants are recorded to system._derived.grants for now (non-persisted)
-    //
-    // Rules:
-    // - Only apply talents that are enabled !== false
-    // - Stacking mechanics are a later phase; for now, we sum all enabled talent adjustments.
     // -----------------------------
     const talents = allItems.filter((it) => {
       if (!it || it.type !== "talent") return false;
       const enabled = it.system?.enabled;
-      return enabled !== false; // default true if missing
+      return enabled !== false;
     });
 
     const tAttrFlat = { power: 0, speed: 0, spirit: 0, recovery: 0 };
@@ -678,7 +641,6 @@ export class HwfwmActor extends Actor {
       const s = it.system ?? {};
       talentList.push(talentSummary(it));
 
-      // Adjustments
       const adj = s.adjustments ?? {};
       const adjAttrs = adj.attributes ?? {};
       tAttrFlat.power += toNum(adjAttrs.power?.flat ?? 0, 0);
@@ -702,7 +664,6 @@ export class HwfwmActor extends Actor {
       tResFlat.defense += toNum(adjRes.defense?.flat ?? 0, 0);
       tResFlat.naturalArmor += toNum(adjRes.naturalArmor?.flat ?? 0, 0);
 
-      // Grants (derived-only for now)
       const g = s.grants ?? {};
 
       const spType = String(g.specialty?.type ?? "").trim();
@@ -719,7 +680,6 @@ export class HwfwmActor extends Actor {
       if (resKey) granted.resistances.push({ key: resKey, from: it.id });
     }
 
-    // 7a) Apply talent flat attribute adjustments (post-equipment)
     for (const a of attrs) {
       const node = system.attributes?.[a];
       if (!node) continue;
@@ -734,7 +694,6 @@ export class HwfwmActor extends Actor {
       node._derived.modBreakdown.talentFlat = add;
     }
 
-    // 7b) Apply talent resource adjustments (% then flat) on top of equipment-adjusted values
     lfMax = applyPctFlatToMax(lfMax, tResPct.lifeForce, tResFlat.lifeForce);
     manaMax = applyPctFlatToMax(manaMax, tResPct.mana, tResFlat.mana);
     stamMax = applyPctFlatToMax(stamMax, tResPct.stamina, tResFlat.stamina);
@@ -752,7 +711,6 @@ export class HwfwmActor extends Actor {
 
     system.resources.pace.value = Math.max(0, toNum(system.resources.pace.value, 0) + toNum(tResFlat.pace, 0));
 
-    // Reaction remains player-editable; store derived-only contribution
     system.resources.reaction._derived = system.resources.reaction._derived ?? {};
     system.resources.reaction._derived.talentFlat = toNum(tResFlat.reaction, 0);
 
@@ -761,12 +719,10 @@ export class HwfwmActor extends Actor {
       toNum(system.resources.naturalArmor, 0) + toNum(tResFlat.naturalArmor, 0)
     );
 
-    // Defense totals: base + manual + equipment + talent
     const defenseTalentFlat = toNum(tResFlat.defense, 0);
     system.defense.total = defenseBase + defenseManualMod + defenseEquipFlat + defenseTalentFlat;
     system.defense._derived.modBreakdown.talentFlat = defenseTalentFlat;
 
-    // Debug snapshot
     system._derived.talents = {
       count: talents.length,
       items: talentList,
