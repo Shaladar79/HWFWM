@@ -2,6 +2,8 @@
 
 const { HandlebarsApplicationMixin } = foundry.applications.api;
 
+import { RANK_RESOURCE_MULTIPLIER } from "../../../config/ranks.mjs";
+
 /**
  * HWFWM Consumable Item Sheet (V13 Sheet V2)
  * Category-driven layout:
@@ -11,18 +13,19 @@ const { HandlebarsApplicationMixin } = foundry.applications.api;
  *  - itemRank: normal | iron | bronze | silver | gold | diamond
  *
  * Damage fields:
- *  - damagePerSuccess (number)
+ *  - damagePerSuccess (number)   // treated as BASE damage per success (editable)
  *  - damageType1/2/3 (string keys)
  *  - actionCost (number)
  *
  * Recovery fields:
  *  - recoveryType (lifeforce | mana | stamina)
- *  - recoveredPerRank (number)
+ *  - recoveredPerRank (number)   // treated as BASE recovered per rank (editable)
  *  - actionCost (number) [shared]
  *
- * Notes:
- * - Uses fixed keys instead of arrays to avoid V13 submitOnChange array pitfalls.
- * - No mechanics wiring; purely schema + UI persistence.
+ * Derived display fields (read-only, UI only):
+ *  - _derived.rankMultiplier
+ *  - _derived.totalDamagePerSuccess
+ *  - _derived.totalRecoveredPerRank
  */
 export class HwfwmConsumableSheet extends HandlebarsApplicationMixin(
   foundry.applications.sheets.ItemSheetV2
@@ -70,13 +73,13 @@ export class HwfwmConsumableSheet extends HandlebarsApplicationMixin(
     // Shared numeric fields
     system.actionCost = this._toNumberOrBlank(system.actionCost);
 
-    // Damage
+    // Damage (BASE)
     system.damagePerSuccess = this._toNumberOrBlank(system.damagePerSuccess);
     system.damageType1 = (system.damageType1 ?? "").toString();
     system.damageType2 = (system.damageType2 ?? "").toString();
     system.damageType3 = (system.damageType3 ?? "").toString();
 
-    // Recovery
+    // Recovery (BASE)
     // Backward-compat display: if older items used system.recovered, show it as recoveredPerRank.
     const legacyRecovered = system.recovered;
     if (system.recoveredPerRank === undefined && legacyRecovered !== undefined) {
@@ -86,6 +89,27 @@ export class HwfwmConsumableSheet extends HandlebarsApplicationMixin(
 
     const rt = (system.recoveryType ?? "").toString();
     system.recoveryType = ["lifeforce", "mana", "stamina"].includes(rt) ? rt : "";
+
+    // -----------------------------
+    // Derived display math (UI only)
+    // -----------------------------
+    system._derived = system._derived ?? {};
+
+    const rankMultiplierRaw = RANK_RESOURCE_MULTIPLIER?.[system.itemRank];
+    const rankMultiplier =
+      Number.isFinite(Number(rankMultiplierRaw)) ? Number(rankMultiplierRaw) : 1;
+
+    const baseDps = Number.isFinite(Number(system.damagePerSuccess))
+      ? Number(system.damagePerSuccess)
+      : 0;
+
+    const baseRec = Number.isFinite(Number(system.recoveredPerRank))
+      ? Number(system.recoveredPerRank)
+      : 0;
+
+    system._derived.rankMultiplier = rankMultiplier;
+    system._derived.totalDamagePerSuccess = Math.round(baseDps * rankMultiplier);
+    system._derived.totalRecoveredPerRank = Math.round(baseRec * rankMultiplier);
 
     context.system = system;
 
@@ -171,12 +195,12 @@ export class HwfwmConsumableSheet extends HandlebarsApplicationMixin(
       flat["system.actionCost"] = this._toNumberOrBlank(flat["system.actionCost"]);
     }
 
-    // Coerce damage numeric
+    // Coerce damage numeric (BASE)
     if ("system.damagePerSuccess" in flat) {
       flat["system.damagePerSuccess"] = this._toNumberOrBlank(flat["system.damagePerSuccess"]);
     }
 
-    // Coerce recovery numeric (new key)
+    // Coerce recovery numeric (BASE)
     if ("system.recoveredPerRank" in flat) {
       flat["system.recoveredPerRank"] = this._toNumberOrBlank(flat["system.recoveredPerRank"]);
     }
