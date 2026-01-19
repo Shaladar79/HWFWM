@@ -69,8 +69,18 @@
         <!-- DAMAGE -->
         {{#if isDamage}}
           <div class="hwfwm-field">
-            <div class="hwfwm-label" style="color:#000;">Damage per Success</div>
+            <div class="hwfwm-label" style="color:#000;">Base Damage per Success</div>
             <input type="number" name="system.damagePerSuccess" value="{{system.damagePerSuccess}}" min="0" step="1" />
+          </div>
+
+          <div class="hwfwm-field">
+            <div class="hwfwm-label" style="color:#000;">Rank Multiplier</div>
+            <input type="number" value="{{system._derived.rankMultiplier}}" readonly />
+          </div>
+
+          <div class="hwfwm-field">
+            <div class="hwfwm-label" style="color:#000;">Total Damage per Success</div>
+            <input type="number" value="{{system._derived.totalDamagePerSuccess}}" readonly />
           </div>
 
           <div class="hwfwm-field">
@@ -126,8 +136,18 @@
           </div>
 
           <div class="hwfwm-field">
-            <div class="hwfwm-label" style="color:#000;">Recovered per Rank</div>
+            <div class="hwfwm-label" style="color:#000;">Base Recovery per Rank</div>
             <input type="number" name="system.recoveredPerRank" value="{{system.recoveredPerRank}}" min="0" step="1" />
+          </div>
+
+          <div class="hwfwm-field">
+            <div class="hwfwm-label" style="color:#000;">Rank Multiplier</div>
+            <input type="number" value="{{system._derived.rankMultiplier}}" readonly />
+          </div>
+
+          <div class="hwfwm-field">
+            <div class="hwfwm-label" style="color:#000;">Total Recovered per Rank</div>
+            <input type="number" value="{{system._derived.totalRecoveredPerRank}}" readonly />
           </div>
 
           <div class="hwfwm-field">
