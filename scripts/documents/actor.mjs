@@ -246,11 +246,29 @@ export class HwfwmActor extends Actor {
       ? BACKGROUND_GRANTED_SPECIALTIES[backgroundKey]
       : [];
 
+    const bgGrantedSet = new Set(grantedByBackground.filter(Boolean));
+
     system._derived.specialtiesGranted = system._derived.specialtiesGranted ?? {};
     system._derived.specialtiesGranted.background = grantedByBackground;
 
-    for (const key of grantedByBackground) {
-      if (!key) continue;
+    // ✅ CLEANUP: remove stale derived-only background specialties that are no longer granted
+    for (const [k, v] of Object.entries(system.specialties ?? {})) {
+      if (!v || typeof v !== "object") continue;
+
+      const isDerivedBackground =
+        v._derivedOnly === true &&
+        v.granted === true &&
+        String(v.source ?? "") === "background";
+
+      if (!isDerivedBackground) continue;
+
+      if (!bgGrantedSet.has(k)) {
+        delete system.specialties[k];
+      }
+    }
+
+    // ✅ ADD: ensure currently granted keys exist (without overwriting user-managed entries)
+    for (const key of bgGrantedSet) {
       if (system.specialties?.[key]) continue;
 
       system.specialties[key] = {
