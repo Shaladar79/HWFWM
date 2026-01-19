@@ -321,8 +321,23 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
   // ---------------------------------------------------------------------------
   // Treasures: Items (Equipment + Consumables)
   // ---------------------------------------------------------------------------
-  const coerceBool = (v) =>
-    v === true || v === 1 || v === "1" || v === "true" || v === "yes" || v === "on";
+  const coerceBool = (v) => {
+    if (v === true) return true;
+    if (v === false) return false;
+
+    const s = String(v ?? "").trim().toLowerCase();
+    if (["1", "true", "yes", "y", "on"].includes(s)) return true;
+    if (["0", "false", "no", "n", "off", ""].includes(s)) return false;
+
+    // Default for unknown legacy values: false
+    return false;
+  };
+
+  const clampInt = (v, fallback = 0) => {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return fallback;
+    return Math.max(0, Math.floor(n));
+  };
 
   const equipment = items
     .filter((it) => it?.type === "equipment")
@@ -342,7 +357,7 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
     .map((it) => ({
       id: it.id,
       name: it.name,
-      quantity: Number(it.system?.quantity ?? 0),
+      quantity: clampInt(it.system?.quantity ?? 0, 0),
       // IMPORTANT: schema is boolean system.readied
       readied: coerceBool(it.system?.readied),
       notes: it.system?.notes ?? ""
@@ -360,7 +375,7 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
   const miscEntries = Object.entries(misc).map(([key, data]) => ({
     key,
     name: data?.name ?? key,
-    quantity: Number(data?.quantity ?? 1),
+    quantity: clampInt(data?.quantity ?? 1, 1),
     notes: data?.notes ?? ""
   }));
   miscEntries.sort((a, b) => a.name.localeCompare(b.name));
