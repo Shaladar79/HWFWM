@@ -254,6 +254,8 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
 
         if (field === "system.quantity" && typeof value === "number" && value <= 0) {
           await item.delete();
+          // ✅ Ensure UI refresh after deletion so lists update immediately.
+          sheet.render(false);
           return;
         }
 
@@ -264,8 +266,11 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
 
         await item.update({ [field]: value });
 
-        // ✅ For test clarity: after equip/readied toggles, force sheet refresh.
-        if (field === "system.equipped" || field === "system.readied") {
+        // ✅ Force sheet refresh for derived/list-driven views.
+        // - system.equipped affects Equipped Equipment list
+        // - system.readied affects Readied Consumables derived snapshot display
+        // - system.quantity affects Qty display on both Inventory and Equipment (readied list meta)
+        if (field === "system.equipped" || field === "system.readied" || field === "system.quantity") {
           sheet.render(false);
         }
 
@@ -398,14 +403,17 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
           const id = btn.dataset.itemId ?? btn.getAttribute("data-item-id");
           const item = id ? sheet.document?.items?.get(id) : null;
           if (item) await item.delete();
+          // ✅ Ensure UI refresh after deletion so lists update immediately.
+          sheet.render(false);
           return;
         }
 
         case "create-talent":
           // Creates a basic talent item. You can refine default fields later.
-          return sheet.document?.createEmbeddedDocuments?.("Item", [
-            { name: "New Talent", type: "talent" }
-          ]);
+          await sheet.document?.createEmbeddedDocuments?.("Item", [{ name: "New Talent", type: "talent" }]);
+          // ✅ Ensure UI refresh so the new item appears immediately.
+          sheet.render(false);
+          return;
 
         default:
           return;
