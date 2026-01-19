@@ -236,13 +236,6 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
 
   // ---------------------------------------------------------------------------
   // Enhancements: Race-granted Affinities + Aptitudes (DERIVED-ONLY, VISIBILITY)
-  //
-  // Your template renders:
-  //   {{#each system.affinities}} ...
-  //   {{#each system.aptitudes}} ...
-  //
-  // but nothing persists race grants into actor.system.* yet.
-  // So we union race grants into context.system.* at render time only.
   // ---------------------------------------------------------------------------
   const raceKey = String(context.details?.raceKey ?? "").trim();
 
@@ -325,17 +318,91 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
   // Essence UI
   context.essenceUI = computeEssenceUI(sheet, context.system);
 
-  // Treasures: items
-  const equipment = items
-    .filter((it) => it?.type === "equipment")
-    .map((it) => ({
+  // ---------------------------------------------------------------------------
+  // Treasures: Equipment (boolean equip wiring + derived display fields)
+  // ---------------------------------------------------------------------------
+
+  const toNum = (v, fallback = 0) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : fallback;
+  };
+
+  const equipmentDocs = items.filter((it) => it?.type === "equipment");
+
+  const mapEquipmentRow = (it) => {
+    const s = it.system ?? {};
+    const type = String(s.type ?? s.category ?? "misc"); // prefer canonical system.type
+    const equippedBool = s.equipped === true; // strict boolean is authoritative
+
+    // Back-compat for older templates that used "yes"/"no" strings:
+    const equipped = equippedBool ? "yes" : "no";
+
+    // Generic display helpers
+    const img = it.img ?? "";
+    const itemRank = String(s.itemRank ?? "normal");
+    const legendary = s.legendary === true;
+
+    const base = {
       id: it.id,
       name: it.name,
-      category: it.system?.category ?? "misc",
-      equipped: (it.system?.equipped ?? "no").toString(),
-      notes: it.system?.notes ?? ""
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name));
+      img,
+      itemRank,
+      legendary,
+
+      // canonical + compatibility fields
+      type, // preferred name going forward
+      category: type, // legacy field name used by older templates
+      equippedBool,
+      equipped, // legacy yes/no string
+
+      notes: s.notes ?? ""
+    };
+
+    if (type === "weapon") {
+      return {
+        ...base,
+        weaponCategory: String(s.weapon?.category ?? ""),
+        weaponType: String(s.weapon?.weaponType ?? ""),
+        damagePerSuccess: toNum(s.weapon?.totalDamagePerSuccess ?? s.weapon?.damagePerSuccess ?? 0, 0),
+        actionCost: toNum(s.weapon?.totalActionCost ?? s.weapon?.actionCost ?? 0, 0),
+        range: toNum(s.weapon?.range ?? 0, 0)
+      };
+    }
+
+    if (type === "armor") {
+      return {
+        ...base,
+        armorClass: String(s.armor?.armorType ?? ""),
+        armorName: String(s.armor?.armorName ?? ""),
+        totalArmor: toNum(s.armor?.totalArmor ?? s.armor?.value ?? 0, 0)
+      };
+    }
+
+    // misc
+    return {
+      ...base,
+      miscArmor: toNum(s.misc?.armor ?? 0, 0)
+    };
+  };
+
+  const equipment = equipmentDocs
+    .map(mapEquipmentRow)
+    .sort((a, b) => String(a.name ?? "").localeCompare(String(b.name ?? "")));
+
+  // Flat list (for any existing templates)
+  context.allEquipment = equipment;
+
+  // Equipped list (boolean authoritative)
+  context.equippedEquipment = equipment.filter((it) => it.equippedBool === true);
+
+  // Categorized lists (recommended for new actor equipment UI)
+  context.equipmentWeapons = equipment.filter((it) => it.type === "weapon");
+  context.equipmentArmors = equipment.filter((it) => it.type === "armor");
+  context.equipmentMisc = equipment.filter((it) => it.type === "misc");
+
+  // ---------------------------------------------------------------------------
+  // Treasures: Consumables (unchanged)
+  // ---------------------------------------------------------------------------
 
   const consumables = items
     .filter((it) => it?.type === "consumable")
@@ -347,9 +414,6 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
       notes: it.system?.notes ?? ""
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
-
-  context.allEquipment = equipment;
-  context.equippedEquipment = equipment.filter((it) => it.equipped === "yes");
 
   context.allConsumables = consumables;
   context.readiedConsumables = consumables.filter((it) => it.readied === "yes");
