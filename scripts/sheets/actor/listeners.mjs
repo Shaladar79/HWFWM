@@ -225,15 +225,21 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
 
         const field = target.dataset.itemField;
 
-        // ✅ NEW: checkbox-safe handling (critical for equipment equipped boolean)
+        // ✅ checkbox-safe handling
+        // Only treat checkboxes as boolean payloads if data-bool="true" is present.
         let value;
-        if (target instanceof HTMLInputElement && target.type === "checkbox") {
+        if (
+          target instanceof HTMLInputElement &&
+          target.type === "checkbox" &&
+          String(target.dataset?.bool ?? "") === "true"
+        ) {
           value = target.checked === true;
         } else {
           value = target.value;
 
           if (target instanceof HTMLInputElement && target.type === "number") {
-            const n = Number(value);
+            // Normalize empty to 0
+            const n = value === "" ? 0 : Number(value);
             value = Number.isFinite(n) ? n : 0;
           }
         }
@@ -264,7 +270,7 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
 
         let value = target.value;
         if (target instanceof HTMLInputElement && target.type === "number") {
-          const n = Number(value);
+          const n = value === "" ? 0 : Number(value);
           value = Number.isFinite(n) ? n : 0;
         }
 
