@@ -225,10 +225,17 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
 
         const field = target.dataset.itemField;
 
-        let value = target.value;
-        if (target instanceof HTMLInputElement && target.type === "number") {
-          const n = Number(value);
-          value = Number.isFinite(n) ? n : 0;
+        // ✅ NEW: checkbox-safe handling (critical for equipment equipped boolean)
+        let value;
+        if (target instanceof HTMLInputElement && target.type === "checkbox") {
+          value = target.checked === true;
+        } else {
+          value = target.value;
+
+          if (target instanceof HTMLInputElement && target.type === "number") {
+            const n = Number(value);
+            value = Number.isFinite(n) ? n : 0;
+          }
         }
 
         if (field === "system.quantity" && typeof value === "number" && value <= 0) {
