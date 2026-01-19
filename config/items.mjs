@@ -399,6 +399,69 @@ export function normalizeEquipmentSystem(system) {
   // NOTE: adjustments arrays are handled by the sheet and intentionally not touched here.
 }
 
+/**
+ * Normalizes talent system data in-place (runtime-only).
+ * Talents are passive modifiers + optional grants.
+ *
+ * Contract:
+ * - system.adjustments.attributes.<attr>.flat (number)
+ * - system.adjustments.resources.lifeForce/mana/stamina: pct + flat (numbers)
+ * - system.adjustments.resources.trauma/pace/reaction/defense/naturalArmor: flat (number)
+ * - system.grants.* are single-selection objects (strings)
+ */
+export function normalizeTalentSystem(system) {
+  if (!system || typeof system !== "object") return;
+
+  system.description = (system.description ?? "").toString();
+  system.notes = (system.notes ?? "").toString();
+
+  system.adjustments ??= {};
+  system.adjustments.attributes ??= {};
+  system.adjustments.resources ??= {};
+
+  // Attributes: flat only
+  for (const a of ["power", "speed", "spirit", "recovery"]) {
+    system.adjustments.attributes[a] ??= {};
+    system.adjustments.attributes[a].flat = coerceNumberOrZero(system.adjustments.attributes[a].flat);
+  }
+
+  // Resources: pct+flat
+  const pctFlatKeys = ["lifeForce", "mana", "stamina"];
+  for (const k of pctFlatKeys) {
+    system.adjustments.resources[k] ??= {};
+    system.adjustments.resources[k].pct = coerceNumberOrZero(system.adjustments.resources[k].pct);
+    system.adjustments.resources[k].flat = coerceNumberOrZero(system.adjustments.resources[k].flat);
+  }
+
+  // Resources: flat only
+  const flatOnlyKeys = ["trauma", "pace", "reaction", "defense", "naturalArmor"];
+  for (const k of flatOnlyKeys) {
+    system.adjustments.resources[k] ??= {};
+    system.adjustments.resources[k].flat = coerceNumberOrZero(system.adjustments.resources[k].flat);
+  }
+
+  // Grants: single-selection objects
+  system.grants ??= {};
+
+  system.grants.specialty ??= {};
+  system.grants.specialty.type = (system.grants.specialty.type ?? "").toString();
+  system.grants.specialty.key = (system.grants.specialty.key ?? "").toString();
+
+  system.grants.affinity ??= {};
+  system.grants.affinity.key = (system.grants.affinity.key ?? "").toString();
+
+  system.grants.aptitude ??= {};
+  system.grants.aptitude.key = (system.grants.aptitude.key ?? "").toString();
+
+  system.grants.resistance ??= {};
+  system.grants.resistance.key = (system.grants.resistance.key ?? "").toString();
+
+  // Future-proof: allow a simple "enabled" toggle later without breaking
+  if (system.enabled !== undefined) {
+    system.enabled = coerceBoolean(system.enabled);
+  }
+}
+
 /* -------------------------------------------- */
 /* Item Document Class                           */
 /* -------------------------------------------- */
@@ -420,9 +483,12 @@ export class HwfwmItem extends Item {
         normalizeEquipmentSystem(system);
         break;
 
+      case "talent":
+        normalizeTalentSystem(system);
+        break;
+
       // Stubs for future wiring (no-op for now)
       case "feature":
-      case "talent":
       case "ability":
       case "miscItem":
       default:
