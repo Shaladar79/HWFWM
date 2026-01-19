@@ -71,7 +71,11 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
   // ✅ NEW: ensure _derived exists so templates can safely read system._derived.*
   sys._derived = sys._derived ?? {};
   // ✅ NEW: ensure consumables derived snapshot exists (actor.mjs should populate; context provides safe defaults)
-  sys._derived.consumables = sys._derived.consumables ?? { totalCount: 0, readiedCount: 0, readiedItems: [] };
+  sys._derived.consumables = sys._derived.consumables ?? {
+    totalCount: 0,
+    readiedCount: 0,
+    readiedItems: []
+  };
 
   context.system = sys;
 
@@ -85,9 +89,7 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
 
   if (derivedFromActorKey) {
     const derivedRankKey = String(derivedFromActorKey);
-    const derivedRankLabel = String(
-      derivedFromActorLabel ?? (ranks?.[derivedRankKey] ?? derivedRankKey)
-    );
+    const derivedRankLabel = String(derivedFromActorLabel ?? (ranks?.[derivedRankKey] ?? derivedRankKey));
     const derivedRankTotal = Number(sys?._derived?.rankTierTotal ?? 0);
 
     context.derivedRankTotal = derivedRankTotal;
@@ -189,15 +191,25 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
   context.system._ui.addAptitudeKey = context.system._ui.addAptitudeKey ?? "";
   context.system._ui.addMiscItemKey = context.system._ui.addMiscItemKey ?? "";
 
+  // ---------------------------------------------------------------------------
   // Subtab persistence
+  // ---------------------------------------------------------------------------
   const storedEssenceTab = context.system._ui.essenceSubTab ?? "power";
   if (!sheet._activeSubTabs.essence) sheet._activeSubTabs.essence = storedEssenceTab;
   context.system._ui.essenceSubTab = sheet._activeSubTabs.essence ?? storedEssenceTab ?? "power";
 
-  const storedTreasuresTab = context.system._ui.treasuresSubTab ?? "equipment";
+  // Treasures: only "equipment" and "inventory" are valid now.
+  const sanitizeTreasuresTab = (tab) => {
+    const t = String(tab ?? "").trim();
+    return t === "inventory" ? "inventory" : "equipment";
+  };
+
+  const storedTreasuresTab = sanitizeTreasuresTab(context.system._ui.treasuresSubTab ?? "equipment");
   if (!sheet._activeSubTabs.treasures) sheet._activeSubTabs.treasures = storedTreasuresTab;
-  context.system._ui.treasuresSubTab =
-    sheet._activeSubTabs.treasures ?? storedTreasuresTab ?? "equipment";
+
+  context.system._ui.treasuresSubTab = sanitizeTreasuresTab(
+    sheet._activeSubTabs.treasures ?? storedTreasuresTab ?? "equipment"
+  );
 
   // catalogs
   context.specialtyCatalog = cfg.specialtyCatalog ?? {};
@@ -253,13 +265,8 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
   const ownedAptitudes = sys.aptitudes ?? {};
   const ownedResistances = sys.resistances ?? {};
 
-  const raceAffinityKeys = Array.isArray(RACE_GRANTED_AFFINITIES?.[raceKey])
-    ? RACE_GRANTED_AFFINITIES[raceKey]
-    : [];
-
-  const raceAptitudeKeys = Array.isArray(RACE_GRANTED_APTITUDES?.[raceKey])
-    ? RACE_GRANTED_APTITUDES[raceKey]
-    : [];
+  const raceAffinityKeys = Array.isArray(RACE_GRANTED_AFFINITIES?.[raceKey]) ? RACE_GRANTED_AFFINITIES[raceKey] : [];
+  const raceAptitudeKeys = Array.isArray(RACE_GRANTED_APTITUDES?.[raceKey]) ? RACE_GRANTED_APTITUDES[raceKey] : [];
 
   // Build merged affinities (owned wins)
   {
@@ -372,8 +379,8 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
   context.allEquipment = equipment;
   context.equippedEquipment = equipment.filter((it) => it.equipped === true);
 
+  // Keep allConsumables for Inventory management. Equipment subtab uses system._derived.consumables snapshot.
   context.allConsumables = consumables;
-  context.readiedConsumables = consumables.filter((it) => it.readied === true);
 
   // Misc actor-data
   const misc = context.system?.treasures?.miscItems ?? {};
