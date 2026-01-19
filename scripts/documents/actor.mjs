@@ -571,6 +571,64 @@ export class HwfwmActor extends Actor {
     };
 
     // -----------------------------
+    // 6e) Consumables Integration (Derived "Readied Consumables" snapshot)
+    //    - Items are NOT duplicated
+    //    - Stored on actor as Items of type "consumable"
+    //    - Equipment tab renders system._derived.consumables.readiedItems
+    // -----------------------------
+    const allConsumables = allItems.filter((it) => it?.type === "consumable");
+    const readied = allConsumables.filter((it) => coerceBool(it.system?.readied));
+
+    const pickDamageTypes = (s) => {
+      const out = [];
+      const a = String(s?.damageType1 ?? "").trim();
+      const b = String(s?.damageType2 ?? "").trim();
+      const c = String(s?.damageType3 ?? "").trim();
+      if (a) out.push(a);
+      if (b) out.push(b);
+      if (c) out.push(c);
+      return out;
+    };
+
+    const packConsumable = (it) => {
+      const s = it.system ?? {};
+      return {
+        id: it.id,
+        uuid: it.uuid,
+        name: it.name,
+        img: it.img,
+
+        itemRank: String(s.itemRank ?? ""),
+        category: String(s.category ?? ""), // "damage" vs "recovery" (or whatever your schema uses)
+
+        quantity: toNum(s.quantity, 0),
+        readied: coerceBool(s.readied),
+
+        // "Damage" surfaces
+        actionCost: toNum(s.actionCost, 0),
+        damagePerSuccess: toNum(s.damagePerSuccess, 0),
+        damageTypes: pickDamageTypes(s),
+        damageType1: String(s.damageType1 ?? ""),
+        damageType2: String(s.damageType2 ?? ""),
+        damageType3: String(s.damageType3 ?? ""),
+
+        // "Recovery" surfaces
+        recoveryType: String(s.recoveryType ?? ""),
+        recoveredPerRank: toNum(s.recoveredPerRank, 0),
+
+        // Text surfaces (for UI hover / later automation)
+        description: String(s.description ?? ""),
+        notes: String(s.notes ?? "")
+      };
+    };
+
+    system._derived.consumables = {
+      totalCount: allConsumables.length,
+      readiedCount: readied.length,
+      readiedItems: readied.map(packConsumable)
+    };
+
+    // -----------------------------
     // 7) Talent Integration (TEST-READY)
     //    - Passive always-on modifiers (no "equipped" checkbox)
     //    - Mirrors equipment adjustment model
