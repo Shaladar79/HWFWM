@@ -52,6 +52,17 @@ function toIntClamp0(v) {
 }
 
 /**
+ * Prevent "category string" being passed as the key by mistake.
+ * Your catalog keys are namespaced like: "sundries.rope-50ft", "essence.fire", "awakening.earth", etc.
+ * This guard makes the failure mode loud (warn) instead of silently corrupting rows.
+ */
+function looksLikeCatalogKey(k) {
+  const s = toStr(k);
+  // minimal heuristic: must contain a namespace delimiter
+  return s.includes(".") && !s.includes(" ");
+}
+
+/**
  * Determine whether a misc catalog entry supports "rank".
  *
  * Preferred future-proof flag: catalogEntry.hasRank === true
@@ -69,9 +80,12 @@ function supportsRank(catalogEntry) {
 function ensureMiscEntryShape(existing, key, catalogEntry) {
   const entryName = toStr(existing?.name) || toStr(catalogEntry?.name) || key;
 
+  // Default quantity to 1 if missing/invalid; updates can still set it down to 0 to delete.
+  const existingQty = Number.isFinite(Number(existing?.quantity)) ? Number(existing?.quantity) : 1;
+
   const out = {
     name: entryName,
-    quantity: toIntClamp0(existing?.quantity ?? 1)
+    quantity: Math.max(0, Math.floor(existingQty))
   };
 
   if (supportsRank(catalogEntry)) {
@@ -100,6 +114,13 @@ export async function addMiscByKey(sheet, { key, quantity }) {
   if (!sheet?.document) return;
   if (!k || qty <= 0) return;
 
+  // Explicit guard against a common UI wiring mistake:
+  // passing the category string into "key".
+  if (!looksLikeCatalogKey(k)) {
+    ui?.notifications?.warn?.(`Misc item selection is not a valid item key: "${k}".`);
+    return;
+  }
+
   const catalog = getFlatMiscCatalog();
   const entry = catalog[k];
 
@@ -116,7 +137,8 @@ export async function addMiscByKey(sheet, { key, quantity }) {
   normalized.quantity = existing ? existingQty + qty : qty;
 
   // Always cache the catalog name (prevents category strings, etc.)
-  normalized.name = toStr(entry?.name) || normalized.name || k;
+  const catalogName = toStr(entry?.name);
+  normalized.name = catalogName || normalized.name || k;
 
   current[k] = normalized;
   await sheet.document.update({ "system.treasures.miscItems": current });
@@ -180,10 +202,18 @@ export async function updateMiscField(sheet, { key, field, value }) {
   if (!sheet?.document) return;
   if (!k || !f) return;
 
+  // If a bad key sneaks in, do not mutate actor data.
+  if (!looksLikeCatalogKey(k)) return;
+
   const catalog = getFlatMiscCatalog();
   const catEntry = catalog[k] ?? null;
 
   const current = foundry.utils.deepClone(sheet.document?.system?.treasures?.miscItems ?? {});
+
+  // If the row doesn't exist yet and catalog entry is missing, do nothing.
+  // (Prevents creating orphan rows with unknown keys.)
+  if (!current[k] && !catEntry) return;
+
   current[k] = ensureMiscEntryShape(current[k], k, catEntry);
 
   // Quantity: clamp >=0, auto-remove at 0
