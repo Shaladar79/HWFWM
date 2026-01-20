@@ -24,9 +24,10 @@ import { bootstrapTalentsPackFolders } from "./scripts/init/compendiums/talents-
 import { seedTalentsCompendium } from "./scripts/init/compendiums/talents-seed.mjs";
 
 // ✅ NEW: Misc Items Catalog (flat dictionary) -> CONFIG["hwfwm-system"].miscItemCatalog
+// Adjust path if your file is elsewhere.
 import { HWFWM_MISC_ITEMS } from "./config/misc-items.mjs";
 
-// ✅ OPTIONAL: Expose rarity rules on CONFIG for future UI usage (tooltips, dropdowns, etc.)
+// ✅ NEW: rarity value rules -> CONFIG["hwfwm-system"].rarityValueRules
 import { HWFWM_RARITY_VALUE_RULES } from "./config/rarities.mjs";
 
 // If you do NOT see this, system.mjs is not being loaded at all.
@@ -38,10 +39,10 @@ Hooks.once("init", async () => {
   // Register system-wide config namespace
   CONFIG["hwfwm-system"] = HWFWM_CONFIG;
 
-  // ✅ register misc item catalog into CONFIG so sheet dropdowns can populate
+  // ✅ NEW: register misc item catalog into CONFIG so sheet dropdowns can populate
   CONFIG["hwfwm-system"].miscItemCatalog = HWFWM_MISC_ITEMS;
 
-  // ✅ OPTIONAL: register rarity rules for convenient downstream access
+  // ✅ NEW: register rarity rules centrally for UI + derived math references
   CONFIG["hwfwm-system"].rarityValueRules = HWFWM_RARITY_VALUE_RULES;
 
   // Register Actor + Item document classes (derived data engines)
@@ -186,3 +187,29 @@ Hooks.once("ready", async () => {
 });
 
 // (equipment ready hook remains intentionally disabled)
+// Hooks.once("ready", async () => {
+//   console.log("HWFWM System | Ready hook fired (folders -> seed)");
+
+//   // Only the GM should mutate compendiums.
+//   if (!game?.user?.isGM) {
+//     console.log("HWFWM System | Ready workflow skipped (not GM)");
+//     return;
+//   }
+
+//   try {
+//     console.time("HWFWM | equipment bootstrap+seed");
+
+//     console.time("HWFWM | equipment folders");
+//     await bootstrapEquipmentPackFolders();
+//     console.timeEnd("HWFWM | equipment folders");
+
+//     console.time("HWFWM | equipment seeding");
+//     await seedEquipmentCompendium();
+//     console.timeEnd("HWFWM | equipment seeding");
+
+//     console.timeEnd("HWFWM | equipment bootstrap+seed");
+//     console.log("HWFWM System | Ready workflow complete");
+//   } catch (err) {
+//     console.error("HWFWM System | Ready workflow failed (folders/seed)", err);
+//   }
+// });
