@@ -31,3 +31,15 @@ export const HWFWM_RARITY_VALUE_RULES = {
     mult: 1
   }
 };
+
+export const HWFWM_RARITY_KEYS = /** @type {const} */ (Object.freeze(Object.keys(HWFWM_RARITY_VALUE_RULES)));
+
+/**
+ * Safe lookup for rarity rules with fallback.
+ * @param {string} rarity
+ * @returns {{coin:string, mult:number}}
+ */
+export function getRarityValueRule(rarity) {
+  const key = String(rarity ?? "").trim();
+  return HWFWM_RARITY_VALUE_RULES[key] ?? HWFWM_RARITY_VALUE_RULES.common;
+}
