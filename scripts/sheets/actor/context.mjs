@@ -2,10 +2,7 @@
 
 import { computeEssenceUI } from "./essence.mjs";
 import { getFlatMiscCatalog } from "./treasures-misc.mjs";
-import {
-  BACKGROUND_DESCRIPTIONS,
-  BACKGROUND_GRANTED_SPECIALTIES
-} from "../../../config/backgrounds.mjs"; // ✅ FIXED PATH
+import { BACKGROUND_DESCRIPTIONS, BACKGROUND_GRANTED_SPECIALTIES } from "../../../config/backgrounds.mjs"; // ✅ FIXED PATH
 
 // ✅ NEW: race grants (derived-only visibility; no persistence)
 import { RACE_GRANTED_AFFINITIES, RACE_GRANTED_APTITUDES } from "../../../config/races.mjs";
@@ -55,22 +52,18 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
   sys.resources.lifeForce = sys.resources.lifeForce ?? { value: 0, max: 0 };
 
   // NEW: read-only derived display fields (may be set by actor.mjs; default to 0)
-  sys.resources.mana.recovery = Number.isFinite(Number(sys.resources.mana.recovery))
-    ? Number(sys.resources.mana.recovery)
-    : 0;
+  sys.resources.mana.recovery = Number.isFinite(Number(sys.resources.mana.recovery)) ? Number(sys.resources.mana.recovery) : 0;
   sys.resources.stamina.recovery = Number.isFinite(Number(sys.resources.stamina.recovery))
     ? Number(sys.resources.stamina.recovery)
     : 0;
   sys.resources.lifeForce.recovery = Number.isFinite(Number(sys.resources.lifeForce.recovery))
     ? Number(sys.resources.lifeForce.recovery)
     : 0;
-  sys.resources.naturalArmor = Number.isFinite(Number(sys.resources.naturalArmor))
-    ? Number(sys.resources.naturalArmor)
-    : 0;
+  sys.resources.naturalArmor = Number.isFinite(Number(sys.resources.naturalArmor)) ? Number(sys.resources.naturalArmor) : 0;
 
-  // ✅ NEW: ensure _derived exists so templates can safely read system._derived.*
+  // ✅ ensure _derived exists so templates can safely read system._derived.*
   sys._derived = sys._derived ?? {};
-  // ✅ NEW: ensure consumables derived snapshot exists (actor.mjs should populate; context provides safe defaults)
+  // ✅ ensure consumables derived snapshot exists (actor.mjs should populate; context provides safe defaults)
   sys._derived.consumables = sys._derived.consumables ?? {
     totalCount: 0,
     readiedCount: 0,
@@ -82,8 +75,6 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
   // ---------------------------------------------------------------------------
   // DERIVED RANK (Header)
   // ---------------------------------------------------------------------------
-  // Prefer authoritative derived rank from actor.prepareDerivedData().
-  // Fallback to local computation if not available.
   const derivedFromActorKey = sys?._derived?.rankKey ?? null;
   const derivedFromActorLabel = sys?._derived?.rankLabel ?? null;
 
@@ -96,8 +87,6 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
     context.derivedRankKey = derivedRankKey;
     context.derivedRankLabel = derivedRankLabel;
   } else {
-    // Tier values per rankKey: normal 0, iron 1, bronze 2, silver 3, gold 4, diamond 5
-    // This should live in config eventually; until then we default here.
     const rankTierValues =
       cfg.rankTierValues ??
       {
@@ -119,8 +108,6 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
       return "normal";
     }
 
-    // NOW LOCKED: We only read from the actual actor schema:
-    // system.attributes.<attr>.rankKey
     const attrRankKeys = {
       power: sys.attributes?.power?.rankKey ?? "normal",
       speed: sys.attributes?.speed?.rankKey ?? "normal",
@@ -137,12 +124,10 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
     const derivedRankKey = deriveRankKeyFromTierTotal(derivedRankTotal);
     const derivedRankLabel = ranks?.[derivedRankKey] ?? derivedRankKey;
 
-    // Expose to templates (header)
     context.derivedRankTotal = derivedRankTotal;
     context.derivedRankKey = derivedRankKey;
     context.derivedRankLabel = derivedRankLabel;
 
-    // Optional debugging
     context._attrRankKeys = attrRankKeys;
   }
 
@@ -151,10 +136,7 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
   // ---------------------------------------------------------------------------
   const rankDescriptions = cfg.rankDescriptions ?? {};
   context.overviewRankLabel = context.derivedRankLabel;
-
-  // Fall back to a safe placeholder if we haven't authored the text yet
-  context.overviewRankDescription =
-    rankDescriptions?.[context.derivedRankKey] ?? "Rank description not yet defined.";
+  context.overviewRankDescription = rankDescriptions?.[context.derivedRankKey] ?? "Rank description not yet defined.";
 
   // ---------------------------------------------------------------------------
   // Overview: Background description (read-only)
@@ -174,7 +156,6 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
     .map((it) => ({ id: it.id, name: it.name, source: it.system?.source ?? "" }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  // NEW: subset views for Traits → Features tab (do NOT remove from grantedFeatures)
   context.raceFeatures = context.grantedFeatures.filter((it) => String(it?.source ?? "") === "race");
   context.roleFeatures = context.grantedFeatures.filter((it) => String(it?.source ?? "") === "role");
 
@@ -198,7 +179,6 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
   if (!sheet._activeSubTabs.essence) sheet._activeSubTabs.essence = storedEssenceTab;
   context.system._ui.essenceSubTab = sheet._activeSubTabs.essence ?? storedEssenceTab ?? "power";
 
-  // Treasures: only "equipment" and "inventory" are valid now.
   const sanitizeTreasuresTab = (tab) => {
     const t = String(tab ?? "").trim();
     return t === "inventory" ? "inventory" : "equipment";
@@ -225,7 +205,6 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
   const manualSpecialties = sys.specialties ?? {};
   const grantedByBackground = BACKGROUND_GRANTED_SPECIALTIES?.[bgKey] ?? [];
 
-  // Union keys: manual entries + granted keys
   const effectiveKeys = new Set([...Object.keys(manualSpecialties), ...grantedByBackground]);
 
   const effectiveSpecialties = Array.from(effectiveKeys)
@@ -236,13 +215,10 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
 
       return {
         key,
-        // meta (reference)
         name: meta?.name ?? key,
         attribute: meta?.attribute ?? "",
         description: meta?.description ?? "",
-        // actor-owned progression
         score: Number(owned?.score ?? 0),
-        // provenance
         isGranted,
         source: owned?.source ?? (isGranted ? "background" : "manual")
       };
@@ -256,7 +232,6 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
   // ---------------------------------------------------------------------------
   const raceKey = String(context.details?.raceKey ?? "").trim();
 
-  // Ensure collections exist so #each does not silently noop
   sys.affinities = sys.affinities ?? {};
   sys.aptitudes = sys.aptitudes ?? {};
   sys.resistances = sys.resistances ?? {};
@@ -268,7 +243,6 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
   const raceAffinityKeys = Array.isArray(RACE_GRANTED_AFFINITIES?.[raceKey]) ? RACE_GRANTED_AFFINITIES[raceKey] : [];
   const raceAptitudeKeys = Array.isArray(RACE_GRANTED_APTITUDES?.[raceKey]) ? RACE_GRANTED_APTITUDES[raceKey] : [];
 
-  // Build merged affinities (owned wins)
   {
     const keys = new Set([...Object.keys(ownedAffinities), ...raceAffinityKeys]);
     const merged = {};
@@ -276,7 +250,6 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
     for (const key of keys) {
       if (!key) continue;
 
-      // Owned entry takes precedence
       if (ownedAffinities?.[key]) {
         merged[key] = ownedAffinities[key];
         continue;
@@ -295,7 +268,6 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
     context.system.affinities = merged;
   }
 
-  // Build merged aptitudes (owned wins)
   {
     const keys = new Set([...Object.keys(ownedAptitudes), ...raceAptitudeKeys]);
     const merged = {};
@@ -321,7 +293,6 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
     context.system.aptitudes = merged;
   }
 
-  // Resistances: unchanged (owned only) until you define grant rules/math
   context.system.resistances = ownedResistances;
 
   // IMPORTANT: always provide a FLAT misc catalog
@@ -341,7 +312,6 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
     if (["1", "true", "yes", "y", "on"].includes(s)) return true;
     if (["0", "false", "no", "n", "off", ""].includes(s)) return false;
 
-    // Default for unknown legacy values: false
     return false;
   };
 
@@ -356,9 +326,7 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
     .map((it) => ({
       id: it.id,
       name: it.name,
-      // IMPORTANT: equipment schema uses system.type (weapon|armor|misc)
       category: String(it.system?.type ?? "misc"),
-      // IMPORTANT: actor/equipment integration expects boolean system.equipped
       equipped: coerceBool(it.system?.equipped),
       notes: it.system?.notes ?? ""
     }))
@@ -370,7 +338,6 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
       id: it.id,
       name: it.name,
       quantity: clampInt(it.system?.quantity ?? 0, 0),
-      // IMPORTANT: schema is boolean system.readied
       readied: coerceBool(it.system?.readied),
       notes: it.system?.notes ?? ""
     }))
@@ -378,15 +345,10 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
 
   context.allEquipment = equipment;
   context.equippedEquipment = equipment.filter((it) => it.equipped === true);
-
-  // Keep allConsumables for Inventory management. Equipment subtab uses system._derived.consumables snapshot.
   context.allConsumables = consumables;
 
   // ---------------------------------------------------------------------------
-  // Inventory: Misc actor-data (merged with catalog metadata for row expansion)
-  // NEW SHAPE:
-  //  - Stored on actor: quantity + optional rank
-  //  - Display: name/category/value from catalog (read-only)
+  // Inventory: Misc actor-data (lightweight) + catalog metadata for display
   // ---------------------------------------------------------------------------
   const misc = context.system?.treasures?.miscItems ?? {};
   const miscCatalog = context.miscItemCatalog ?? {};
@@ -398,28 +360,23 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
     return Math.max(0, Math.floor(n));
   };
 
-  // Ranked items: default to Quintessence today; also support future catalog flag { ranked: true }
-  const isRanked = (catEntry, categoryLabel) => {
-    if (catEntry && catEntry.ranked === true) return true;
-    return normStr(categoryLabel) === "Quintessence";
+  const supportsRank = (catEntry) => {
+    if (!catEntry || typeof catEntry !== "object") return false;
+    if (catEntry.hasRank === true) return true;
+    const g = normStr(catEntry.group);
+    return g === "Quintessence" || g === "Food Ingredients";
   };
 
   const miscEntries = Object.entries(misc).map(([key, data]) => {
     const cat = miscCatalog?.[key] ?? null;
 
+    const name = normStr(cat?.name ?? data?.name ?? key);
+    const quantity = clampNonNegInt(data?.quantity ?? 1, 1);
+
     const category = normStr(cat?.group ?? cat?.category ?? "");
-    const hasRank = isRanked(cat, category);
-
-    // Quantity is always actor-stored
-    const quantity = clampNonNegInt(data?.quantity ?? 0, 0);
-
-    // Rank is actor-stored but only meaningful when hasRank
+    const hasRank = supportsRank(cat);
     const rank = hasRank ? normStr(data?.rank ?? "") : "";
 
-    // Name: catalog-driven; if missing catalog, fall back to legacy stored name or key
-    const name = normStr(cat?.name ?? data?.name ?? key);
-
-    // Value: catalog-driven (read-only)
     const baseValue = cat?.value ?? cat?.baseValue ?? 0;
     const value = Number.isFinite(Number(baseValue)) ? Math.max(0, Number(baseValue)) : 0;
 
