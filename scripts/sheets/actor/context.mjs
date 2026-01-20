@@ -382,14 +382,87 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
   // Keep allConsumables for Inventory management. Equipment subtab uses system._derived.consumables snapshot.
   context.allConsumables = consumables;
 
-  // Misc actor-data
+  // ---------------------------------------------------------------------------
+  // Inventory: Misc actor-data (merged with catalog metadata for row expansion)
+  // ---------------------------------------------------------------------------
   const misc = context.system?.treasures?.miscItems ?? {};
-  const miscEntries = Object.entries(misc).map(([key, data]) => ({
-    key,
-    name: data?.name ?? key,
-    quantity: clampInt(data?.quantity ?? 1, 1),
-    notes: data?.notes ?? ""
-  }));
+  const miscCatalog = context.miscItemCatalog ?? {};
+
+  const normStr = (v) => String(v ?? "").trim();
+  const clampNonNegInt = (v, fallback = 0) => {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return fallback;
+    return Math.max(0, Math.floor(n));
+  };
+  const normBool = (v) => {
+    if (v === true) return true;
+    if (v === false) return false;
+    const s = String(v ?? "").trim().toLowerCase();
+    return ["1", "true", "yes", "y", "on"].includes(s);
+  };
+  const readOptionalNum = (v) => {
+    // Stored overrides: null or number. Legacy may be "" or undefined.
+    if (v === null) return null;
+    const s = String(v ?? "").trim();
+    if (s === "") return null;
+    const n = Number(s);
+    return Number.isFinite(n) ? Math.max(0, n) : null;
+  };
+
+  const miscEntries = Object.entries(misc).map(([key, data]) => {
+    const cat = miscCatalog?.[key] ?? null;
+
+    // Actor-stored (editable)
+    const name = normStr(data?.name ?? cat?.name ?? key);
+    const quantity = clampNonNegInt(data?.quantity ?? 1, 1);
+    const notes = normStr(data?.notes ?? "");
+
+    const equipped = normBool(data?.equipped ?? false);
+    const rank = normStr(data?.rank ?? "");
+
+    const weightOverride = readOptionalNum(data?.weightOverride);
+    const valueOverride = readOptionalNum(data?.valueOverride);
+
+    // Catalog-driven (read-only display; do not persist)
+    const category = normStr(cat?.group ?? cat?.category ?? ""); // "group" is authoritative today
+    const tags = Array.isArray(cat?.tags) ? cat.tags : [];
+    const description = normStr(cat?.description ?? "");
+
+    // Base catalog values (optional; tolerate missing)
+    const baseWeight = cat?.weight ?? cat?.baseWeight ?? cat?.encumbrance ?? null;
+    const baseValue = cat?.value ?? cat?.baseValue ?? null;
+
+    // Template-friendly computed displays
+    const weight = weightOverride ?? (Number.isFinite(Number(baseWeight)) ? Math.max(0, Number(baseWeight)) : 0);
+    const value = valueOverride ?? (Number.isFinite(Number(baseValue)) ? Math.max(0, Number(baseValue)) : 0);
+
+    // Missing catalog safety: if the key was removed/renamed, we still render using actor data
+    const missingFromCatalog = !cat;
+
+    return {
+      key,
+
+      // Existing columns (backward compatible)
+      name,
+      quantity,
+      notes,
+
+      // New columns (some editable, some display-only)
+      equipped, // actor
+      rank, // actor
+      weightOverride, // actor
+      valueOverride, // actor
+
+      weight, // display (actor override else catalog)
+      value, // display (actor override else catalog)
+
+      category, // catalog display-only
+      tags, // catalog display-only
+      description, // catalog display-only
+      missingFromCatalog
+    };
+  });
+
   miscEntries.sort((a, b) => a.name.localeCompare(b.name));
   context.allMiscItems = miscEntries;
 
