@@ -314,6 +314,7 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
 
   // ---------------------------------------------------------------------------
   // ✅ Phase 2: Treasures context extracted (NO behavior changes)
+  // ✅ Phase 4: also accept structured treasures payload (wealth summary, etc.)
   // ---------------------------------------------------------------------------
   {
     const treasures = await buildTreasuresContext(sheet, context, {
@@ -325,6 +326,9 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
     context.equippedEquipment = treasures.equippedEquipment;
     context.allConsumables = treasures.allConsumables;
     context.allMiscItems = treasures.allMiscItems;
+
+    // NEW: structured treasures payload for modular templates (e.g., wealth-summary.hbs)
+    context.treasures = { ...(context.treasures ?? {}), ...(treasures.treasures ?? {}) };
   }
 
   return context;
