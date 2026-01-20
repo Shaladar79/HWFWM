@@ -25,17 +25,23 @@ export function getFlatMiscCatalog() {
 }
 
 /**
- * Per-actor stored shape (backward compatible):
+ * Per-actor stored shape (forward + backward compatible):
  * system.treasures.miscItems.<key> = {
- *   name, quantity, notes,
- *   equipped?, rank?,
- *   weightOverride?, valueOverride?
+ *   name: string,        // cached display name (fallback if catalog entry is missing later)
+ *   quantity: number,
+ *   rank?: string        // ONLY for ranked catalog entries (e.g., Quintessence / Food Ingredients)
  * }
  *
- * Catalog remains authoritative for static metadata (group/category, baseWeight, baseValue, tags, description, etc).
+ * Catalog remains authoritative for metadata:
+ * - group/category
+ * - value
+ * - description, tags, etc.
  */
 
-/** Coerce helpers */
+/* -------------------------------------------- */
+/* Coerce helpers                                */
+/* -------------------------------------------- */
+
 function toStr(v) {
   return String(v ?? "").trim();
 }
@@ -45,49 +51,47 @@ function toIntClamp0(v) {
   return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
 }
 
-function toBool(v) {
-  if (typeof v === "boolean") return v;
-  const s = String(v ?? "").trim().toLowerCase();
-  return s === "true" || s === "1" || s === "on" || s === "yes";
-}
+/**
+ * Determine whether a misc catalog entry supports "rank".
+ *
+ * Preferred future-proof flag: catalogEntry.hasRank === true
+ * Backward-compatible fallback: group name match (until you add hasRank in config).
+ */
+function supportsRank(catalogEntry) {
+  if (!catalogEntry || typeof catalogEntry !== "object") return false;
+  if (catalogEntry.hasRank === true) return true;
 
-function normalizeOptionalNumber(v) {
-  // Accept blank as "no override"
-  const s = String(v ?? "").trim();
-  if (s === "") return null;
-  const n = Number(s);
-  return Number.isFinite(n) ? Math.max(0, n) : null;
+  const g = toStr(catalogEntry.group);
+  // Fallback list (can be changed later when config adds hasRank everywhere it matters)
+  return g === "Quintessence" || g === "Food Ingredients";
 }
 
 function ensureMiscEntryShape(existing, key, catalogEntry) {
-  const entryName = existing?.name ?? catalogEntry?.name ?? key;
+  const entryName = toStr(existing?.name) || toStr(catalogEntry?.name) || key;
 
-  return {
+  const out = {
     name: entryName,
-    quantity: toIntClamp0(existing?.quantity ?? 1),
-    notes: toStr(existing?.notes ?? catalogEntry?.notes ?? ""),
-
-    // Per-actor fields (optional)
-    equipped: toBool(existing?.equipped ?? false),
-    rank: toStr(existing?.rank ?? ""),
-
-    // Overrides (optional; null means "use catalog/base display value")
-    weightOverride:
-      existing?.weightOverride === null || existing?.weightOverride === undefined
-        ? null
-        : normalizeOptionalNumber(existing?.weightOverride),
-    valueOverride:
-      existing?.valueOverride === null || existing?.valueOverride === undefined
-        ? null
-        : normalizeOptionalNumber(existing?.valueOverride)
+    quantity: toIntClamp0(existing?.quantity ?? 1)
   };
+
+  if (supportsRank(catalogEntry)) {
+    out.rank = toStr(existing?.rank ?? "");
+  }
+
+  // Intentionally do NOT carry forward any legacy fields:
+  // - notes, equipped, weightOverride, valueOverride, etc.
+  return out;
 }
+
+/* -------------------------------------------- */
+/* CRUD helpers                                  */
+/* -------------------------------------------- */
 
 /**
  * Add or merge a misc item by catalog key (inline Add Row).
  * - Validates the key exists in the catalog
  * - Accumulates quantity if it already exists on the actor
- * - Initializes per-actor fields with sane defaults (backward compatible)
+ * - Initializes per-actor fields with sane defaults
  */
 export async function addMiscByKey(sheet, { key, quantity }) {
   const k = toStr(key);
@@ -110,6 +114,9 @@ export async function addMiscByKey(sheet, { key, quantity }) {
   const normalized = ensureMiscEntryShape(existing, k, entry);
   const existingQty = toIntClamp0(existing?.quantity ?? 0);
   normalized.quantity = existing ? existingQty + qty : qty;
+
+  // Always cache the catalog name (prevents category strings, etc.)
+  normalized.name = toStr(entry?.name) || normalized.name || k;
 
   current[k] = normalized;
   await sheet.document.update({ "system.treasures.miscItems": current });
@@ -159,11 +166,17 @@ export async function removeMiscByKey(sheet, key) {
 
 /**
  * Update a misc item field (inline edit).
- * Supports both "weight"/"value" (template-friendly) and "weightOverride"/"valueOverride" (storage).
+ *
+ * Supported fields:
+ * - quantity (number; <=0 deletes the row)
+ * - rank (string; only stored if the catalog entry supports rank)
+ *
+ * All other fields are ignored on purpose to keep misc items lightweight.
  */
 export async function updateMiscField(sheet, { key, field, value }) {
   const k = toStr(key);
   const f = toStr(field);
+
   if (!sheet?.document) return;
   if (!k || !f) return;
 
@@ -188,34 +201,14 @@ export async function updateMiscField(sheet, { key, field, value }) {
     return;
   }
 
-  // Common string fields
-  if (f === "name" || f === "notes" || f === "rank") {
-    current[k][f] = toStr(value);
+  // Rank: only for ranked entries
+  if (f === "rank") {
+    if (!supportsRank(catEntry)) return;
+
+    current[k].rank = toStr(value);
     await sheet.document.update({ "system.treasures.miscItems": current });
     return;
   }
 
-  // Boolean fields
-  if (f === "equipped") {
-    current[k].equipped = toBool(value);
-    await sheet.document.update({ "system.treasures.miscItems": current });
-    return;
-  }
-
-  // Override numeric fields (null when blank)
-  if (f === "weight" || f === "weightOverride") {
-    current[k].weightOverride = normalizeOptionalNumber(value);
-    await sheet.document.update({ "system.treasures.miscItems": current });
-    return;
-  }
-
-  if (f === "value" || f === "valueOverride") {
-    current[k].valueOverride = normalizeOptionalNumber(value);
-    await sheet.document.update({ "system.treasures.miscItems": current });
-    return;
-  }
-
-  // Fallback: store trimmed string for unknown future fields (non-breaking)
-  current[k][f] = typeof value === "string" ? value.trim() : value;
-  await sheet.document.update({ "system.treasures.miscItems": current });
+  // Intentionally ignore all other fields (equipped/notes/weight/value/etc.)
 }
