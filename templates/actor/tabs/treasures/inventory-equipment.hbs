@@ -1,0 +1,51 @@
+{{!-- templates/actor/tabs/treasures/inventory-equipment.hbs --}}
+
+<div class="hwfwm-res-separator">Equipment</div>
+
+{{#if allEquipment.length}}
+  <div class="hwfwm-treasure-table">
+    <div class="hwfwm-treasure-head">
+      <div>Name</div>
+      <div>Type</div>
+      <div>Equipped</div>
+      <div></div>
+    </div>
+
+    {{#each allEquipment as |it|}}
+      <div class="hwfwm-treasure-line">
+        <input
+          type="text"
+          value="{{it.name}}"
+          data-item-id="{{it.id}}"
+          data-item-field="name"
+        />
+
+        {{!-- IMPORTANT: equipment uses system.type (weapon|armor|misc) --}}
+        <select data-item-id="{{it.id}}" data-item-field="system.type">
+          <option value="weapon" {{#if (eq it.category "weapon")}}selected{{/if}}>Weapon</option>
+          <option value="armor" {{#if (eq it.category "armor")}}selected{{/if}}>Armor</option>
+          <option value="misc" {{#if (eq it.category "misc")}}selected{{/if}}>Misc</option>
+        </select>
+
+        {{!-- IMPORTANT: equipped is boolean --}}
+        <label style="display:flex; align-items:center; justify-content:center; gap:8px;">
+          <input
+            type="checkbox"
+            data-bool="true"
+            data-item-id="{{it.id}}"
+            data-item-field="system.equipped"
+            {{#if it.equipped}}checked{{/if}}
+          />
+          <span class="hwfwm-muted">Equipped</span>
+        </label>
+
+        <div class="hwfwm-itemlist__actions">
+          <button type="button" class="hwfwm-itembtn" data-action="open-item" data-item-id="{{it.id}}">Edit</button>
+          <button type="button" class="hwfwm-itembtn hwfwm-itembtn--danger" data-action="delete-item" data-item-id="{{it.id}}">Delete</button>
+        </div>
+      </div>
+    {{/each}}
+  </div>
+{{else}}
+  <div class="hwfwm-muted">No equipment in inventory yet.</div>
+{{/if}}
