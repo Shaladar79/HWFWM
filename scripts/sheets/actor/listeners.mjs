@@ -55,22 +55,23 @@ function bindMiscAddRow(sheet, root, { signal }) {
 
   const toStr = (v) => String(v ?? "").trim();
 
-  const rowsForGroup = (groupName) =>
+  const rowsForCategory = (categoryName) =>
     Object.entries(catalog)
-      .filter(([, v]) => toStr(v?.group) === toStr(groupName))
+      .filter(([, v]) => toStr(v?.group) === toStr(categoryName)) // group is the authoritative category key in the catalog
       .map(([k, v]) => ({ key: k, name: v?.name ?? k }))
       .sort((a, b) => a.name.localeCompare(b.name));
 
+  // NOTE: Must match template data-misc-add-field values
+  const categorySel = root.querySelector('select[data-misc-add-field="category"]');
   const keySel = root.querySelector('select[data-misc-add-field="key"]');
-  const groupSel = root.querySelector('select[data-misc-add-field="group"]');
   const qtyInput = root.querySelector('input[data-misc-add-field="qty"]');
 
   // If the template isn't present (older sheet or different actor type), do nothing.
-  if (!keySel || !groupSel || !qtyInput) return;
+  if (!categorySel || !keySel || !qtyInput) return;
 
   const refreshItems = () => {
-    const groupName = toStr(groupSel.value);
-    const rows = rowsForGroup(groupName);
+    const categoryName = toStr(categorySel.value);
+    const rows = rowsForCategory(categoryName);
 
     if (!rows.length) {
       keySel.innerHTML = `<option value="">— None Available —</option>`;
@@ -90,14 +91,17 @@ function bindMiscAddRow(sheet, root, { signal }) {
   // Initialize
   refreshItems();
 
-  // Re-populate when group changes
-  groupSel.addEventListener("change", refreshItems, { signal });
+  // Re-populate when category changes
+  categorySel.addEventListener("change", refreshItems, { signal });
 
-  // Optional UX: when group changes, reset qty to 1
-  groupSel.addEventListener(
+  // Optional UX: keep qty sane
+  categorySel.addEventListener(
     "change",
     () => {
-      qtyInput.value = String(Math.max(1, Number(qtyInput.value || 1)));
+      const n = Number(qtyInput.value || 1);
+      qtyInput.value = String(Number.isFinite(n) ? Math.max(1, Math.floor(n)) : 1);
+      // also clear item selection on category change
+      keySel.value = "";
     },
     { signal }
   );
@@ -347,7 +351,6 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
 
         if (field === "system.quantity" && typeof value === "number" && value <= 0) {
           await item.delete();
-          // ✅ Ensure UI refresh after deletion so lists update immediately.
           sheet.render(false);
           return;
         }
@@ -359,10 +362,6 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
 
         await item.update({ [field]: value });
 
-        // ✅ Force sheet refresh for derived/list-driven views.
-        // - system.equipped affects Equipped Equipment list
-        // - system.readied affects Readied Consumables derived snapshot display
-        // - system.quantity affects Qty display on both Inventory and Equipment (readied list meta)
         if (field === "system.equipped" || field === "system.readied" || field === "system.quantity") {
           sheet.render(false);
         }
@@ -389,11 +388,9 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
         if (target instanceof HTMLInputElement && target.type === "checkbox") {
           value = target.checked === true;
         } else if (wantsBool) {
-          // supports future misc bool fields if you add data-bool="true"
           const s = String(target.value ?? "").trim().toLowerCase();
           value = ["1", "true", "yes", "y", "on"].includes(s);
         } else {
-          // IMPORTANT: for number inputs, allow blank string for override fields
           if (target instanceof HTMLInputElement && target.type === "number") {
             const raw = String(target.value ?? "");
 
@@ -436,7 +433,6 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
   /* ----------------------- */
   /* Click handler           */
   /* ----------------------- */
-  // capture true so we reliably intercept our action buttons
   root.addEventListener(
     "click",
     async (ev) => {
@@ -445,10 +441,9 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
 
       const action = btn.dataset.action;
 
-      // Only intercept actions we own (avoid Foundry window chrome collisions)
       const allowed = new Set([
         // misc inventory
-        "add-misc-row",
+        "misc-add-row",
         "remove-misc-qty",
         "remove-misc-item",
 
@@ -474,16 +469,16 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
       ev.stopImmediatePropagation?.();
 
       switch (action) {
-        case "add-misc-row": {
-          const groupSel = root.querySelector('select[data-misc-add-field="group"]');
+        case "misc-add-row": {
+          const categorySel = root.querySelector('select[data-misc-add-field="category"]');
           const keySel = root.querySelector('select[data-misc-add-field="key"]');
           const qtyInput = root.querySelector('input[data-misc-add-field="qty"]');
 
           const key = String(keySel?.value ?? "").trim();
+
           const qtyNum = Number(qtyInput?.value ?? 1);
           const qty = Number.isFinite(qtyNum) ? Math.max(0, Math.floor(qtyNum)) : 0;
 
-          // If no valid selection, do nothing
           if (!key || qty <= 0) return;
 
           await addMiscByKey(sheet, { key, quantity: qty });
@@ -492,7 +487,6 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
           if (qtyInput) qtyInput.value = "1";
           if (keySel) keySel.value = "";
 
-          // Ensure row appears immediately
           sheet.render(false);
           return;
         }
@@ -591,15 +585,12 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
           const id = btn.dataset.itemId ?? btn.getAttribute("data-item-id");
           const item = id ? sheet.document?.items?.get(id) : null;
           if (item) await item.delete();
-          // ✅ Ensure UI refresh after deletion so lists update immediately.
           sheet.render(false);
           return;
         }
 
         case "create-talent":
-          // Creates a basic talent item. You can refine default fields later.
           await sheet.document?.createEmbeddedDocuments?.("Item", [{ name: "New Talent", type: "talent" }]);
-          // ✅ Ensure UI refresh so the new item appears immediately.
           sheet.render(false);
           return;
 
