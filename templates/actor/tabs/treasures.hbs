@@ -204,7 +204,12 @@
       <div class="hwfwm-treasure-table">
         <div class="hwfwm-treasure-head">
           <div>Name</div>
+          <div>Category</div>
           <div>Qty</div>
+          <div>Equipped</div>
+          <div>Rank</div>
+          <div>Weight</div>
+          <div>Value</div>
           <div>Notes</div>
           <div></div>
         </div>
@@ -216,6 +221,16 @@
               value="{{m.name}}"
               data-misc-key="{{m.key}}"
               data-misc-field="name"
+              title="{{#if m.missingFromCatalog}}Missing from catalog (key: {{m.key}}){{/if}}"
+            />
+
+            {{!-- Catalog-driven, read-only --}}
+            <input
+              type="text"
+              value="{{m.category}}"
+              readonly
+              tabindex="-1"
+              title="{{#if m.missingFromCatalog}}Missing from catalog (key: {{m.key}}){{/if}}"
             />
 
             <input
@@ -227,11 +242,56 @@
               data-misc-field="quantity"
             />
 
+            {{!-- Per-actor --}}
+            <label style="display:flex; align-items:center; justify-content:center; gap:8px;">
+              <input
+                type="checkbox"
+                data-bool="true"
+                data-misc-key="{{m.key}}"
+                data-misc-field="equipped"
+                {{#if m.equipped}}checked{{/if}}
+              />
+            </label>
+
+            <input
+              type="text"
+              value="{{m.rank}}"
+              placeholder="—"
+              data-misc-key="{{m.key}}"
+              data-misc-field="rank"
+            />
+
+            {{!-- Editable override; blank = use catalog/base --}}
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value="{{#if (ne m.weightOverride null)}}{{m.weightOverride}}{{/if}}"
+              placeholder="{{m.weight}}"
+              data-misc-key="{{m.key}}"
+              data-misc-field="weight"
+              title="Blank uses catalog/base (currently: {{m.weight}})"
+            />
+
+            {{!-- Editable override; blank = use catalog/base --}}
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value="{{#if (ne m.valueOverride null)}}{{m.valueOverride}}{{/if}}"
+              placeholder="{{m.value}}"
+              data-misc-key="{{m.key}}"
+              data-misc-field="value"
+              title="Blank uses catalog/base (currently: {{m.value}})"
+            />
+
             <input
               type="text"
               value="{{m.notes}}"
               data-misc-key="{{m.key}}"
               data-misc-field="notes"
+              placeholder="{{#if m.description}}{{m.description}}{{else}}Notes…{{/if}}"
+              title="{{#if m.description}}{{m.description}}{{/if}}"
             />
 
             <div class="hwfwm-itemlist__actions">
@@ -246,6 +306,11 @@
             </div>
           </div>
         {{/each}}
+      </div>
+
+      {{!-- Optional read-only “tags” / “missing” note, displayed below the table to avoid bloating columns --}}
+      <div class="hwfwm-muted" style="margin-top: 6px;">
+        Weight/Value: leave blank to use catalog defaults. If a catalog entry is removed or renamed, the row remains editable but may show missing metadata.
       </div>
     {{else}}
       <div class="hwfwm-muted">No misc items yet.</div>
