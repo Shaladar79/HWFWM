@@ -372,6 +372,34 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
     return g === "Quintessence" || g === "Food Ingredients";
   };
 
+  // NEW: parse "20 GSC" -> { amount: 20, suffix: "GSC" }
+  const parseValueLabel = (label) => {
+    const raw = normStr(label);
+    if (!raw) return { amount: 0, suffix: "" };
+
+    // Accept:
+    // - "20 GSC"
+    // - "20GSC"
+    // - "20.5 GSC" (kept numeric; still multiplies)
+    // Anything else -> amount 0, suffix raw (for display only)
+    const m = raw.match(/^(-?\d+(?:\.\d+)?)\s*([A-Za-z][A-Za-z0-9]*)$/);
+    if (!m) return { amount: 0, suffix: raw };
+
+    const amount = Number(m[1]);
+    const suffix = m[2] ?? "";
+    return { amount: Number.isFinite(amount) ? amount : 0, suffix };
+  };
+
+  const formatValueLabel = (amount, suffix) => {
+    const sfx = normStr(suffix);
+    if (!sfx) return "";
+    // Keep decimals only if they exist (e.g., 1.5)
+    const n = Number(amount);
+    if (!Number.isFinite(n)) return "";
+    const txt = Number.isInteger(n) ? String(n) : String(n);
+    return `${txt} ${sfx}`.trim();
+  };
+
   const miscEntries = Object.entries(misc).map(([key, data]) => {
     const cat = miscCatalog?.[key] ?? null;
 
@@ -384,8 +412,17 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
     const hasRank = supportsRank(cat);
     const rank = hasRank ? normStr(data?.rank ?? "") : "";
 
-    const baseValue = cat?.value ?? cat?.baseValue ?? 0;
-    const value = Number.isFinite(Number(baseValue)) ? Math.max(0, Number(baseValue)) : 0;
+    // NEW: valueLabel + computed totalValueLabel
+    const valueLabel = normStr(cat?.valueLabel ?? "");
+    const parsed = parseValueLabel(valueLabel);
+
+    const perUnitAmount = Number.isFinite(parsed.amount) ? parsed.amount : 0;
+    const totalAmount = perUnitAmount * quantity;
+
+    const totalValueLabel =
+      parsed.suffix && perUnitAmount > 0
+        ? formatValueLabel(totalAmount, parsed.suffix)
+        : "";
 
     const missingFromCatalog = !cat;
 
@@ -396,7 +433,16 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
       quantity,
       hasRank,
       rank,
-      value,
+
+      // for template display
+      valueLabel,
+      totalValueLabel,
+
+      // useful if later you want to sort/filter by numeric wealth
+      _valueAmount: perUnitAmount,
+      _valueSuffix: parsed.suffix,
+      _totalValueAmount: totalAmount,
+
       missingFromCatalog
     };
   });
