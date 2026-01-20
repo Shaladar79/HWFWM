@@ -84,7 +84,7 @@ function bindMiscAddRow(sheet, root, { signal }) {
   const rowsForCategory = (categoryName) => {
     const wanted = norm(categoryName);
     return Object.entries(catalog ?? {})
-      .filter(([, v]) => norm(v?.group) === wanted) // ✅ normalized compare
+      .filter(([, v]) => norm(v?.group) === wanted) // normalized compare
       .map(([k, v]) => ({ key: k, name: v?.name ?? k }))
       .sort((a, b) => a.name.localeCompare(b.name));
   };
@@ -153,14 +153,18 @@ function bindMiscAddRow(sheet, root, { signal }) {
   refreshItems();
 
   // Re-populate when category changes
-  categorySel.addEventListener("change", () => {
-    // keep qty sane + clear item selection
-    const n = Number(qtyInput.value || 1);
-    qtyInput.value = String(Number.isFinite(n) ? Math.max(1, Math.floor(n)) : 1);
+  categorySel.addEventListener(
+    "change",
+    () => {
+      // keep qty sane + clear item selection
+      const n = Number(qtyInput.value || 1);
+      qtyInput.value = String(Number.isFinite(n) ? Math.max(1, Math.floor(n)) : 1);
 
-    refreshItems();
-    keySel.value = "";
-  }, { signal });
+      refreshItems();
+      keySel.value = "";
+    },
+    { signal }
+  );
 }
 
 /* -------------------------------------------- */
@@ -344,6 +348,7 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
         return;
       }
 
+      // Embedded Items (equipment/consumables/etc.)
       if (
         (target instanceof HTMLInputElement || target instanceof HTMLSelectElement) &&
         target.dataset?.itemId &&
@@ -403,6 +408,7 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
         return;
       }
 
+      // Misc Items (actor-data) — lightweight only: quantity + rank
       if (
         (target instanceof HTMLInputElement || target instanceof HTMLSelectElement) &&
         target.dataset?.miscKey &&
@@ -413,36 +419,21 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
         ev.stopImmediatePropagation?.();
 
         const field = String(target.dataset.miscField ?? "").trim();
+        const key = String(target.dataset.miscKey ?? "").trim();
 
         let value;
-        const wantsBool = String(target.dataset?.bool ?? "").trim().toLowerCase() === "true";
 
-        if (target instanceof HTMLInputElement && target.type === "checkbox") {
-          value = target.checked === true;
-        } else if (wantsBool) {
-          const s = String(target.value ?? "").trim().toLowerCase();
-          value = ["1", "true", "yes", "y", "on"].includes(s);
+        if (field === "quantity") {
+          const n = Number(target.value);
+          value = Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+        } else if (field === "rank") {
+          value = String(target.value ?? "").trim();
         } else {
-          if (target instanceof HTMLInputElement && target.type === "number") {
-            const raw = String(target.value ?? "");
-
-            if (field === "weight" || field === "value" || field === "weightOverride" || field === "valueOverride") {
-              value = raw.trim() === "" ? "" : raw;
-            } else {
-              const n = Number(raw);
-              value = Number.isFinite(n) ? n : 0;
-            }
-          } else {
-            value = target.value;
-          }
+          // Ignore any stray legacy fields the DOM might still contain
+          return;
         }
 
-        await updateMiscField(sheet, {
-          key: target.dataset.miscKey,
-          field,
-          value
-        });
-
+        await updateMiscField(sheet, { key, field, value });
         return;
       }
 
