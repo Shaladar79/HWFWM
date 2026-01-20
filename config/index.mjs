@@ -40,6 +40,9 @@ import { HWFWM_CONFLUENCE_ESSENCES } from "./confluence-essences.mjs";
 // Misc Inventory Items (actor-data, not Item documents)
 import { HWFWM_MISC_ITEMS } from "./misc-items.mjs";
 
+// ✅ NEW: Rarity → coin + multiplier rules
+import { HWFWM_RARITY_VALUE_RULES } from "./rarities.mjs";
+
 export const HWFWM_CONFIG = {
   // -------------------------------------------------
   // Core Rank Progression
@@ -60,7 +63,7 @@ export const HWFWM_CONFIG = {
   roles: ROLES,
   roleOrder: ROLE_ORDER,
 
-  // NEW: Role mechanics/lore catalogs
+  // Role mechanics/lore catalogs
   roleAdjustments: ROLE_ADJUSTMENTS,
   roleByRank: ROLE_BY_RANK,
   roleDescriptions: ROLE_DESCRIPTIONS,
@@ -96,5 +99,8 @@ export const HWFWM_CONFIG = {
   // -------------------------------------------------
   // Treasures
   // -------------------------------------------------
-  miscItemCatalog: HWFWM_MISC_ITEMS
+  miscItemCatalog: HWFWM_MISC_ITEMS,
+
+  // ✅ NEW: Rarity → coin denomination + multiplier
+  rarityValueRules: HWFWM_RARITY_VALUE_RULES
 };
