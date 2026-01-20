@@ -2,7 +2,13 @@
 
 import { activateTabGroup } from "./tabs.mjs";
 import { handleEssenceSelectChange } from "./essence.mjs";
-import { openAddMiscDialog, removeMiscByKey, updateMiscField } from "./treasures-misc.mjs";
+import {
+  removeMiscByKey,
+  updateMiscField,
+  addMiscByKey,
+  removeMiscQuantity,
+  getFlatMiscCatalog
+} from "./treasures-misc.mjs";
 
 // Split modules (new)
 import {
@@ -41,6 +47,63 @@ async function lockChoices(sheet) {
 }
 
 /* -------------------------------------------- */
+/* Misc inline add-row controller                */
+/* -------------------------------------------- */
+
+function bindMiscAddRow(sheet, root, { signal }) {
+  const catalog = getFlatMiscCatalog();
+
+  const toStr = (v) => String(v ?? "").trim();
+
+  const rowsForGroup = (groupName) =>
+    Object.entries(catalog)
+      .filter(([, v]) => toStr(v?.group) === toStr(groupName))
+      .map(([k, v]) => ({ key: k, name: v?.name ?? k }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+  const keySel = root.querySelector('select[data-misc-add-field="key"]');
+  const groupSel = root.querySelector('select[data-misc-add-field="group"]');
+  const qtyInput = root.querySelector('input[data-misc-add-field="qty"]');
+
+  // If the template isn't present (older sheet or different actor type), do nothing.
+  if (!keySel || !groupSel || !qtyInput) return;
+
+  const refreshItems = () => {
+    const groupName = toStr(groupSel.value);
+    const rows = rowsForGroup(groupName);
+
+    if (!rows.length) {
+      keySel.innerHTML = `<option value="">— None Available —</option>`;
+      return;
+    }
+
+    keySel.innerHTML = [
+      `<option value="">— Select —</option>`,
+      ...rows.map((r) => {
+        const safeKey = foundry.utils.escapeHTML(r.key);
+        const safeName = foundry.utils.escapeHTML(r.name);
+        return `<option value="${safeKey}">${safeName}</option>`;
+      })
+    ].join("");
+  };
+
+  // Initialize
+  refreshItems();
+
+  // Re-populate when group changes
+  groupSel.addEventListener("change", refreshItems, { signal });
+
+  // Optional UX: when group changes, reset qty to 1
+  groupSel.addEventListener(
+    "change",
+    () => {
+      qtyInput.value = String(Math.max(1, Number(qtyInput.value || 1)));
+    },
+    { signal }
+  );
+}
+
+/* -------------------------------------------- */
 /* Binder                                        */
 /* -------------------------------------------- */
 
@@ -66,6 +129,9 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
   if (!sheet || !root || !controller) return;
 
   const { signal } = controller;
+
+  // Bind inline misc add-row UI (no dialog)
+  bindMiscAddRow(sheet, root, { signal });
 
   // One-time sync on render/bind
   const details = sheet.document?.system?.details ?? {};
@@ -349,8 +415,6 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
           value
         });
 
-        // Optional but helpful: misc columns can affect derived display if you add rollups later
-        // Keep lightweight for now: do not force full re-render.
         return;
       }
 
@@ -383,8 +447,11 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
 
       // Only intercept actions we own (avoid Foundry window chrome collisions)
       const allowed = new Set([
-        "add-misc-item",
+        // misc inventory
+        "add-misc-row",
+        "remove-misc-qty",
         "remove-misc-item",
+
         "add-specialty",
         "add-affinity",
         "remove-affinity",
@@ -407,12 +474,80 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
       ev.stopImmediatePropagation?.();
 
       switch (action) {
-        case "add-misc-item":
-          return openAddMiscDialog(sheet);
+        case "add-misc-row": {
+          const groupSel = root.querySelector('select[data-misc-add-field="group"]');
+          const keySel = root.querySelector('select[data-misc-add-field="key"]');
+          const qtyInput = root.querySelector('input[data-misc-add-field="qty"]');
+
+          const key = String(keySel?.value ?? "").trim();
+          const qtyNum = Number(qtyInput?.value ?? 1);
+          const qty = Number.isFinite(qtyNum) ? Math.max(0, Math.floor(qtyNum)) : 0;
+
+          // If no valid selection, do nothing
+          if (!key || qty <= 0) return;
+
+          await addMiscByKey(sheet, { key, quantity: qty });
+
+          // Reset UI to a sensible state
+          if (qtyInput) qtyInput.value = "1";
+          if (keySel) keySel.value = "";
+
+          // Ensure row appears immediately
+          sheet.render(false);
+          return;
+        }
+
+        case "remove-misc-qty": {
+          const key = String(btn.dataset.key ?? btn.getAttribute("data-key") ?? "").trim();
+          if (!key) return;
+
+          const currentQty = Number(sheet.document?.system?.treasures?.miscItems?.[key]?.quantity ?? 0);
+          const safeCurrentQty = Number.isFinite(currentQty) ? currentQty : 0;
+
+          const content = `
+            <form class="hwfwm-misc-removeqty-dialog">
+              <div class="form-group">
+                <label>Remove how many?</label>
+                <input type="number" name="qty" min="0" step="1" value="1" />
+                <p class="notes">Current quantity: ${safeCurrentQty}</p>
+              </div>
+            </form>
+          `;
+
+          new Dialog(
+            {
+              title: "Remove Quantity",
+              content,
+              buttons: {
+                remove: {
+                  label: "Remove",
+                  callback: async (html) => {
+                    const form = html?.[0]?.querySelector?.("form.hwfwm-misc-removeqty-dialog");
+                    const raw = form?.querySelector?.('input[name="qty"]')?.value ?? "1";
+                    const n = Number(raw);
+                    const qtyToRemove = Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+
+                    if (qtyToRemove <= 0) return;
+
+                    await removeMiscQuantity(sheet, { key, quantity: qtyToRemove });
+                    sheet.render(false);
+                  }
+                },
+                cancel: { label: "Cancel" }
+              },
+              default: "remove"
+            },
+            { width: 360 }
+          ).render(true);
+
+          return;
+        }
 
         case "remove-misc-item": {
           const key = btn.dataset.key ?? btn.getAttribute("data-key");
-          return removeMiscByKey(sheet, key);
+          await removeMiscByKey(sheet, key);
+          sheet.render(false);
+          return;
         }
 
         case "add-specialty":
