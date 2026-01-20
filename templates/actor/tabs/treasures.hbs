@@ -2,7 +2,7 @@
   <div class="hwfwm-card__title">Spirit Coins</div>
 
   {{!-- One-row, 6-across coins --}}
-  <div class="hwfwm-coin-row6">
+  <div class="hwfwm-coin-row6_tf">
     <div class="hwfwm-coin-cell">
       <div class="hwfwm-res-label">Lesser</div>
       <input class="hwfwm-coin-input" type="number" name="system.treasures.coins.lesser" value="{{system.treasures.coins.lesser}}" min="0" step="1" />
@@ -91,10 +91,6 @@
 
   {{!-- INVENTORY SUBTAB: manage ALL equipment/consumables + misc actor-data --}}
   <section class="tab" data-group="treasures" data-tab="inventory">
-
-    <div class="hwfwm-treasure-actions">
-      <button type="button" class="hwfwm-itembtn" data-action="add-misc-item">Add Misc Item</button>
-    </div>
 
     <div class="hwfwm-res-separator">Equipment</div>
 
@@ -200,6 +196,53 @@
 
     <div class="hwfwm-res-separator">Misc Items</div>
 
+    {{!-- Inline Add Row (no dialog) --}}
+    <div class="hwfwm-treasure-actions" style="margin-bottom: 8px;">
+      <div class="hwfwm-treasure-table">
+        <div class="hwfwm-treasure-head">
+          <div>Category</div>
+          <div>Item</div>
+          <div>Qty</div>
+          <div></div>
+        </div>
+
+        <div class="hwfwm-treasure-line">
+          {{!-- Category dropdown; options are the SAME list used by the old dialog --}}
+          <select data-misc-add-field="group">
+            <option value="Sundries">Sundries</option>
+            <option value="Awakening Stones">Awakening Stones</option>
+            <option value="Essences">Essence Cube</option>
+            <option value="Quintessence">Quintessence</option>
+            <option value="Other">Other</option>
+          </select>
+
+          {{!-- Item dropdown; listeners populate based on selected group --}}
+          <select data-misc-add-field="key">
+            <option value="">— Select —</option>
+          </select>
+
+          <input
+            type="number"
+            min="0"
+            step="1"
+            value="1"
+            data-misc-add-field="qty"
+            title="Quantity to add"
+          />
+
+          <div class="hwfwm-itemlist__actions">
+            <button
+              type="button"
+              class="hwfwm-itembtn"
+              data-action="add-misc-row"
+            >
+              Add
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     {{#if allMiscItems.length}}
       <div class="hwfwm-treasure-table">
         <div class="hwfwm-treasure-head">
@@ -294,21 +337,29 @@
               title="{{#if m.description}}{{m.description}}{{/if}}"
             />
 
-            <div class="hwfwm-itemlist__actions">
+            <div class="hwfwm-itemlist__actions" style="display:flex; gap:6px; justify-content:flex-end;">
+              <button
+                type="button"
+                class="hwfwm-itembtn"
+                data-action="remove-misc-qty"
+                data-key="{{m.key}}"
+              >
+                Remove Qty…
+              </button>
+
               <button
                 type="button"
                 class="hwfwm-itembtn hwfwm-itembtn--danger"
                 data-action="remove-misc-item"
                 data-key="{{m.key}}"
               >
-                Remove
+                Remove All
               </button>
             </div>
           </div>
         {{/each}}
       </div>
 
-      {{!-- Optional read-only “tags” / “missing” note, displayed below the table to avoid bloating columns --}}
       <div class="hwfwm-muted" style="margin-top: 6px;">
         Weight/Value: leave blank to use catalog defaults. If a catalog entry is removed or renamed, the row remains editable but may show missing metadata.
       </div>
