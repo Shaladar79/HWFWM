@@ -51,8 +51,6 @@ async function lockChoices(sheet) {
 /* -------------------------------------------- */
 
 function bindMiscAddRow(sheet, root, { signal }) {
-  const catalog = getFlatMiscCatalog();
-
   const toStr = (v) => String(v ?? "");
   const norm = (v) =>
     toStr(v)
@@ -70,7 +68,10 @@ function bindMiscAddRow(sheet, root, { signal }) {
 
   const escape = (s) => foundry.utils.escapeHTML(String(s ?? ""));
 
-  const getAllCategoriesFromCatalog = () => {
+  // IMPORTANT: do not snapshot the catalog once; CONFIG may hydrate later.
+  const getCatalog = () => getFlatMiscCatalog() ?? {};
+
+  const getAllCategoriesFromCatalog = (catalog) => {
     const map = new Map(); // normalized -> display value (first seen)
     for (const v of Object.values(catalog ?? {})) {
       const raw = toStr(v?.group);
@@ -81,10 +82,10 @@ function bindMiscAddRow(sheet, root, { signal }) {
     return Array.from(map.values()).sort((a, b) => a.localeCompare(b));
   };
 
-  const rowsForCategory = (categoryName) => {
+  const rowsForCategory = (catalog, categoryName) => {
     const wanted = norm(categoryName);
     return Object.entries(catalog ?? {})
-      .filter(([, v]) => norm(v?.group) === wanted) // normalized compare
+      .filter(([, v]) => norm(v?.group) === wanted)
       .map(([k, v]) => ({ key: k, name: v?.name ?? k }))
       .sort((a, b) => a.name.localeCompare(b.name));
   };
@@ -93,8 +94,8 @@ function bindMiscAddRow(sheet, root, { signal }) {
    * Always rebuild Category <select> from catalog.
    * This avoids mismatch between hard-coded template options and catalog group strings.
    */
-  const rebuildCategoryOptions = () => {
-    const categories = getAllCategoriesFromCatalog();
+  const rebuildCategoryOptions = (catalog) => {
+    const categories = getAllCategoriesFromCatalog(catalog);
 
     // If there are no categories in the catalog, we cannot populate items.
     if (!categories.length) {
@@ -118,25 +119,26 @@ function bindMiscAddRow(sheet, root, { signal }) {
   };
 
   const refreshItems = () => {
-    const ok = rebuildCategoryOptions();
-    if (!ok) return;
+    const catalog = getCatalog();
+    const ok = rebuildCategoryOptions(catalog);
+    if (!ok) return false;
 
     const categoryName = toStr(categorySel.value);
-    let rows = rowsForCategory(categoryName);
+    let rows = rowsForCategory(catalog, categoryName);
 
     // Fallback: snap to first category that actually has items
     if (!rows.length) {
-      const categories = getAllCategoriesFromCatalog();
-      const firstWithItems = categories.find((c) => rowsForCategory(c).length > 0);
+      const categories = getAllCategoriesFromCatalog(catalog);
+      const firstWithItems = categories.find((c) => rowsForCategory(catalog, c).length > 0);
       if (firstWithItems) {
         categorySel.value = firstWithItems;
-        rows = rowsForCategory(firstWithItems);
+        rows = rowsForCategory(catalog, firstWithItems);
       }
     }
 
     if (!rows.length) {
       keySel.innerHTML = `<option value="">— None Available —</option>`;
-      return;
+      return true;
     }
 
     keySel.innerHTML = [
@@ -147,10 +149,21 @@ function bindMiscAddRow(sheet, root, { signal }) {
         return `<option value="${safeKey}">${safeName}</option>`;
       })
     ].join("");
+
+    return true;
   };
 
-  // Initialize
-  refreshItems();
+  // Initialize (may run before CONFIG is fully hydrated in some setups)
+  const didInit = refreshItems();
+
+  // If catalog was empty at init, retry once on next tick (avoids needing a manual sheet refresh)
+  if (!didInit || keySel.options.length <= 1) {
+    setTimeout(() => {
+      // If the controller has been aborted, do nothing
+      if (signal?.aborted) return;
+      refreshItems();
+    }, 0);
+  }
 
   // Re-populate when category changes
   categorySel.addEventListener(
