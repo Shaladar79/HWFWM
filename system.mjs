@@ -23,6 +23,10 @@ import { seedEquipmentCompendium } from "./scripts/init/compendiums/equipment-se
 import { bootstrapTalentsPackFolders } from "./scripts/init/compendiums/talents-pack.mjs";
 import { seedTalentsCompendium } from "./scripts/init/compendiums/talents-seed.mjs";
 
+// ✅ NEW: Misc Items Catalog (flat dictionary) -> CONFIG["hwfwm-system"].miscItemCatalog
+// Adjust path if your file is elsewhere.
+import { HWFWM_MISC_ITEMS } from "./config/misc-items.mjs";
+
 // If you do NOT see this, system.mjs is not being loaded at all.
 console.log("HWFWM System | system.mjs module loaded");
 
@@ -31,6 +35,9 @@ Hooks.once("init", async () => {
 
   // Register system-wide config namespace
   CONFIG["hwfwm-system"] = HWFWM_CONFIG;
+
+  // ✅ NEW: register misc item catalog into CONFIG so sheet dropdowns can populate
+  CONFIG["hwfwm-system"].miscItemCatalog = HWFWM_MISC_ITEMS;
 
   // Register Actor + Item document classes (derived data engines)
   CONFIG.Actor.documentClass = HwfwmActor;
