@@ -384,6 +384,9 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
 
   // ---------------------------------------------------------------------------
   // Inventory: Misc actor-data (merged with catalog metadata for row expansion)
+  // NEW SHAPE:
+  //  - Stored on actor: quantity + optional rank
+  //  - Display: name/category/value from catalog (read-only)
   // ---------------------------------------------------------------------------
   const misc = context.system?.treasures?.miscItems ?? {};
   const miscCatalog = context.miscItemCatalog ?? {};
@@ -394,71 +397,42 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
     if (!Number.isFinite(n)) return fallback;
     return Math.max(0, Math.floor(n));
   };
-  const normBool = (v) => {
-    if (v === true) return true;
-    if (v === false) return false;
-    const s = String(v ?? "").trim().toLowerCase();
-    return ["1", "true", "yes", "y", "on"].includes(s);
-  };
-  const readOptionalNum = (v) => {
-    // Stored overrides: null or number. Legacy may be "" or undefined.
-    if (v === null) return null;
-    const s = String(v ?? "").trim();
-    if (s === "") return null;
-    const n = Number(s);
-    return Number.isFinite(n) ? Math.max(0, n) : null;
+
+  // Ranked items: default to Quintessence today; also support future catalog flag { ranked: true }
+  const isRanked = (catEntry, categoryLabel) => {
+    if (catEntry && catEntry.ranked === true) return true;
+    return normStr(categoryLabel) === "Quintessence";
   };
 
   const miscEntries = Object.entries(misc).map(([key, data]) => {
     const cat = miscCatalog?.[key] ?? null;
 
-    // Actor-stored (editable)
-    const name = normStr(data?.name ?? cat?.name ?? key);
-    const quantity = clampNonNegInt(data?.quantity ?? 1, 1);
-    const notes = normStr(data?.notes ?? "");
+    const category = normStr(cat?.group ?? cat?.category ?? "");
+    const hasRank = isRanked(cat, category);
 
-    const equipped = normBool(data?.equipped ?? false);
-    const rank = normStr(data?.rank ?? "");
+    // Quantity is always actor-stored
+    const quantity = clampNonNegInt(data?.quantity ?? 0, 0);
 
-    const weightOverride = readOptionalNum(data?.weightOverride);
-    const valueOverride = readOptionalNum(data?.valueOverride);
+    // Rank is actor-stored but only meaningful when hasRank
+    const rank = hasRank ? normStr(data?.rank ?? "") : "";
 
-    // Catalog-driven (read-only display; do not persist)
-    const category = normStr(cat?.group ?? cat?.category ?? ""); // "group" is authoritative today
-    const tags = Array.isArray(cat?.tags) ? cat.tags : [];
-    const description = normStr(cat?.description ?? "");
+    // Name: catalog-driven; if missing catalog, fall back to legacy stored name or key
+    const name = normStr(cat?.name ?? data?.name ?? key);
 
-    // Base catalog values (optional; tolerate missing)
-    const baseWeight = cat?.weight ?? cat?.baseWeight ?? cat?.encumbrance ?? null;
-    const baseValue = cat?.value ?? cat?.baseValue ?? null;
+    // Value: catalog-driven (read-only)
+    const baseValue = cat?.value ?? cat?.baseValue ?? 0;
+    const value = Number.isFinite(Number(baseValue)) ? Math.max(0, Number(baseValue)) : 0;
 
-    // Template-friendly computed displays
-    const weight = weightOverride ?? (Number.isFinite(Number(baseWeight)) ? Math.max(0, Number(baseWeight)) : 0);
-    const value = valueOverride ?? (Number.isFinite(Number(baseValue)) ? Math.max(0, Number(baseValue)) : 0);
-
-    // Missing catalog safety: if the key was removed/renamed, we still render using actor data
     const missingFromCatalog = !cat;
 
     return {
       key,
-
-      // Existing columns (backward compatible)
       name,
+      category,
       quantity,
-      notes,
-
-      // New columns (some editable, some display-only)
-      equipped, // actor
-      rank, // actor
-      weightOverride, // actor
-      valueOverride, // actor
-
-      weight, // display (actor override else catalog)
-      value, // display (actor override else catalog)
-
-      category, // catalog display-only
-      tags, // catalog display-only
-      description, // catalog display-only
+      hasRank,
+      rank,
+      value,
       missingFromCatalog
     };
   });
