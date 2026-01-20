@@ -52,7 +52,13 @@ async function lockChoices(sheet) {
 
 function bindMiscAddRow(sheet, root, { signal }) {
   const catalog = getFlatMiscCatalog();
-  const toStr = (v) => String(v ?? "").trim();
+
+  const toStr = (v) => String(v ?? "");
+  const norm = (v) =>
+    toStr(v)
+      .replace(/\s+/g, " ")
+      .trim()
+      .toLowerCase();
 
   // NOTE: Must match template data-misc-add-field values
   const categorySel = root.querySelector('select[data-misc-add-field="category"]');
@@ -65,19 +71,23 @@ function bindMiscAddRow(sheet, root, { signal }) {
   const escape = (s) => foundry.utils.escapeHTML(String(s ?? ""));
 
   const getAllCategoriesFromCatalog = () => {
-    const set = new Set();
+    const map = new Map(); // normalized -> display value (first seen)
     for (const v of Object.values(catalog ?? {})) {
-      const g = toStr(v?.group);
-      if (g) set.add(g);
+      const raw = toStr(v?.group);
+      const k = norm(raw);
+      if (!k) continue;
+      if (!map.has(k)) map.set(k, raw.trim());
     }
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
+    return Array.from(map.values()).sort((a, b) => a.localeCompare(b));
   };
 
-  const rowsForCategory = (categoryName) =>
-    Object.entries(catalog ?? {})
-      .filter(([, v]) => toStr(v?.group) === toStr(categoryName)) // group is authoritative category key
+  const rowsForCategory = (categoryName) => {
+    const wanted = norm(categoryName);
+    return Object.entries(catalog ?? {})
+      .filter(([, v]) => norm(v?.group) === wanted) // ✅ normalized compare
       .map(([k, v]) => ({ key: k, name: v?.name ?? k }))
       .sort((a, b) => a.name.localeCompare(b.name));
+  };
 
   /**
    * Always rebuild Category <select> from catalog.
@@ -93,13 +103,17 @@ function bindMiscAddRow(sheet, root, { signal }) {
       return false;
     }
 
-    const prior = toStr(categorySel.value);
+    const prior = toStr(categorySel.value).trim();
+    const priorNorm = norm(prior);
+
     categorySel.innerHTML = categories
       .map((c) => `<option value="${escape(c)}">${escape(c)}</option>`)
       .join("");
 
     // Preserve previous selection if still valid; otherwise snap to first.
-    categorySel.value = categories.includes(prior) ? prior : categories[0];
+    const validNorms = new Set(categories.map((c) => norm(c)));
+    categorySel.value = priorNorm && validNorms.has(priorNorm) ? prior : categories[0];
+
     return true;
   };
 
@@ -139,18 +153,14 @@ function bindMiscAddRow(sheet, root, { signal }) {
   refreshItems();
 
   // Re-populate when category changes
-  categorySel.addEventListener("change", refreshItems, { signal });
+  categorySel.addEventListener("change", () => {
+    // keep qty sane + clear item selection
+    const n = Number(qtyInput.value || 1);
+    qtyInput.value = String(Number.isFinite(n) ? Math.max(1, Math.floor(n)) : 1);
 
-  // Optional UX: keep qty sane + clear item selection when category changes
-  categorySel.addEventListener(
-    "change",
-    () => {
-      const n = Number(qtyInput.value || 1);
-      qtyInput.value = String(Number.isFinite(n) ? Math.max(1, Math.floor(n)) : 1);
-      keySel.value = "";
-    },
-    { signal }
-  );
+    refreshItems();
+    keySel.value = "";
+  }, { signal });
 }
 
 /* -------------------------------------------- */
