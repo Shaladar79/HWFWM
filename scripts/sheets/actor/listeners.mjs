@@ -80,47 +80,40 @@ function bindMiscAddRow(sheet, root, { signal }) {
       .sort((a, b) => a.name.localeCompare(b.name));
 
   /**
-   * Ensure the Category <select> has usable options.
-   * This removes reliance on context-provided arrays like miscAddCategoryOptions.
+   * Always rebuild Category <select> from catalog.
+   * This avoids mismatch between hard-coded template options and catalog group strings.
    */
-  const ensureCategoryOptions = () => {
+  const rebuildCategoryOptions = () => {
     const categories = getAllCategoriesFromCatalog();
 
     // If there are no categories in the catalog, we cannot populate items.
     if (!categories.length) {
-      // Keep the select as-is; items will show "None Available".
-      return;
+      categorySel.innerHTML = `<option value="">— No Categories —</option>`;
+      keySel.innerHTML = `<option value="">— None Available —</option>`;
+      return false;
     }
 
-    // Detect whether categorySel already has real options
-    const existingOptions = Array.from(categorySel.options ?? []);
-    const hasRealOptions = existingOptions.some((o) => toStr(o.value) && !toStr(o.value).startsWith("—"));
+    const prior = toStr(categorySel.value);
+    categorySel.innerHTML = categories
+      .map((c) => `<option value="${escape(c)}">${escape(c)}</option>`)
+      .join("");
 
-    // If not, populate from catalog
-    if (!hasRealOptions) {
-      categorySel.innerHTML = categories
-        .map((c) => `<option value="${escape(c)}">${escape(c)}</option>`)
-        .join("");
-    }
-
-    // Ensure a valid selection
-    const current = toStr(categorySel.value);
-    if (!current || !categories.includes(current)) {
-      categorySel.value = categories[0];
-    }
+    // Preserve previous selection if still valid; otherwise snap to first.
+    categorySel.value = categories.includes(prior) ? prior : categories[0];
+    return true;
   };
 
   const refreshItems = () => {
-    ensureCategoryOptions();
+    const ok = rebuildCategoryOptions();
+    if (!ok) return;
 
     const categoryName = toStr(categorySel.value);
     let rows = rowsForCategory(categoryName);
 
-    // Fallback: if the selected category yields nothing, snap to first valid category that has items
+    // Fallback: snap to first category that actually has items
     if (!rows.length) {
       const categories = getAllCategoriesFromCatalog();
       const firstWithItems = categories.find((c) => rowsForCategory(c).length > 0);
-
       if (firstWithItems) {
         categorySel.value = firstWithItems;
         rows = rowsForCategory(firstWithItems);
@@ -201,8 +194,6 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
   // ------------------------------------------------------------
   const bgStamp = sheet.document?.system?._flags?.backgroundGrantStamp ?? "";
 
-  // If stamp differs, reconcile from old->new deterministically.
-  // Otherwise, just ensure grants exist + prompt choice if needed.
   if (initialBgKey && bgStamp && bgStamp !== initialBgKey) {
     replaceBackgroundSpecialties(sheet, initialBgKey, bgStamp).then(() =>
       sheet.document?.update?.({ "system._flags.backgroundGrantStamp": initialBgKey }).catch(() => {})
@@ -216,15 +207,11 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
     }
   }
 
-  // Race: IMPORTANT - do NOT re-run every bind/render.
-  // Only run if we have a raceKey AND the completed stamp doesn't match.
   const raceStamp = sheet.document?.system?._flags?.raceGrantStamp ?? "";
   if (initialRaceKey && raceStamp !== initialRaceKey) {
     replaceRaceGrants(sheet, initialRaceKey);
   }
 
-  // Role: do NOT re-run every bind/render.
-  // Only run if we have a roleKey AND the completed stamp doesn't match.
   const roleStamp = sheet.document?.system?._flags?.roleGrantStamp ?? "";
   if (initialRoleKey && roleStamp !== initialRoleKey) {
     replaceRoleGrantedSpecialties(sheet, initialRoleKey);
@@ -265,22 +252,15 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
     signal
   });
 
-  // ---------------------------------------------------------------------------
-  // Treasures subtabs: only "equipment" and "inventory" are valid now.
-  // If a legacy actor has "consumables" persisted, force-fallback to "equipment"
-  // and persist the correction.
-  // ---------------------------------------------------------------------------
   const sanitizeTreasuresTab = (tab) => {
     const t = String(tab ?? "").trim();
     return t === "inventory" ? "inventory" : "equipment";
   };
 
-  // Ensure sheet state is sane before activateTabGroup reads it
   sheet._activeSubTabs.treasures = sanitizeTreasuresTab(
     sheet._activeSubTabs.treasures ?? sheet.document?.system?._ui?.treasuresSubTab ?? "equipment"
   );
 
-  // If actor has legacy persisted value, correct it once
   const persistedTreasuresTab = sanitizeTreasuresTab(sheet.document?.system?._ui?.treasuresSubTab ?? "equipment");
   if ((sheet.document?.system?._ui?.treasuresSubTab ?? "equipment") !== persistedTreasuresTab) {
     sheet.document?.update?.({ "system._ui.treasuresSubTab": persistedTreasuresTab }).catch(() => {});
