@@ -7,6 +7,9 @@ import { BACKGROUND_DESCRIPTIONS, BACKGROUND_GRANTED_SPECIALTIES } from "../../.
 // ✅ NEW: race grants (derived-only visibility; no persistence)
 import { RACE_GRANTED_AFFINITIES, RACE_GRANTED_APTITUDES } from "../../../config/races.mjs";
 
+// ✅ NEW: rarity rules (coin + multiplier)
+import { getRarityValueRule } from "../../../config/rarities.mjs";
+
 /**
  * Build the actor sheet context.
  * @param {HwfwmActorSheet} sheet
@@ -372,32 +375,18 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
     return g === "Quintessence" || g === "Food Ingredients";
   };
 
-  // NEW: parse "20 GSC" -> { amount: 20, suffix: "GSC" }
-  const parseValueLabel = (label) => {
-    const raw = normStr(label);
-    if (!raw) return { amount: 0, suffix: "" };
-
-    // Accept:
-    // - "20 GSC"
-    // - "20GSC"
-    // - "20.5 GSC" (kept numeric; still multiplies)
-    // Anything else -> amount 0, suffix raw (for display only)
-    const m = raw.match(/^(-?\d+(?:\.\d+)?)\s*([A-Za-z][A-Za-z0-9]*)$/);
-    if (!m) return { amount: 0, suffix: raw };
-
-    const amount = Number(m[1]);
-    const suffix = m[2] ?? "";
-    return { amount: Number.isFinite(amount) ? amount : 0, suffix };
+  const toNumberNonNeg = (v, fallback = 0) => {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return fallback;
+    return Math.max(0, n);
   };
 
-  const formatValueLabel = (amount, suffix) => {
-    const sfx = normStr(suffix);
-    if (!sfx) return "";
-    // Keep decimals only if they exist (e.g., 1.5)
+  const formatCoinValue = (amount, coin) => {
     const n = Number(amount);
-    if (!Number.isFinite(n)) return "";
+    if (!Number.isFinite(n) || n <= 0) return "";
     const txt = Number.isInteger(n) ? String(n) : String(n);
-    return `${txt} ${sfx}`.trim();
+    const c = normStr(coin);
+    return c ? `${txt} ${c}` : txt;
   };
 
   const miscEntries = Object.entries(misc).map(([key, data]) => {
@@ -405,6 +394,7 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
 
     // Catalog-driven display; actor-stored name is fallback cache only
     const name = normStr(cat?.name ?? data?.name ?? key);
+
     // Keep rows stable; quantity should not be negative and should render at least 1 if absent
     const quantity = Math.max(1, clampNonNegInt(data?.quantity ?? 1, 1));
 
@@ -412,17 +402,19 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
     const hasRank = supportsRank(cat);
     const rank = hasRank ? normStr(data?.rank ?? "") : "";
 
-    // NEW: valueLabel + computed totalValueLabel
-    const valueLabel = normStr(cat?.valueLabel ?? "");
-    const parsed = parseValueLabel(valueLabel);
+    // NEW: rarity/value numeric + derived display (coin + multiplier)
+    const rarity = normStr(data?.rarity ?? cat?.rarity ?? "common") || "common";
+    const baseValue = toNumberNonNeg(data?.value ?? cat?.value ?? 1, 1);
 
-    const perUnitAmount = Number.isFinite(parsed.amount) ? parsed.amount : 0;
-    const totalAmount = perUnitAmount * quantity;
+    const rule = getRarityValueRule(rarity);
+    const coin = normStr(rule?.coin ?? "");
+    const mult = toNumberNonNeg(rule?.mult ?? 1, 1);
 
-    const totalValueLabel =
-      parsed.suffix && perUnitAmount > 0
-        ? formatValueLabel(totalAmount, parsed.suffix)
-        : "";
+    const perUnitValue = baseValue * mult;
+    const totalValue = perUnitValue * quantity;
+
+    const displayValue = formatCoinValue(perUnitValue, coin);
+    const displayTotalValue = formatCoinValue(totalValue, coin);
 
     const missingFromCatalog = !cat;
 
@@ -434,14 +426,18 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
       hasRank,
       rank,
 
-      // for template display
-      valueLabel,
-      totalValueLabel,
+      // read-only UI fields
+      rarity,
+      value: baseValue,
+      displayValue,        // e.g. "20 LSC"
+      totalValue: displayTotalValue, // e.g. "60 LSC"
 
       // useful if later you want to sort/filter by numeric wealth
-      _valueAmount: perUnitAmount,
-      _valueSuffix: parsed.suffix,
-      _totalValueAmount: totalAmount,
+      _coin: coin,
+      _mult: mult,
+      _baseValue: baseValue,
+      _perUnitValue: perUnitValue,
+      _totalValue: totalValue,
 
       missingFromCatalog
     };
