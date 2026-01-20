@@ -25,9 +25,11 @@
   {{!-- Readied Consumables (Derived Snapshot) --}}
   <div class="hwfwm-res-separator">Readied Consumables</div>
 
-  {{!-- harden against missing derived paths --}}
+  {{!-- Harden against missing derived paths and missing arrays --}}
   {{#if (and system._derived system._derived.consumables)}}
-    {{#if system._derived.consumables.readiedItems.length}}
+
+    {{!-- Prefer readiedCount if present; fallback to array length safely --}}
+    {{#if (or system._derived.consumables.readiedCount (and system._derived.consumables.readiedItems system._derived.consumables.readiedItems.length))}}
       <div class="hwfwm-treasure-list">
         {{#each system._derived.consumables.readiedItems as |it|}}
           <div class="hwfwm-treasure-row">
@@ -50,6 +52,7 @@
     {{else}}
       <div class="hwfwm-muted">No readied consumables yet.</div>
     {{/if}}
+
   {{else}}
     <div class="hwfwm-muted">No readied consumables yet.</div>
   {{/if}}
