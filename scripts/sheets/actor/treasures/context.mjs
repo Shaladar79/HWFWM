@@ -5,6 +5,8 @@
 // - Returns the same arrays used by existing templates:
 //   allEquipment, equippedEquipment, allConsumables, allMiscItems
 
+import { buildMiscRows } from "./misc.mjs";
+
 /**
  * Build Treasures-related context.
  *
@@ -63,94 +65,15 @@ export async function buildTreasuresContext(sheet, context, deps = {}) {
     .sort((a, b) => a.name.localeCompare(b.name));
 
   // ---------------------------------------------------------------------------
-  // Inventory: Misc actor-data (lightweight) + catalog metadata for display
+  // Inventory: Misc actor-data + catalog metadata for display (Phase 3 isolated)
   // ---------------------------------------------------------------------------
-  const misc = context?.system?.treasures?.miscItems ?? {};
   const miscCatalog = context?.miscItemCatalog ?? {};
-
-  const normStr = (v) => String(v ?? "").trim();
-  const clampNonNegInt = (v, fallback = 0) => {
-    const n = Number(v);
-    if (!Number.isFinite(n)) return fallback;
-    return Math.max(0, Math.floor(n));
-  };
-
-  const supportsRank = (catEntry) => {
-    if (!catEntry || typeof catEntry !== "object") return false;
-    if (catEntry.hasRank === true) return true;
-    const g = normStr(catEntry.group);
-    return g === "Quintessence" || g === "Food Ingredients";
-  };
-
-  const toNumberNonNeg = (v, fallback = 0) => {
-    const n = Number(v);
-    if (!Number.isFinite(n)) return fallback;
-    return Math.max(0, n);
-  };
-
-  const formatCoinValue = (amount, coin) => {
-    const n = Number(amount);
-    if (!Number.isFinite(n) || n <= 0) return "";
-    const txt = Number.isInteger(n) ? String(n) : String(n);
-    const c = normStr(coin);
-    return c ? `${txt} ${c}` : txt;
-  };
-
-  const miscEntries = Object.entries(misc).map(([key, data]) => {
-    const cat = miscCatalog?.[key] ?? null;
-
-    // Catalog-driven display; actor-stored name is fallback cache only
-    const name = normStr(cat?.name ?? data?.name ?? key);
-
-    // Keep rows stable; quantity should not be negative and should render at least 1 if absent
-    const quantity = Math.max(1, clampNonNegInt(data?.quantity ?? 1, 1));
-
-    const category = normStr(cat?.group ?? cat?.category ?? "");
-    const hasRank = supportsRank(cat);
-    const rank = hasRank ? normStr(data?.rank ?? "") : "";
-
-    // rarity/value numeric + derived display (coin + multiplier)
-    const rarity = normStr(data?.rarity ?? cat?.rarity ?? "common") || "common";
-    const baseValue = toNumberNonNeg(data?.value ?? cat?.value ?? 1, 1);
-
-    const rule = getRarityValueRule(rarity);
-    const coin = normStr(rule?.coin ?? "");
-    const mult = toNumberNonNeg(rule?.mult ?? 1, 1);
-
-    const perUnitValue = baseValue * mult;
-    const totalValue = perUnitValue * quantity;
-
-    const displayValue = formatCoinValue(perUnitValue, coin);
-    const displayTotalValue = formatCoinValue(totalValue, coin);
-
-    const missingFromCatalog = !cat;
-
-    return {
-      key,
-      name,
-      category,
-      quantity,
-      hasRank,
-      rank,
-
-      // read-only UI fields
-      rarity,
-      value: baseValue,
-      displayValue, // e.g. "20 LSC"
-      totalValue: displayTotalValue, // e.g. "60 LSC"
-
-      // useful if later you want to sort/filter by numeric wealth
-      _coin: coin,
-      _mult: mult,
-      _baseValue: baseValue,
-      _perUnitValue: perUnitValue,
-      _totalValue: totalValue,
-
-      missingFromCatalog
-    };
+  const { rows: miscEntries } = buildMiscRows({
+    system: context?.system ?? {},
+    miscCatalog,
+    getRarityValueRule,
+    debug: false
   });
-
-  miscEntries.sort((a, b) => a.name.localeCompare(b.name));
 
   return {
     allEquipment: equipment,
