@@ -314,17 +314,43 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
         ev.stopPropagation?.();
         ev.stopImmediatePropagation?.();
 
-        let value = target.value;
-        if (target instanceof HTMLInputElement && target.type === "number") {
-          const n = Number(value);
-          value = Number.isFinite(n) ? n : 0;
+        const field = String(target.dataset.miscField ?? "").trim();
+
+        // Handle checkboxes correctly (needed for misc.equipped)
+        let value;
+        const wantsBool = String(target.dataset?.bool ?? "").trim().toLowerCase() === "true";
+
+        if (target instanceof HTMLInputElement && target.type === "checkbox") {
+          value = target.checked === true;
+        } else if (wantsBool) {
+          // supports future misc bool fields if you add data-bool="true"
+          const s = String(target.value ?? "").trim().toLowerCase();
+          value = ["1", "true", "yes", "y", "on"].includes(s);
+        } else {
+          // IMPORTANT: for number inputs, allow blank string for override fields
+          if (target instanceof HTMLInputElement && target.type === "number") {
+            const raw = String(target.value ?? "");
+
+            // weight/value override inputs: blank means "clear override" (store null)
+            if (field === "weight" || field === "value" || field === "weightOverride" || field === "valueOverride") {
+              value = raw.trim() === "" ? "" : raw;
+            } else {
+              const n = Number(raw);
+              value = Number.isFinite(n) ? n : 0;
+            }
+          } else {
+            value = target.value;
+          }
         }
 
         await updateMiscField(sheet, {
           key: target.dataset.miscKey,
-          field: target.dataset.miscField,
+          field,
           value
         });
+
+        // Optional but helpful: misc columns can affect derived display if you add rollups later
+        // Keep lightweight for now: do not force full re-render.
         return;
       }
 
