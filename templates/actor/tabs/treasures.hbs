@@ -283,14 +283,21 @@
               <div class="hwfwm-muted" style="display:flex; align-items:center;">—</div>
             {{/if}}
 
-            {{!-- Value is catalog-driven display --}}
-            <input
-              type="number"
-              value="{{m.value}}"
-              readonly
-              tabindex="-1"
-              title="Catalog value"
-            />
+            {{!-- Value is derived from rarity rules + base numeric value --}}
+            <div style="display:flex; flex-direction:column; gap:2px;">
+              <input
+                type="text"
+                value="{{m.displayValue}}"
+                readonly
+                tabindex="-1"
+                title="Per-unit value (derived)"
+              />
+              {{#if m.totalValue}}
+                <div class="hwfwm-muted" style="font-size: 11px; line-height: 1.1;">
+                  Total: {{m.totalValue}}
+                </div>
+              {{/if}}
+            </div>
 
             <div class="hwfwm-itemlist__actions">
               <button
