@@ -13,16 +13,15 @@
  *  - quantity: number (default suggested)
  *  - notes: string (default suggested)
  *
- * NEW (catalog-only display fields):
- *  - valueLabel: string (optional; e.g. "1000 LSC", "20 GSC")
- *      - Applies to ALL groups including Sundries/Other.
- *  - rarity: string (optional; freeform)
- *      - Applies ONLY to: Essences, Quintessence, Awakening Stones.
- *      - NOT used on Sundries/Other.
+ * NEW (mechanical fields; stored on actor entries):
+ *  - rarity: string (default "common")
+ *  - value: number (default 1)
  *
  * IMPORTANT:
  * - Confluence Essences are NOT part of this file.
  */
+
+import { getMiscItemValueMeta } from "./misc-item-values.mjs";
 
 // ---------------------------------------------
 // 1) Master Essence List (source of truth)
@@ -131,6 +130,21 @@ function slugify(name) {
     .replace(/-+/g, "-");          // collapse
 }
 
+/**
+ * Apply rarity/value metadata to a catalog entry.
+ * Value meta is config-driven and safe by default.
+ * @param {string} key
+ * @param {object} entry
+ */
+function withValueMeta(key, entry) {
+  const meta = getMiscItemValueMeta(key);
+  return {
+    ...entry,
+    rarity: meta.rarity,
+    value: meta.value
+  };
+}
+
 function buildEssenceAndQuintessenceCatalog() {
   const out = {};
 
@@ -141,17 +155,13 @@ function buildEssenceAndQuintessenceCatalog() {
 
     const slug = slugify(n);
 
-    // Keys are stable namespaces: essence.<slug>
-    out[`essence.${slug}`] = {
+    const key = `essence.${slug}`;
+    out[key] = withValueMeta(key, {
       name: `Essence: ${n}`,
       group: "Essences",
       quantity: 0,
-      notes: "",
-
-      // NEW
-      valueLabel: "",
-      rarity: ""
-    };
+      notes: ""
+    });
   }
 
   // Quintessence (explicit list)
@@ -161,17 +171,13 @@ function buildEssenceAndQuintessenceCatalog() {
 
     const slug = slugify(n);
 
-    // Keys are stable namespaces: quintessence.<slug>
-    out[`quintessence.${slug}`] = {
+    const key = `quintessence.${slug}`;
+    out[key] = withValueMeta(key, {
       name: `${n} Quintessence`,
       group: "Quintessence",
       quantity: 0,
-      notes: "",
-
-      // NEW
-      valueLabel: "",
-      rarity: ""
-    };
+      notes: ""
+    });
   }
 
   return out;
@@ -185,18 +191,13 @@ function buildAwakeningStoneCatalog() {
 
     const slug = slugify(n);
 
-    // Key namespace: awakening.<slug>
-    // Display: Awakening Stone: <Name>
-    out[`awakening.${slug}`] = {
+    const key = `awakening.${slug}`;
+    out[key] = withValueMeta(key, {
       name: `Awakening Stone: ${n}`,
       group: "Awakening Stones",
       quantity: 0,
-      notes: "",
-
-      // NEW
-      valueLabel: "",
-      rarity: ""
-    };
+      notes: ""
+    });
   }
   return out;
 }
@@ -204,64 +205,55 @@ function buildAwakeningStoneCatalog() {
 // ---------------------------------------------
 // 3) Non-essence misc items (real entries; no placeholders)
 // ---------------------------------------------
-const BASE_MISC = {
+const BASE_MISC_RAW = {
   // Sundries
   "sundries.rations": {
     name: "Rations",
     group: "Sundries",
     quantity: 0,
-    notes: "",
-    // NEW (value allowed; rarity NOT used here)
-    valueLabel: ""
+    notes: ""
   },
   "sundries.waterskin": {
     name: "Waterskin",
     group: "Sundries",
     quantity: 0,
-    notes: "",
-    valueLabel: ""
+    notes: ""
   },
   "sundries.torch": {
     name: "Torch",
     group: "Sundries",
     quantity: 0,
-    notes: "",
-    valueLabel: ""
+    notes: ""
   },
   "sundries.oil-flask": {
     name: "Oil Flask",
     group: "Sundries",
     quantity: 0,
-    notes: "",
-    valueLabel: ""
+    notes: ""
   },
   "sundries.rope-50ft": {
     name: "Rope (50 ft)",
     group: "Sundries",
     quantity: 0,
-    notes: "",
-    valueLabel: ""
+    notes: ""
   },
   "sundries.backpack": {
     name: "Backpack",
     group: "Sundries",
     quantity: 0,
-    notes: "",
-    valueLabel: ""
+    notes: ""
   },
   "sundries.bedroll": {
     name: "Bedroll",
     group: "Sundries",
     quantity: 0,
-    notes: "",
-    valueLabel: ""
+    notes: ""
   },
   "sundries.tinderbox": {
     name: "Tinderbox",
     group: "Sundries",
     quantity: 0,
-    notes: "",
-    valueLabel: ""
+    notes: ""
   },
 
   // Other (catch-all for campaign-specific objects)
@@ -269,31 +261,32 @@ const BASE_MISC = {
     name: "Empty Vial",
     group: "Other",
     quantity: 0,
-    notes: "",
-    valueLabel: ""
+    notes: ""
   },
   "other.small-pouch": {
     name: "Small Pouch",
     group: "Other",
     quantity: 0,
-    notes: "",
-    valueLabel: ""
+    notes: ""
   },
   "other.gemstone": {
     name: "Gemstone (Uncut)",
     group: "Other",
     quantity: 0,
-    notes: "",
-    valueLabel: ""
+    notes: ""
   },
   "other.letter-sealed": {
     name: "Sealed Letter",
     group: "Other",
     quantity: 0,
-    notes: "",
-    valueLabel: ""
+    notes: ""
   }
 };
+
+// Apply value meta to all base misc items without changing their defining block.
+const BASE_MISC = Object.fromEntries(
+  Object.entries(BASE_MISC_RAW).map(([key, entry]) => [key, withValueMeta(key, entry)])
+);
 
 // ---------------------------------------------
 // 4) Final exported flat catalog
