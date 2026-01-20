@@ -52,14 +52,18 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
   sys.resources.lifeForce = sys.resources.lifeForce ?? { value: 0, max: 0 };
 
   // NEW: read-only derived display fields (may be set by actor.mjs; default to 0)
-  sys.resources.mana.recovery = Number.isFinite(Number(sys.resources.mana.recovery)) ? Number(sys.resources.mana.recovery) : 0;
+  sys.resources.mana.recovery = Number.isFinite(Number(sys.resources.mana.recovery))
+    ? Number(sys.resources.mana.recovery)
+    : 0;
   sys.resources.stamina.recovery = Number.isFinite(Number(sys.resources.stamina.recovery))
     ? Number(sys.resources.stamina.recovery)
     : 0;
   sys.resources.lifeForce.recovery = Number.isFinite(Number(sys.resources.lifeForce.recovery))
     ? Number(sys.resources.lifeForce.recovery)
     : 0;
-  sys.resources.naturalArmor = Number.isFinite(Number(sys.resources.naturalArmor)) ? Number(sys.resources.naturalArmor) : 0;
+  sys.resources.naturalArmor = Number.isFinite(Number(sys.resources.naturalArmor))
+    ? Number(sys.resources.naturalArmor)
+    : 0;
 
   // ✅ ensure _derived exists so templates can safely read system._derived.*
   sys._derived = sys._derived ?? {};
@@ -136,7 +140,8 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
   // ---------------------------------------------------------------------------
   const rankDescriptions = cfg.rankDescriptions ?? {};
   context.overviewRankLabel = context.derivedRankLabel;
-  context.overviewRankDescription = rankDescriptions?.[context.derivedRankKey] ?? "Rank description not yet defined.";
+  context.overviewRankDescription =
+    rankDescriptions?.[context.derivedRankKey] ?? "Rank description not yet defined.";
 
   // ---------------------------------------------------------------------------
   // Overview: Background description (read-only)
@@ -370,8 +375,10 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
   const miscEntries = Object.entries(misc).map(([key, data]) => {
     const cat = miscCatalog?.[key] ?? null;
 
+    // Catalog-driven display; actor-stored name is fallback cache only
     const name = normStr(cat?.name ?? data?.name ?? key);
-    const quantity = clampNonNegInt(data?.quantity ?? 1, 1);
+    // Keep rows stable; quantity should not be negative and should render at least 1 if absent
+    const quantity = Math.max(1, clampNonNegInt(data?.quantity ?? 1, 1));
 
     const category = normStr(cat?.group ?? cat?.category ?? "");
     const hasRank = supportsRank(cat);
