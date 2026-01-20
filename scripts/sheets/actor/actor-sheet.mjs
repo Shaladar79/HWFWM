@@ -91,4 +91,3 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
     bindActorSheetListeners(this, root, this._domController);
   }
 }
-
