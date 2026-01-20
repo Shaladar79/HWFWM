@@ -45,6 +45,11 @@ function toNumClamp0(v) {
   return Number.isFinite(n) ? Math.max(0, n) : 0;
 }
 
+function toIntClamp0(v) {
+  const n = Number(v);
+  return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+}
+
 function toBool(v) {
   if (typeof v === "boolean") return v;
   const s = String(v ?? "").trim().toLowerCase();
@@ -64,7 +69,7 @@ function ensureMiscEntryShape(existing, key, catalogEntry) {
 
   return {
     name: entryName,
-    quantity: toNumClamp0(existing?.quantity ?? 1),
+    quantity: toIntClamp0(existing?.quantity ?? 1),
     notes: toStr(existing?.notes ?? catalogEntry?.notes ?? ""),
 
     // New per-actor fields (optional)
@@ -83,137 +88,63 @@ function ensureMiscEntryShape(existing, key, catalogEntry) {
   };
 }
 
-export function openAddMiscDialog(sheet) {
+/**
+ * Add or merge a misc item by catalog key (inline Add Row).
+ * - Validates the key exists in the catalog
+ * - Accumulates quantity if it already exists on the actor
+ * - Initializes per-actor fields with sane defaults (backward compatible)
+ */
+export async function addMiscByKey(sheet, { key, quantity }) {
+  const k = toStr(key);
+  const qty = toIntClamp0(quantity);
+
+  if (!sheet?.document) return;
+  if (!k || qty <= 0) return;
+
   const catalog = getFlatMiscCatalog();
+  const entry = catalog[k];
 
-  // IMPORTANT: these values must match entry.group from your misc-items config
-  const TYPE_OPTIONS = [
-    { value: "Sundries", label: "Sundries" },
-    { value: "Awakening Stones", label: "Awakening Stones" },
-    { value: "Essences", label: "Essence Cube" },
-    { value: "Quintessence", label: "Quintessence" },
-    { value: "Other", label: "Other" }
-  ];
+  if (!entry) {
+    ui?.notifications?.warn?.(`Misc item selection is not a valid item key: "${k}".`);
+    return;
+  }
 
-  const rowsForGroup = (groupName) =>
-    Object.entries(catalog)
-      .filter(([, v]) => toStr(v?.group) === toStr(groupName))
-      .map(([k, v]) => ({ key: k, name: v?.name ?? k }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+  const current = foundry.utils.deepClone(sheet.document?.system?.treasures?.miscItems ?? {});
+  const existing = current[k];
 
-  const buildOptions = (groupName) => {
-    const rows = rowsForGroup(groupName);
-    if (!rows.length) return `<option value="">— None Available —</option>`;
+  const normalized = ensureMiscEntryShape(existing, k, entry);
+  const existingQty = toIntClamp0(existing?.quantity ?? 0);
+  normalized.quantity = existing ? existingQty + qty : qty;
 
-    return [
-      `<option value="">— Select —</option>`,
-      ...rows.map((r) => {
-        const safeKey = foundry.utils.escapeHTML(r.key);
-        const safeName = foundry.utils.escapeHTML(r.name);
-        // CRITICAL: option value is the *catalog key*, not the group/type
-        return `<option value="${safeKey}">${safeName}</option>`;
-      })
-    ].join("");
-  };
+  current[k] = normalized;
+  await sheet.document.update({ "system.treasures.miscItems": current });
+}
 
-  const defaultGroup = "Sundries";
+/**
+ * Remove a quantity from a misc item row.
+ * - If quantity reaches 0, the row is deleted.
+ * - If key is missing, does nothing (safe).
+ */
+export async function removeMiscQuantity(sheet, { key, quantity }) {
+  const k = toStr(key);
+  const qtyRemove = toIntClamp0(quantity);
 
-  const content = `
-    <form class="hwfwm-misc-dialog">
-      <div class="form-group">
-        <label>Type</label>
-        <select name="miscType">
-          ${TYPE_OPTIONS.map((o) => {
-            const safeVal = foundry.utils.escapeHTML(o.value);
-            const safeLbl = foundry.utils.escapeHTML(o.label);
-            return `<option value="${safeVal}" ${o.value === defaultGroup ? "selected" : ""}>${safeLbl}</option>`;
-          }).join("")}
-        </select>
-      </div>
+  if (!sheet?.document) return;
+  if (!k || qtyRemove <= 0) return;
 
-      <div class="form-group">
-        <label>Item</label>
-        <select name="miscKey">
-          ${buildOptions(defaultGroup)}
-        </select>
-      </div>
+  const current = foundry.utils.deepClone(sheet.document?.system?.treasures?.miscItems ?? {});
+  if (!current?.[k]) return;
 
-      <div class="form-group">
-        <label>Quantity</label>
-        <input type="number" name="miscQty" min="0" step="1" value="1" />
-      </div>
-    </form>
-  `;
+  const existingQty = toIntClamp0(current[k]?.quantity ?? 0);
+  const nextQty = Math.max(0, existingQty - qtyRemove);
 
-  const onRender = (html) => {
-    const form = html?.[0]?.querySelector?.("form.hwfwm-misc-dialog");
-    if (!form) return;
+  if (nextQty <= 0) {
+    delete current[k];
+  } else {
+    current[k].quantity = nextQty;
+  }
 
-    const typeSel = form.querySelector('select[name="miscType"]');
-    const itemSel = form.querySelector('select[name="miscKey"]');
-    if (!typeSel || !itemSel) return;
-
-    const refreshItems = () => {
-      const groupName = toStr(typeSel.value);
-      itemSel.innerHTML = buildOptions(groupName);
-    };
-
-    typeSel.addEventListener("change", refreshItems);
-    refreshItems();
-  };
-
-  new Dialog(
-    {
-      title: "Add Misc Item",
-      content,
-      render: onRender,
-      buttons: {
-        add: {
-          label: "Add",
-          callback: async (html) => {
-            const form = html?.[0]?.querySelector?.("form.hwfwm-misc-dialog");
-            if (!form) return;
-
-            // CRITICAL: read the selected ITEM KEY (miscKey), not the type (miscType)
-            const key = toStr(form.querySelector('select[name="miscKey"]')?.value);
-            const qty = toNumClamp0(form.querySelector('input[name="miscQty"]')?.value ?? "1");
-
-            // If nothing selected, do nothing
-            if (!key || qty <= 0) return;
-
-            // Safety: if key isn't a catalog entry, warn and stop.
-            // This catches the exact bug you're seeing (key becomes "Sundries", etc.)
-            const entry = catalog[key];
-            if (!entry) {
-              ui?.notifications?.warn?.(
-                `Misc item selection is not a valid item key: "${key}". (This usually means the dialog is reading the Type instead of the Item.)`
-              );
-              return;
-            }
-
-            const current = foundry.utils.deepClone(sheet.document?.system?.treasures?.miscItems ?? {});
-            const existing = current[key];
-
-            // Backward compatible merge:
-            // - keep name/notes if already customized on actor
-            // - accumulate quantity
-            // - initialize new per-actor fields with sane defaults
-            const normalized = ensureMiscEntryShape(existing, key, entry);
-
-            const existingQty = toNumClamp0(existing?.quantity ?? 0);
-            normalized.quantity = existing ? existingQty + qty : qty;
-
-            current[key] = normalized;
-
-            await sheet.document.update({ "system.treasures.miscItems": current });
-          }
-        },
-        cancel: { label: "Cancel" }
-      },
-      default: "add"
-    },
-    { width: 420 }
-  ).render(true);
+  await sheet.document.update({ "system.treasures.miscItems": current });
 }
 
 export async function removeMiscByKey(sheet, key) {
@@ -244,7 +175,7 @@ export async function updateMiscField(sheet, { key, field, value }) {
 
   // Quantity: clamp >=0, auto-remove at 0
   if (f === "quantity") {
-    const qty = toNumClamp0(value);
+    const qty = toIntClamp0(value);
 
     if (qty <= 0) {
       delete current[k];
