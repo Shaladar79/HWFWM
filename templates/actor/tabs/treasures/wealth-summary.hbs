@@ -1,0 +1,39 @@
+{{!-- templates/actor/tabs/treasures/wealth-summary.hbs --}}
+{{!-- Phase 4 (optional): Read-only wealth summary --}}
+{{!-- Safe fallback: renders nothing if no summary data exists --}}
+
+{{#if treasures.wealthSummary}}
+  <div class="hwfwm-res-separator">Wealth Summary</div>
+
+  <div class="hwfwm-treasure-summary">
+    {{!-- Coin totals --}}
+    {{#if treasures.wealthSummary.coins}}
+      <div class="hwfwm-summary-block">
+        <div class="hwfwm-summary-title">Coins</div>
+        <div class="hwfwm-summary-grid">
+          {{#each treasures.wealthSummary.coins as |v k|}}
+            <div class="hwfwm-summary-row">
+              <div class="hwfwm-summary-label">{{k}}</div>
+              <div class="hwfwm-summary-value">{{v}}</div>
+            </div>
+          {{/each}}
+        </div>
+      </div>
+    {{/if}}
+
+    {{!-- Misc totals by rarity (optional) --}}
+    {{#if treasures.wealthSummary.byRarity}}
+      <div class="hwfwm-summary-block">
+        <div class="hwfwm-summary-title">Misc (by Rarity)</div>
+        <div class="hwfwm-summary-grid">
+          {{#each treasures.wealthSummary.byRarity as |v k|}}
+            <div class="hwfwm-summary-row">
+              <div class="hwfwm-summary-label">{{k}}</div>
+              <div class="hwfwm-summary-value">{{v}}</div>
+            </div>
+          {{/each}}
+        </div>
+      </div>
+    {{/if}}
+  </div>
+{{/if}}
