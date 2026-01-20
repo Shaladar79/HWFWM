@@ -13,18 +13,11 @@ import { HwfwmEquipmentSheet } from "./scripts/sheets/items/equipment-sheet.mjs"
 import { HwfwmConsumableSheet } from "./scripts/sheets/items/consumable-sheet.mjs";
 import { HwfwmMiscItemSheet } from "./scripts/sheets/items/miscitem-sheet.mjs";
 
-// Equipment compendium folder bootstrap (AWAITABLE)
-import { bootstrapEquipmentPackFolders } from "./scripts/init/compendiums/equipment-pack.mjs";
-
-// Equipment compendium item seeding (idempotent, non-destructive)
-import { seedEquipmentCompendium } from "./scripts/init/compendiums/equipment-seed.mjs";
-
 // NEW: Talents compendium folder bootstrap + seeding
 import { bootstrapTalentsPackFolders } from "./scripts/init/compendiums/talents-pack.mjs";
 import { seedTalentsCompendium } from "./scripts/init/compendiums/talents-seed.mjs";
 
 // ✅ NEW: Misc Items Catalog (flat dictionary) -> CONFIG["hwfwm-system"].miscItemCatalog
-// Adjust path if your file is elsewhere.
 import { HWFWM_MISC_ITEMS } from "./config/misc-items.mjs";
 
 // ✅ NEW: rarity value rules -> CONFIG["hwfwm-system"].rarityValueRules
@@ -39,10 +32,10 @@ Hooks.once("init", async () => {
   // Register system-wide config namespace
   CONFIG["hwfwm-system"] = HWFWM_CONFIG;
 
-  // ✅ NEW: register misc item catalog into CONFIG so sheet dropdowns can populate
+  // ✅ register misc item catalog into CONFIG so sheet dropdowns can populate
   CONFIG["hwfwm-system"].miscItemCatalog = HWFWM_MISC_ITEMS;
 
-  // ✅ NEW: register rarity rules centrally for UI + derived math references
+  // ✅ register rarity rules centrally for UI + derived math references
   CONFIG["hwfwm-system"].rarityValueRules = HWFWM_RARITY_VALUE_RULES;
 
   // Register Actor + Item document classes (derived data engines)
@@ -58,7 +51,7 @@ Hooks.once("init", async () => {
   Handlebars.registerHelper("or", (...args) => args.slice(0, -1).some(Boolean));
   Handlebars.registerHelper("not", (v) => !v);
 
-  // ✅ NEW: Needed by templates (e.g., treasures equipment subtab hardening)
+  // Needed by templates (e.g., treasures equipment subtab hardening)
   Handlebars.registerHelper("and", (...args) => args.slice(0, -1).every(Boolean));
 
   // Preload actor + item sheet templates
@@ -78,14 +71,14 @@ Hooks.once("init", async () => {
     "systems/hwfwm-system/templates/actor/tabs/essence.hbs",
     "systems/hwfwm-system/templates/actor/tabs/treasures.hbs",
 
-    // ✅ NEW: Treasures split templates (Phase 1)
+    // Treasures split templates
     "systems/hwfwm-system/templates/actor/tabs/treasures/coins.hbs",
     "systems/hwfwm-system/templates/actor/tabs/treasures/equipment.hbs",
     "systems/hwfwm-system/templates/actor/tabs/treasures/inventory-equipment.hbs",
     "systems/hwfwm-system/templates/actor/tabs/treasures/consumables.hbs",
     "systems/hwfwm-system/templates/actor/tabs/treasures/misc.hbs",
 
-    // ✅ NEW: Phase 4 (optional) wealth summary partial
+    // Phase 4 (optional) wealth summary partial
     "systems/hwfwm-system/templates/actor/tabs/treasures/wealth-summary.hbs",
 
     // Tab Sections
@@ -161,18 +154,17 @@ Hooks.once("init", async () => {
 
 /**
  * IMPORTANT CHANGE:
- * We are disabling automatic equipment folder/bootstrap+seed on world entry because:
- *  - you reported world-level folders being created repeatedly (symptom of folder creation targeting game.folders)
- *  - equipment folder placement still needs community input/debugging
+ * Equipment folder/bootstrap+seed is intentionally disabled on world entry.
  *
- * You can still run these manually from the console as GM:
- *   await bootstrapEquipmentPackFolders();
- *   await seedEquipmentCompendium();
+ * If you want to run equipment setup manually, do it via a temporary GM macro
+ * (or re-enable an equipment-ready hook) that imports and calls:
+ *   bootstrapEquipmentPackFolders()
+ *   seedEquipmentCompendium()
  *
- * Talents automation IS enabled below (folders -> seed), since this is the next compendium workflow.
+ * Talents automation IS enabled below (folders -> seed).
  */
 
-// NEW: Talents ready hook: folders FIRST (awaited), then seed (awaited)
+// Talents ready hook: folders FIRST (awaited), then seed (awaited)
 Hooks.once("ready", async () => {
   console.log("HWFWM System | Ready hook fired (talents folders -> talents seed)");
 
@@ -198,31 +190,3 @@ Hooks.once("ready", async () => {
     console.error("HWFWM System | Talents ready workflow failed", err);
   }
 });
-
-// (equipment ready hook remains intentionally disabled)
-// Hooks.once("ready", async () => {
-//   console.log("HWFWM System | Ready hook fired (folders -> seed)");
-
-//   // Only the GM should mutate compendiums.
-//   if (!game?.user?.isGM) {
-//     console.log("HWFWM System | Ready workflow skipped (not GM)");
-//     return;
-//   }
-
-//   try {
-//     console.time("HWFWM | equipment bootstrap+seed");
-
-//     console.time("HWFWM | equipment folders");
-//     await bootstrapEquipmentPackFolders();
-//     console.timeEnd("HWFWM | equipment folders");
-
-//     console.time("HWFWM | equipment seeding");
-//     await seedEquipmentCompendium();
-//     console.timeEnd("HWFWM | equipment seeding");
-
-//     console.timeEnd("HWFWM | equipment bootstrap+seed");
-//     console.log("HWFWM System | Ready workflow complete");
-//   } catch (err) {
-//     console.error("HWFWM System | Ready workflow failed (folders/seed)", err);
-//   }
-// });
