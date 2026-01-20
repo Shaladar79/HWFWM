@@ -1,0 +1,42 @@
+{{!-- templates/actor/tabs/treasures/coins.hbs --}}
+
+<div class="hwfwm-card__title">Spirit Coins</div>
+
+{{!-- One-row, 6-across coins --}}
+<div class="hwfwm-coin-row6">
+  <div class="hwfwm-coin-cell">
+    <div class="hwfwm-res-label">Lesser</div>
+    <input class="hwfwm-coin-input" type="number" name="system.treasures.coins.lesser" value="{{system.treasures.coins.lesser}}" min="0" step="1" />
+  </div>
+
+  <div class="hwfwm-coin-cell">
+    <div class="hwfwm-res-label">Iron</div>
+    <input class="hwfwm-coin-input" type="number" name="system.treasures.coins.iron" value="{{system.treasures.coins.iron}}" min="0" step="1" />
+  </div>
+
+  <div class="hwfwm-coin-cell">
+    <div class="hwfwm-res-label">Bronze</div>
+    <input class="hwfwm-coin-input" type="number" name="system.treasures.coins.bronze" value="{{system.treasures.coins.bronze}}" min="0" step="1" />
+  </div>
+
+  <div class="hwfwm-coin-cell">
+    <div class="hwfwm-res-label">Silver</div>
+    <input class="hwfwm-coin-input" type="number" name="system.treasures.coins.silver" value="{{system.treasures.coins.silver}}" min="0" step="1" />
+  </div>
+
+  <div class="hwfwm-coin-cell">
+    <div class="hwfwm-res-label">Gold</div>
+    <input class="hwfwm-coin-input" type="number" name="system.treasures.coins.gold" value="{{system.treasures.coins.gold}}" min="0" step="1" />
+  </div>
+
+  <div class="hwfwm-coin-cell">
+    <div class="hwfwm-res-label">Diamond</div>
+    <input class="hwfwm-coin-input" type="number" name="system.treasures.coins.diamond" value="{{system.treasures.coins.diamond}}" min="0" step="1" />
+  </div>
+</div>
+
+{{!-- Subtabs always below coins --}}
+<nav class="hwfwm-tabs hwfwm-tabs--sub" data-group="treasures">
+  <a class="hwfwm-tab {{#if (or (eq system._ui.treasuresSubTab "equipment") (not system._ui.treasuresSubTab))}}is-active{{/if}}" data-tab="equipment">Equipment</a>
+  <a class="hwfwm-tab {{#if (eq system._ui.treasuresSubTab "inventory")}}is-active{{/if}}" data-tab="inventory">Inventory</a>
+</nav>
