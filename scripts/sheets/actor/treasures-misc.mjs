@@ -40,11 +40,6 @@ function toStr(v) {
   return String(v ?? "").trim();
 }
 
-function toNumClamp0(v) {
-  const n = Number(v);
-  return Number.isFinite(n) ? Math.max(0, n) : 0;
-}
-
 function toIntClamp0(v) {
   const n = Number(v);
   return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
@@ -72,7 +67,7 @@ function ensureMiscEntryShape(existing, key, catalogEntry) {
     quantity: toIntClamp0(existing?.quantity ?? 1),
     notes: toStr(existing?.notes ?? catalogEntry?.notes ?? ""),
 
-    // New per-actor fields (optional)
+    // Per-actor fields (optional)
     equipped: toBool(existing?.equipped ?? false),
     rank: toStr(existing?.rank ?? ""),
 
@@ -147,8 +142,12 @@ export async function removeMiscQuantity(sheet, { key, quantity }) {
   await sheet.document.update({ "system.treasures.miscItems": current });
 }
 
+/**
+ * Remove ALL of a misc item row (used by the "Remove All" button).
+ */
 export async function removeMiscByKey(sheet, key) {
   const k = toStr(key);
+  if (!sheet?.document) return;
   if (!k) return;
 
   const current = foundry.utils.deepClone(sheet.document?.system?.treasures?.miscItems ?? {});
@@ -165,6 +164,7 @@ export async function removeMiscByKey(sheet, key) {
 export async function updateMiscField(sheet, { key, field, value }) {
   const k = toStr(key);
   const f = toStr(field);
+  if (!sheet?.document) return;
   if (!k || !f) return;
 
   const catalog = getFlatMiscCatalog();
