@@ -52,14 +52,7 @@ async function lockChoices(sheet) {
 
 function bindMiscAddRow(sheet, root, { signal }) {
   const catalog = getFlatMiscCatalog();
-
   const toStr = (v) => String(v ?? "").trim();
-
-  const rowsForCategory = (categoryName) =>
-    Object.entries(catalog)
-      .filter(([, v]) => toStr(v?.group) === toStr(categoryName)) // group is the authoritative category key in the catalog
-      .map(([k, v]) => ({ key: k, name: v?.name ?? k }))
-      .sort((a, b) => a.name.localeCompare(b.name));
 
   // NOTE: Must match template data-misc-add-field values
   const categorySel = root.querySelector('select[data-misc-add-field="category"]');
@@ -69,9 +62,70 @@ function bindMiscAddRow(sheet, root, { signal }) {
   // If the template isn't present (older sheet or different actor type), do nothing.
   if (!categorySel || !keySel || !qtyInput) return;
 
+  const escape = (s) => foundry.utils.escapeHTML(String(s ?? ""));
+
+  const getAllCategoriesFromCatalog = () => {
+    const set = new Set();
+    for (const v of Object.values(catalog ?? {})) {
+      const g = toStr(v?.group);
+      if (g) set.add(g);
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  };
+
+  const rowsForCategory = (categoryName) =>
+    Object.entries(catalog ?? {})
+      .filter(([, v]) => toStr(v?.group) === toStr(categoryName)) // group is authoritative category key
+      .map(([k, v]) => ({ key: k, name: v?.name ?? k }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+  /**
+   * Ensure the Category <select> has usable options.
+   * This removes reliance on context-provided arrays like miscAddCategoryOptions.
+   */
+  const ensureCategoryOptions = () => {
+    const categories = getAllCategoriesFromCatalog();
+
+    // If there are no categories in the catalog, we cannot populate items.
+    if (!categories.length) {
+      // Keep the select as-is; items will show "None Available".
+      return;
+    }
+
+    // Detect whether categorySel already has real options
+    const existingOptions = Array.from(categorySel.options ?? []);
+    const hasRealOptions = existingOptions.some((o) => toStr(o.value) && !toStr(o.value).startsWith("—"));
+
+    // If not, populate from catalog
+    if (!hasRealOptions) {
+      categorySel.innerHTML = categories
+        .map((c) => `<option value="${escape(c)}">${escape(c)}</option>`)
+        .join("");
+    }
+
+    // Ensure a valid selection
+    const current = toStr(categorySel.value);
+    if (!current || !categories.includes(current)) {
+      categorySel.value = categories[0];
+    }
+  };
+
   const refreshItems = () => {
+    ensureCategoryOptions();
+
     const categoryName = toStr(categorySel.value);
-    const rows = rowsForCategory(categoryName);
+    let rows = rowsForCategory(categoryName);
+
+    // Fallback: if the selected category yields nothing, snap to first valid category that has items
+    if (!rows.length) {
+      const categories = getAllCategoriesFromCatalog();
+      const firstWithItems = categories.find((c) => rowsForCategory(c).length > 0);
+
+      if (firstWithItems) {
+        categorySel.value = firstWithItems;
+        rows = rowsForCategory(firstWithItems);
+      }
+    }
 
     if (!rows.length) {
       keySel.innerHTML = `<option value="">— None Available —</option>`;
@@ -81,8 +135,8 @@ function bindMiscAddRow(sheet, root, { signal }) {
     keySel.innerHTML = [
       `<option value="">— Select —</option>`,
       ...rows.map((r) => {
-        const safeKey = foundry.utils.escapeHTML(r.key);
-        const safeName = foundry.utils.escapeHTML(r.name);
+        const safeKey = escape(r.key);
+        const safeName = escape(r.name);
         return `<option value="${safeKey}">${safeName}</option>`;
       })
     ].join("");
@@ -94,13 +148,12 @@ function bindMiscAddRow(sheet, root, { signal }) {
   // Re-populate when category changes
   categorySel.addEventListener("change", refreshItems, { signal });
 
-  // Optional UX: keep qty sane
+  // Optional UX: keep qty sane + clear item selection when category changes
   categorySel.addEventListener(
     "change",
     () => {
       const n = Number(qtyInput.value || 1);
       qtyInput.value = String(Number.isFinite(n) ? Math.max(1, Math.floor(n)) : 1);
-      // also clear item selection on category change
       keySel.value = "";
     },
     { signal }
@@ -255,7 +308,6 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
   /* ----------------------- */
   /* Change handler (CAPTURE) */
   /* ----------------------- */
-  // We intercept background changes early so we can capture the OLD key before submitOnChange mutates the actor.
   root.addEventListener(
     "change",
     async (ev) => {
@@ -272,13 +324,11 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
         const newKey = String(target.value ?? "").trim();
         const oldKey = String(actor.system?.details?.backgroundKey ?? "").trim();
 
-        // Persist the new backgroundKey ourselves (since we stopped propagation)
         await actor.update({
           "system.details.backgroundKey": newKey,
           "system._flags.backgroundGrantStamp": newKey
         });
 
-        // Cleanup old grants and apply new ones
         await replaceBackgroundSpecialties(sheet, newKey, oldKey);
         return;
       }
@@ -289,25 +339,21 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
   /* ----------------------- */
   /* Change handler          */
   /* ----------------------- */
-  // IMPORTANT: capture false so Foundry’s submitOnChange remains intact for normal fields.
   root.addEventListener(
     "change",
     async (ev) => {
       const target = ev.target;
 
-      // Race change (always replace on explicit change)
       if (target instanceof HTMLSelectElement && target.name === "system.details.raceKey") {
         await replaceRaceGrants(sheet, target.value);
         return;
       }
 
-      // Role change (always replace on explicit change)
       if (target instanceof HTMLSelectElement && target.name === "system.details.roleKey") {
         await replaceRoleGrantedSpecialties(sheet, target.value);
         return;
       }
 
-      // Embedded Item inline edits
       if (
         (target instanceof HTMLInputElement || target instanceof HTMLSelectElement) &&
         target.dataset?.itemId &&
@@ -322,7 +368,6 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
 
         const field = target.dataset.itemField;
 
-        // Coercion helpers
         const coerceBool = (v) => {
           if (v === true) return true;
           if (v === false) return false;
@@ -332,7 +377,6 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
           return false;
         };
 
-        // ✅ checkbox-safe + data-bool safe handling (critical for equipment equipped boolean)
         let value;
         const wantsBool = String(target.dataset?.bool ?? "").trim().toLowerCase() === "true";
 
@@ -369,7 +413,6 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
         return;
       }
 
-      // Misc inline edits
       if (
         (target instanceof HTMLInputElement || target instanceof HTMLSelectElement) &&
         target.dataset?.miscKey &&
@@ -381,7 +424,6 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
 
         const field = String(target.dataset.miscField ?? "").trim();
 
-        // Handle checkboxes correctly (needed for misc.equipped)
         let value;
         const wantsBool = String(target.dataset?.bool ?? "").trim().toLowerCase() === "true";
 
@@ -394,7 +436,6 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
           if (target instanceof HTMLInputElement && target.type === "number") {
             const raw = String(target.value ?? "");
 
-            // weight/value override inputs: blank means "clear override" (store null)
             if (field === "weight" || field === "value" || field === "weightOverride" || field === "valueOverride") {
               value = raw.trim() === "" ? "" : raw;
             } else {
@@ -415,7 +456,6 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
         return;
       }
 
-      // Essence enforcement
       if (target instanceof HTMLSelectElement) {
         const handled = await handleEssenceSelectChange(sheet, target);
         if (handled) {
@@ -424,8 +464,6 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
           ev.stopImmediatePropagation?.();
         }
       }
-
-      // Otherwise: let Foundry handle normal actor fields.
     },
     { signal, capture: false }
   );
@@ -456,7 +494,6 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
         "remove-resistance",
         "lock-choices",
 
-        // item list actions used by Traits/Treasures templates
         "open-item",
         "delete-item",
         "create-talent"
@@ -470,7 +507,6 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
 
       switch (action) {
         case "misc-add-row": {
-          const categorySel = root.querySelector('select[data-misc-add-field="category"]');
           const keySel = root.querySelector('select[data-misc-add-field="key"]');
           const qtyInput = root.querySelector('input[data-misc-add-field="qty"]');
 
@@ -483,7 +519,6 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
 
           await addMiscByKey(sheet, { key, quantity: qty });
 
-          // Reset UI to a sensible state
           if (qtyInput) qtyInput.value = "1";
           if (keySel) keySel.value = "";
 
