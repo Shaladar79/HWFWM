@@ -58,6 +58,9 @@ Hooks.once("init", async () => {
   Handlebars.registerHelper("or", (...args) => args.slice(0, -1).some(Boolean));
   Handlebars.registerHelper("not", (v) => !v);
 
+  // ✅ NEW: Needed by templates (e.g., treasures equipment subtab hardening)
+  Handlebars.registerHelper("and", (...args) => args.slice(0, -1).every(Boolean));
+
   // Preload actor + item sheet templates
   // V13+: loadTemplates is namespaced under foundry.applications.handlebars
   await foundry.applications.handlebars.loadTemplates([
