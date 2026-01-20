@@ -75,6 +75,13 @@ Hooks.once("init", async () => {
     "systems/hwfwm-system/templates/actor/tabs/essence.hbs",
     "systems/hwfwm-system/templates/actor/tabs/treasures.hbs",
 
+    // ✅ NEW: Treasures split templates (Phase 1)
+    "systems/hwfwm-system/templates/actor/tabs/treasures/coins.hbs",
+    "systems/hwfwm-system/templates/actor/tabs/treasures/equipment.hbs",
+    "systems/hwfwm-system/templates/actor/tabs/treasures/inventory-equipment.hbs",
+    "systems/hwfwm-system/templates/actor/tabs/treasures/consumables.hbs",
+    "systems/hwfwm-system/templates/actor/tabs/treasures/misc.hbs",
+
     // Tab Sections
     "systems/hwfwm-system/templates/actor/tabs/status/attributes.hbs",
     "systems/hwfwm-system/templates/actor/tabs/status/resources.hbs",
