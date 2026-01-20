@@ -196,24 +196,21 @@
 
     <div class="hwfwm-res-separator">Misc Items</div>
 
-    {{!-- Inline Add Row (replaces dialog) --}}
+    {{!-- Inline Add Row (binder populates item list based on group) --}}
     <div class="hwfwm-treasure-actions">
       <div class="hwfwm-treasure-line hwfwm-misc-add-row" style="grid-template-columns: 1fr 2fr 0.8fr auto;">
-        {{!-- Category --}}
-        <select class="hwfwm-misc-add-category" data-misc-add-field="category" title="Category">
-          {{!-- NOTE: context must provide miscAddCategoryOptions: [{value,label}] --}}
-          {{#each miscAddCategoryOptions as |o|}}
-            <option value="{{o.value}}" {{#if (eq o.value ../miscAddCategorySelected)}}selected{{/if}}>{{o.label}}</option>
-          {{/each}}
+        {{!-- Group/Category --}}
+        <select class="hwfwm-misc-add-group" data-misc-add-field="group" title="Category">
+          <option value="Sundries">Sundries</option>
+          <option value="Awakening Stones">Awakening Stones</option>
+          <option value="Essences">Essences</option>
+          <option value="Quintessence">Quintessence</option>
+          <option value="Other">Other</option>
         </select>
 
-        {{!-- Item (filtered by category) --}}
+        {{!-- Item (filtered by group) --}}
         <select class="hwfwm-misc-add-key" data-misc-add-field="key" title="Item">
-          {{!-- NOTE: context must provide miscAddItemOptions: [{value,label}] --}}
           <option value="">— Select —</option>
-          {{#each miscAddItemOptions as |o|}}
-            <option value="{{o.value}}">{{o.label}}</option>
-          {{/each}}
         </select>
 
         {{!-- Quantity --}}
@@ -228,7 +225,7 @@
         />
 
         <div class="hwfwm-itemlist__actions" style="justify-content:flex-end;">
-          <button type="button" class="hwfwm-itembtn" data-action="misc-add-row">Add</button>
+          <button type="button" class="hwfwm-itembtn" data-action="add-misc-row">Add</button>
         </div>
       </div>
     </div>
