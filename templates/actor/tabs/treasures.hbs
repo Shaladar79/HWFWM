@@ -2,7 +2,7 @@
   <div class="hwfwm-card__title">Spirit Coins</div>
 
   {{!-- One-row, 6-across coins --}}
-  <div class="hwfwm-coin-row6_tf">
+  <div class="hwfwm-coin-row6">
     <div class="hwfwm-coin-cell">
       <div class="hwfwm-res-label">Lesser</div>
       <input class="hwfwm-coin-input" type="number" name="system.treasures.coins.lesser" value="{{system.treasures.coins.lesser}}" min="0" step="1" />
@@ -196,49 +196,39 @@
 
     <div class="hwfwm-res-separator">Misc Items</div>
 
-    {{!-- Inline Add Row (no dialog) --}}
-    <div class="hwfwm-treasure-actions" style="margin-bottom: 8px;">
-      <div class="hwfwm-treasure-table">
-        <div class="hwfwm-treasure-head">
-          <div>Category</div>
-          <div>Item</div>
-          <div>Qty</div>
-          <div></div>
-        </div>
+    {{!-- Inline Add Row (replaces dialog) --}}
+    <div class="hwfwm-treasure-actions">
+      <div class="hwfwm-treasure-line hwfwm-misc-add-row" style="grid-template-columns: 1fr 2fr 0.8fr auto;">
+        {{!-- Category --}}
+        <select class="hwfwm-misc-add-category" data-misc-add-field="category" title="Category">
+          {{!-- NOTE: context must provide miscAddCategoryOptions: [{value,label}] --}}
+          {{#each miscAddCategoryOptions as |o|}}
+            <option value="{{o.value}}" {{#if (eq o.value ../miscAddCategorySelected)}}selected{{/if}}>{{o.label}}</option>
+          {{/each}}
+        </select>
 
-        <div class="hwfwm-treasure-line">
-          {{!-- Category dropdown; options are the SAME list used by the old dialog --}}
-          <select data-misc-add-field="group">
-            <option value="Sundries">Sundries</option>
-            <option value="Awakening Stones">Awakening Stones</option>
-            <option value="Essences">Essence Cube</option>
-            <option value="Quintessence">Quintessence</option>
-            <option value="Other">Other</option>
-          </select>
+        {{!-- Item (filtered by category) --}}
+        <select class="hwfwm-misc-add-key" data-misc-add-field="key" title="Item">
+          {{!-- NOTE: context must provide miscAddItemOptions: [{value,label}] --}}
+          <option value="">— Select —</option>
+          {{#each miscAddItemOptions as |o|}}
+            <option value="{{o.value}}">{{o.label}}</option>
+          {{/each}}
+        </select>
 
-          {{!-- Item dropdown; listeners populate based on selected group --}}
-          <select data-misc-add-field="key">
-            <option value="">— Select —</option>
-          </select>
+        {{!-- Quantity --}}
+        <input
+          class="hwfwm-misc-add-qty"
+          data-misc-add-field="qty"
+          type="number"
+          min="1"
+          step="1"
+          value="1"
+          title="Quantity"
+        />
 
-          <input
-            type="number"
-            min="0"
-            step="1"
-            value="1"
-            data-misc-add-field="qty"
-            title="Quantity to add"
-          />
-
-          <div class="hwfwm-itemlist__actions">
-            <button
-              type="button"
-              class="hwfwm-itembtn"
-              data-action="add-misc-row"
-            >
-              Add
-            </button>
-          </div>
+        <div class="hwfwm-itemlist__actions" style="justify-content:flex-end;">
+          <button type="button" class="hwfwm-itembtn" data-action="misc-add-row">Add</button>
         </div>
       </div>
     </div>
@@ -337,12 +327,13 @@
               title="{{#if m.description}}{{m.description}}{{/if}}"
             />
 
-            <div class="hwfwm-itemlist__actions" style="display:flex; gap:6px; justify-content:flex-end;">
+            <div class="hwfwm-itemlist__actions">
               <button
                 type="button"
                 class="hwfwm-itembtn"
                 data-action="remove-misc-qty"
                 data-key="{{m.key}}"
+                title="Remove a quantity from this row"
               >
                 Remove Qty…
               </button>
@@ -352,6 +343,7 @@
                 class="hwfwm-itembtn hwfwm-itembtn--danger"
                 data-action="remove-misc-item"
                 data-key="{{m.key}}"
+                title="Remove the row entirely"
               >
                 Remove All
               </button>
