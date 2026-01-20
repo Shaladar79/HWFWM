@@ -1,15 +1,24 @@
 /**
+ * config/misc-items.mjs
+ *
  * Misc Inventory Item Catalog
  * - NOT Item documents.
  * - Stored on Actor at: system.treasures.miscItems[key]
- * - UI dropdown expects a FLAT dictionary: { [key]: { name, ... } }
+ * - UI dropdown expects a FLAT dictionary: { [key]: { name, group, ... } }
  *
  * Entry fields:
  *  - name: string (required)
- *  - group: string (required)  // top-level grouping for future UI
+ *  - group: string (required)  // top-level grouping for UI
  *  - subgroup: string (optional)
  *  - quantity: number (default suggested)
  *  - notes: string (default suggested)
+ *
+ * NEW (catalog-only display fields):
+ *  - valueLabel: string (optional; e.g. "1000 LSC", "20 GSC")
+ *      - Applies to ALL groups including Sundries/Other.
+ *  - rarity: string (optional; freeform)
+ *      - Applies ONLY to: Essences, Quintessence, Awakening Stones.
+ *      - NOT used on Sundries/Other.
  *
  * IMPORTANT:
  * - Confluence Essences are NOT part of this file.
@@ -104,6 +113,12 @@ const AWAKENING_STONE_NAMES = [
 ];
 
 // ---------------------------------------------
+// 1c) Quintessence List (explicit; editable later)
+// ---------------------------------------------
+// For now, this is a direct copy of ESSENCE_NAMES. You can diverge later.
+const QUINTESSENCE_NAMES = [...ESSENCE_NAMES];
+
+// ---------------------------------------------
 // 2) Helpers
 // ---------------------------------------------
 function slugify(name) {
@@ -119,26 +134,43 @@ function slugify(name) {
 function buildEssenceAndQuintessenceCatalog() {
   const out = {};
 
+  // Essences
   for (const raw of ESSENCE_NAMES) {
     const n = String(raw).trim();
     if (!n) continue;
 
     const slug = slugify(n);
 
-    // Keys are stable namespaces: essence.<slug> / quintessence.<slug>
-    // Display naming matches the manifest requirement.
+    // Keys are stable namespaces: essence.<slug>
     out[`essence.${slug}`] = {
       name: `Essence: ${n}`,
       group: "Essences",
       quantity: 0,
-      notes: ""
-    };
+      notes: "",
 
+      // NEW
+      valueLabel: "",
+      rarity: ""
+    };
+  }
+
+  // Quintessence (explicit list)
+  for (const raw of QUINTESSENCE_NAMES) {
+    const n = String(raw).trim();
+    if (!n) continue;
+
+    const slug = slugify(n);
+
+    // Keys are stable namespaces: quintessence.<slug>
     out[`quintessence.${slug}`] = {
       name: `${n} Quintessence`,
       group: "Quintessence",
       quantity: 0,
-      notes: ""
+      notes: "",
+
+      // NEW
+      valueLabel: "",
+      rarity: ""
     };
   }
 
@@ -159,7 +191,11 @@ function buildAwakeningStoneCatalog() {
       name: `Awakening Stone: ${n}`,
       group: "Awakening Stones",
       quantity: 0,
-      notes: ""
+      notes: "",
+
+      // NEW
+      valueLabel: "",
+      rarity: ""
     };
   }
   return out;
@@ -174,49 +210,58 @@ const BASE_MISC = {
     name: "Rations",
     group: "Sundries",
     quantity: 0,
-    notes: ""
+    notes: "",
+    // NEW (value allowed; rarity NOT used here)
+    valueLabel: ""
   },
   "sundries.waterskin": {
     name: "Waterskin",
     group: "Sundries",
     quantity: 0,
-    notes: ""
+    notes: "",
+    valueLabel: ""
   },
   "sundries.torch": {
     name: "Torch",
     group: "Sundries",
     quantity: 0,
-    notes: ""
+    notes: "",
+    valueLabel: ""
   },
   "sundries.oil-flask": {
     name: "Oil Flask",
     group: "Sundries",
     quantity: 0,
-    notes: ""
+    notes: "",
+    valueLabel: ""
   },
   "sundries.rope-50ft": {
     name: "Rope (50 ft)",
     group: "Sundries",
     quantity: 0,
-    notes: ""
+    notes: "",
+    valueLabel: ""
   },
   "sundries.backpack": {
     name: "Backpack",
     group: "Sundries",
     quantity: 0,
-    notes: ""
+    notes: "",
+    valueLabel: ""
   },
   "sundries.bedroll": {
     name: "Bedroll",
     group: "Sundries",
     quantity: 0,
-    notes: ""
+    notes: "",
+    valueLabel: ""
   },
   "sundries.tinderbox": {
     name: "Tinderbox",
     group: "Sundries",
     quantity: 0,
-    notes: ""
+    notes: "",
+    valueLabel: ""
   },
 
   // Other (catch-all for campaign-specific objects)
@@ -224,25 +269,29 @@ const BASE_MISC = {
     name: "Empty Vial",
     group: "Other",
     quantity: 0,
-    notes: ""
+    notes: "",
+    valueLabel: ""
   },
   "other.small-pouch": {
     name: "Small Pouch",
     group: "Other",
     quantity: 0,
-    notes: ""
+    notes: "",
+    valueLabel: ""
   },
   "other.gemstone": {
     name: "Gemstone (Uncut)",
     group: "Other",
     quantity: 0,
-    notes: ""
+    notes: "",
+    valueLabel: ""
   },
   "other.letter-sealed": {
     name: "Sealed Letter",
     group: "Other",
     quantity: 0,
-    notes: ""
+    notes: "",
+    valueLabel: ""
   }
 };
 
