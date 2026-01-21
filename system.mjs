@@ -78,9 +78,6 @@ Hooks.once("init", async () => {
     "systems/hwfwm-system/templates/actor/tabs/treasures/consumables.hbs",
     "systems/hwfwm-system/templates/actor/tabs/treasures/misc.hbs",
 
-    // Phase 4 (optional) wealth summary partial
-    "systems/hwfwm-system/templates/actor/tabs/treasures/wealth-summary.hbs",
-
     // Tab Sections
     "systems/hwfwm-system/templates/actor/tabs/status/attributes.hbs",
     "systems/hwfwm-system/templates/actor/tabs/status/resources.hbs",
