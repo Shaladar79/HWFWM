@@ -1,14 +1,10 @@
 // scripts/sheets/actor/context.mjs
 
 import { computeEssenceUI } from "./essence.mjs";
-import { getFlatMiscCatalog } from "./treasures-misc.mjs";
 import { BACKGROUND_DESCRIPTIONS, BACKGROUND_GRANTED_SPECIALTIES } from "../../../config/backgrounds.mjs"; // ✅ FIXED PATH
 
 // ✅ NEW: race grants (derived-only visibility; no persistence)
 import { RACE_GRANTED_AFFINITIES, RACE_GRANTED_APTITUDES } from "../../../config/races.mjs";
-
-// ✅ NEW: rarity rules (coin + multiplier)
-import { getRarityValueRule } from "../../../config/rarities.mjs";
 
 // ✅ NEW: Treasures context builder (Phase 2 extraction)
 import { buildTreasuresContext } from "./treasures/context.mjs";
@@ -306,20 +302,15 @@ export async function buildActorSheetContext(sheet, baseContext, options) {
 
   context.system.resistances = ownedResistances;
 
-  // IMPORTANT: always provide a FLAT misc catalog
-  context.miscItemCatalog = getFlatMiscCatalog();
-
   // Essence UI
   context.essenceUI = computeEssenceUI(sheet, context.system);
 
   // ---------------------------------------------------------------------------
-  // ✅ Phase 2: Treasures context extracted (NO behavior changes)
+  // ✅ Phase 2: Treasures context extracted (equipment + consumables + misc rows)
+  // NOTE: misc will be rebuilt later; UI currently does not render misc.
   // ---------------------------------------------------------------------------
   {
-    const treasures = await buildTreasuresContext(sheet, context, {
-      items,
-      getRarityValueRule
-    });
+    const treasures = await buildTreasuresContext(sheet, context, { items });
 
     context.allEquipment = treasures.allEquipment;
     context.equippedEquipment = treasures.equippedEquipment;
