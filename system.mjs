@@ -17,10 +17,11 @@ import { HwfwmMiscItemSheet } from "./scripts/sheets/items/miscitem-sheet.mjs";
 import { bootstrapTalentsPackFolders } from "./scripts/init/compendiums/talents-pack.mjs";
 import { seedTalentsCompendium } from "./scripts/init/compendiums/talents-seed.mjs";
 
-// ✅ NEW: Misc Items Catalog (flat dictionary) -> CONFIG["hwfwm-system"].miscItemCatalog
+// ---------------------------------------------------------------------------
+// Misc (TEMPORARY): still registered so existing misc plumbing doesn’t break.
+// You said you want to rebuild misc + configs; we can remove/replace this later.
+// ---------------------------------------------------------------------------
 import { HWFWM_MISC_ITEMS } from "./config/misc-items.mjs";
-
-// ✅ NEW: rarity value rules -> CONFIG["hwfwm-system"].rarityValueRules
 import { HWFWM_RARITY_VALUE_RULES } from "./config/rarities.mjs";
 
 // If you do NOT see this, system.mjs is not being loaded at all.
