@@ -112,10 +112,29 @@ const AWAKENING_STONE_NAMES = [
 ];
 
 // ---------------------------------------------
-// 1c) Quintessence List (explicit; editable later)
+// 1c) Quintessence List (explicit source of truth)
 // ---------------------------------------------
-// For now, this is a direct copy of ESSENCE_NAMES. You can diverge later.
-const QUINTESSENCE_NAMES = [...ESSENCE_NAMES];
+// NOTE:
+// - This is intentionally NOT derived from ESSENCE_NAMES.
+// - It starts as a full copy for convenience only.
+// - You are expected to REMOVE entries that are not valid Quintessence
+//   and ADD new ones that do not exist as Essences.
+// - Value / rarity tuning will be handled via misc-item-values.mjs.
+const QUINTESSENCE_NAMES = [
+  "Adept","Ape","Armour","Axe","Balance","Bat","Bear","Bee","Bird","Blight","Blood","Bone","Bow",
+  "Cage","Cat","Cattle","Chain","Claw","Cloth","Cloud","Cold","Coral","Corrupt","Crocodile",
+  "Crystal","Dance","Dark","Death","Deep","Deer","Dimension","Discord","Dog","Duck","Dust","Earth",
+  "Echo","Elemental","Eye","Feast","Feeble","Fire","Fish","Flea","Flesh","Foot","Fork","Fox","Frog",
+  "Fungus","Gathering","Glass","Goat","Grazen","Growth","Gun","Hair","Hammer","Hand","Harmonic",
+  "Heidel","Hook","Horse","Hunger","Hunt","Ice","Iron","Knife","Knowledge","Life","Light","Lightning",
+  "Lizard","Locust","Lurker","Magic","Malign","Manatee","Might","Mirror","Monkey","Moon","Mouse",
+  "Myriad","Needle","Net","Octopus","Omen","Pangolin","Paper","Plant","Potent","Pure","Rabbit","Rake",
+  "Rat","Renewal","Resolute","Rune","Sand","Sceptre","Serene","Shark","Shield","Shimmer","Ship",
+  "Shovel","Sickle","Sin","Skunk","Sloth","Smoke","Snake","Song","Spear","Spider","Spike","Staff",
+  "Star","Sun","Swift","Sword","Technology","Tentacle","Thread","Trap","Tree","Trowel","Turtle","Vast",
+  "Vehicle","Venom","Visage","Void","Wall","Wasp","Water","Whale","Wheel","Whip","Wind","Wing","Wolf",
+  "Wood","Zeal"
+];
 
 // ---------------------------------------------
 // 2) Helpers
