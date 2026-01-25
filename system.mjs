@@ -14,8 +14,8 @@ import { HwfwmConsumableSheet } from "./scripts/sheets/items/consumable-sheet.mj
 import { HwfwmMiscItemSheet } from "./scripts/sheets/items/miscitem-sheet.mjs";
 
 // NEW: Talents compendium folder bootstrap + seeding
-import { bootstrapTalentsPackFolders } from "./scripts/init/compendiums/talents-pack.mjs";
-import { seedTalentsCompendium } from "./scripts/init/compendiums/talents-seed.mjs";
+//import { bootstrapTalentsPackFolders } from "./scripts/init/compendiums/talents-pack.mjs";
+//import { seedTalentsCompendium } from "./scripts/init/compendiums/talents-seed.mjs";
 
 // ---------------------------------------------------------------------------
 // Misc (TEMPORARY): still registered so existing misc plumbing doesn’t break.
