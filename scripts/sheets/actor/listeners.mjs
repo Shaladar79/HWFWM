@@ -159,7 +159,6 @@ function bindMiscAddRow(sheet, root, { signal }) {
   // If catalog was empty at init, retry once on next tick (avoids needing a manual sheet refresh)
   if (!didInit || keySel.options.length <= 1) {
     setTimeout(() => {
-      // If the controller has been aborted, do nothing
       if (signal?.aborted) return;
       refreshItems();
     }, 0);
@@ -511,7 +510,15 @@ export function bindActorSheetListeners(arg1, arg2, arg3) {
 
           if (!key || qty <= 0) return;
 
-          await addMiscByKey(sheet, { key, quantity: qty });
+          // NEW: stamp rarity/value from catalog into the actor entry
+          const catalog = getFlatMiscCatalog() ?? {};
+          const meta = catalog[key] ?? {};
+
+          const rarity = String(meta?.rarity ?? "common").trim() || "common";
+          const valueNum = Number(meta?.value ?? 1);
+          const value = Number.isFinite(valueNum) ? valueNum : 1;
+
+          await addMiscByKey(sheet, { key, quantity: qty, rarity, value });
 
           if (qtyInput) qtyInput.value = "1";
           if (keySel) keySel.value = "";
