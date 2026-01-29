@@ -2,6 +2,133 @@
 
 <div class="hwfwm-res-separator">Misc Items</div>
 
-<div class="hwfwm-muted">
-  Misc items are temporarily disabled while this section is being rebuilt.
+{{!-- Inline Add Row (wired to listeners.mjs bindMiscAddRow + misc-add-row click action) --}}
+<div class="hwfwm-card" style="margin-bottom: 8px;">
+  <div class="hwfwm-card__title">Add Misc Item</div>
+
+  <div class="hwfwm-grid hwfwm-grid--4" style="align-items: end;">
+    <div class="hwfwm-field">
+      <label>Category</label>
+      {{!-- Options are rebuilt from catalog at runtime --}}
+      <select data-misc-add-field="category">
+        <option value="">— Select —</option>
+      </select>
+    </div>
+
+    <div class="hwfwm-field">
+      <label>Item</label>
+      {{!-- Options are rebuilt from catalog at runtime --}}
+      <select data-misc-add-field="key">
+        <option value="">— Select —</option>
+      </select>
+    </div>
+
+    <div class="hwfwm-field">
+      <label>Qty</label>
+      <input data-misc-add-field="qty" type="number" value="1" min="1" step="1" />
+    </div>
+
+    <div class="hwfwm-field">
+      <label>&nbsp;</label>
+      <button type="button" class="hwfwm-btn" data-action="misc-add-row">
+        Add
+      </button>
+    </div>
+  </div>
+
+  <div class="hwfwm-muted" style="margin-top: 6px;">
+    Catalog metadata (category/rarity/value) is authoritative; the actor stores only quantity and (when applicable) rank.
+  </div>
 </div>
+
+{{!-- List --}}
+{{#if (and system.treasures.miscItems (gt (length (keys system.treasures.miscItems)) 0))}}
+  <div class="hwfwm-card">
+    <div class="hwfwm-card__title">Inventory</div>
+
+    <table class="hwfwm-table">
+      <thead>
+        <tr>
+          <th style="width: 34%;">Item</th>
+          <th style="width: 10%;">Qty</th>
+          <th style="width: 16%;">Rank</th>
+          <th style="width: 16%;">Rarity</th>
+          <th style="width: 16%;">Value</th>
+          <th style="width: 8%; text-align:right;">Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {{!-- system.treasures.miscItems is a dictionary keyed by catalog key --}}
+        {{#each system.treasures.miscItems as |row key|}}
+          {{!-- Try to read metadata from a flat catalog exposed via sheet data (recommended) --}}
+          {{#with (lookup ../miscCatalog key) as |meta|}}
+            <tr>
+              <td>
+                <div class="hwfwm-strong">{{row.name}}</div>
+                <div class="hwfwm-muted" style="font-size: 11px;">{{key}}</div>
+              </td>
+
+              <td>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value="{{row.quantity}}"
+                  data-misc-key="{{key}}"
+                  data-misc-field="quantity"
+                />
+              </td>
+
+              <td>
+                {{!-- Rank is only meaningful for certain catalog entries; update handler ignores rank if unsupported --}}
+                {{#if (or row.rank meta.hasRank)}}
+                  <input
+                    type="text"
+                    value="{{row.rank}}"
+                    placeholder="(rank)"
+                    data-misc-key="{{key}}"
+                    data-misc-field="rank"
+                  />
+                {{else}}
+                  <span class="hwfwm-muted">—</span>
+                {{/if}}
+              </td>
+
+              <td>
+                {{#if meta.rarity}}
+                  <span>{{meta.rarity}}</span>
+                {{else}}
+                  <span class="hwfwm-muted">—</span>
+                {{/if}}
+              </td>
+
+              <td>
+                {{#if meta.valueLabel}}
+                  <span>{{meta.valueLabel}}</span>
+                {{else if meta.value}}
+                  <span>{{meta.value}}</span>
+                {{else}}
+                  <span class="hwfwm-muted">—</span>
+                {{/if}}
+              </td>
+
+              <td style="text-align:right; white-space:nowrap;">
+                <button type="button" class="hwfwm-btn hwfwm-btn--small" data-action="remove-misc-qty" data-key="{{key}}">
+                  -Qty
+                </button>
+                <button type="button" class="hwfwm-btn hwfwm-btn--small hwfwm-btn--danger" data-action="remove-misc-item" data-key="{{key}}">
+                  Remove
+                </button>
+              </td>
+            </tr>
+          {{/with}}
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+{{else}}
+  <div class="hwfwm-muted">
+    No misc items yet. Use the Add row above.
+  </div>
+{{/if}}
