@@ -3,6 +3,9 @@
 import { buildActorSheetContext } from "./context.mjs";
 import { bindActorSheetListeners } from "./listeners.mjs";
 
+// NEW: expose flat misc catalog to templates (misc.hbs uses ctx.miscCatalog[key])
+import { getFlatMiscCatalog } from "./treasures-misc.mjs";
+
 const { HandlebarsApplicationMixin } = foundry.applications.api;
 
 export class HwfwmActorSheet extends HandlebarsApplicationMixin(
@@ -28,6 +31,13 @@ export class HwfwmActorSheet extends HandlebarsApplicationMixin(
   async _prepareContext(options) {
     const baseContext = await super._prepareContext(options);
     const ctx = await buildActorSheetContext(this, baseContext, options);
+
+    // ------------------------------------------------------------
+    // Treasures: expose flat misc catalog to templates
+    // ------------------------------------------------------------
+    // IMPORTANT: don't snapshot CONFIG earlier than this; buildActorSheetContext may run before configs settle.
+    // getFlatMiscCatalog() is already defensive and will walk bucketed shapes.
+    ctx.miscCatalog = getFlatMiscCatalog() ?? {};
 
     // ------------------------------------------------------------
     // Header/Overview read models:
