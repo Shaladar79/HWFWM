@@ -29,13 +29,18 @@ export function getFlatMiscCatalog() {
  * system.treasures.miscItems.<key> = {
  *   name: string,        // cached display name (fallback if catalog entry is missing later)
  *   quantity: number,
- *   rank?: string        // ONLY for ranked catalog entries (e.g., Quintessence / Food Ingredients)
+ *   rank?: string,       // ONLY for ranked catalog entries (e.g., Quintessence / Food Ingredients)
+ *   rarity?: string,     // optional stamp from catalog/UI (display/sorting)
+ *   value?: number       // optional stamp from catalog/UI (display/sorting)
  * }
  *
- * Catalog remains authoritative for metadata:
+ * Catalog remains authoritative for metadata like:
  * - group/category
- * - value
  * - description, tags, etc.
+ *
+ * NOTE:
+ * We intentionally keep actor misc entries lightweight. Only quantity/rank are editable;
+ * rarity/value are stamped at add-time for convenience and can be re-stamped later if desired.
  */
 
 /* -------------------------------------------- */
@@ -49,6 +54,11 @@ function toStr(v) {
 function toIntClamp0(v) {
   const n = Number(v);
   return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+}
+
+function toNum(v, fallback = 0) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
 }
 
 /**
@@ -77,6 +87,11 @@ function supportsRank(catalogEntry) {
   return g === "Quintessence" || g === "Food Ingredients";
 }
 
+/**
+ * Normalize a single actor misc entry to the supported lightweight shape.
+ * - Preserves existing rarity/value if present.
+ * - Optionally fills from catalog (if catalog includes those fields).
+ */
 function ensureMiscEntryShape(existing, key, catalogEntry) {
   const entryName = toStr(existing?.name) || toStr(catalogEntry?.name) || key;
 
@@ -92,6 +107,19 @@ function ensureMiscEntryShape(existing, key, catalogEntry) {
     out.rank = toStr(existing?.rank ?? "");
   }
 
+  // Optional stamped fields (not user-editable via updateMiscField)
+  const rarityFromExisting = toStr(existing?.rarity);
+  const rarityFromCatalog = toStr(catalogEntry?.rarity);
+  const rarity = rarityFromExisting || rarityFromCatalog;
+  if (rarity) out.rarity = rarity;
+
+  const hasExistingValue = existing?.value !== undefined && existing?.value !== null && existing?.value !== "";
+  const value =
+    hasExistingValue ? toNum(existing?.value, 0) : toNum(catalogEntry?.value, 0);
+
+  // Only persist if it looks meaningful; default catalog may omit it.
+  if (Number.isFinite(value) && value !== 0) out.value = value;
+
   // Intentionally do NOT carry forward any legacy fields:
   // - notes, equipped, weightOverride, valueOverride, etc.
   return out;
@@ -106,8 +134,10 @@ function ensureMiscEntryShape(existing, key, catalogEntry) {
  * - Validates the key exists in the catalog
  * - Accumulates quantity if it already exists on the actor
  * - Initializes per-actor fields with sane defaults
+ *
+ * Supports optional stamps: rarity, value (numbers/strings) from the caller.
  */
-export async function addMiscByKey(sheet, { key, quantity }) {
+export async function addMiscByKey(sheet, { key, quantity, rarity, value }) {
   const k = toStr(key);
   const qty = toIntClamp0(quantity);
 
@@ -139,6 +169,13 @@ export async function addMiscByKey(sheet, { key, quantity }) {
   // Always cache the catalog name (prevents category strings, etc.)
   const catalogName = toStr(entry?.name);
   normalized.name = catalogName || normalized.name || k;
+
+  // Stamp optional fields (caller wins; otherwise keep whatever normalize provided)
+  const r = toStr(rarity);
+  if (r) normalized.rarity = r;
+
+  const vNum = toNum(value, NaN);
+  if (Number.isFinite(vNum)) normalized.value = vNum;
 
   current[k] = normalized;
   await sheet.document.update({ "system.treasures.miscItems": current });
@@ -240,5 +277,5 @@ export async function updateMiscField(sheet, { key, field, value }) {
     return;
   }
 
-  // Intentionally ignore all other fields (equipped/notes/weight/value/etc.)
+  // Intentionally ignore all other fields (rarity/value/equipped/notes/weight/etc.)
 }
