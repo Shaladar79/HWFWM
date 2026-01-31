@@ -783,6 +783,81 @@
 }
 
 /* =========================================================
+   18) Treasures > Misc Items (table + buttons)
+   Used by: templates/actor/tabs/treasures/misc.hbs
+   ========================================================= */
+
+.hwfwm-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.hwfwm-table thead th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 900;
+  color: rgba(0, 0, 0, 0.65);
+  padding: 8px 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.hwfwm-table tbody td {
+  padding: 8px 8px;
+  vertical-align: top;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.hwfwm-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+/* Tighten inputs inside tables (otherwise global input padding is huge) */
+.hwfwm-table input[type="number"],
+.hwfwm-table input[type="text"],
+.hwfwm-table select {
+  height: 32px;
+  padding: 6px 8px;
+  border-radius: 8px;
+}
+
+/* Make Qty numeric input feel right */
+.hwfwm-table input[type="number"] {
+  text-align: right;
+}
+
+/* Buttons (used by misc.hbs) */
+.hwfwm-btn {
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  background: rgba(255, 255, 255, 0.85);
+  color: #1b1b1b;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.hwfwm-btn:hover {
+  background: #ffffff;
+}
+
+.hwfwm-btn--small {
+  height: 28px;
+  padding: 0 8px;
+  font-size: 12px;
+}
+
+.hwfwm-btn--danger {
+  border-color: rgba(140, 0, 0, 0.28);
+}
+
+/* Optional: keep action buttons from wrapping weirdly */
+.hwfwm-table td:last-child .hwfwm-btn {
+  margin-left: 6px;
+}
+
+/* =========================================================
    Item Sheets (ALL TYPES) – Scrollable body for V13 SheetV2
    ========================================================= */
 
