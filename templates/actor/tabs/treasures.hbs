@@ -3,13 +3,23 @@
 <div class="hwfwm-card">
   {{> "systems/hwfwm-system/templates/actor/tabs/treasures/coins.hbs" }}
 
-  {{> "systems/hwfwm-system/templates/actor/tabs/treasures/equipment.hbs" }}
+  {{!-- Treasures Sub-Tabs --}}
+  <nav class="hwfwm-tabs" data-group="treasures">
+    <a class="item" data-tab="equipment">Equipment</a>
+    <a class="item" data-tab="inventory">Inventory</a>
+  </nav>
 
+  {{!-- EQUIPMENT sub-tab --}}
+  <section class="tab" data-group="treasures" data-tab="equipment">
+    {{> "systems/hwfwm-system/templates/actor/tabs/treasures/equipment.hbs" }}
+  </section>
+
+  {{!-- INVENTORY sub-tab --}}
   <section class="tab" data-group="treasures" data-tab="inventory">
     {{> "systems/hwfwm-system/templates/actor/tabs/treasures/inventory-equipment.hbs" }}
 
     {{> "systems/hwfwm-system/templates/actor/tabs/treasures/consumables.hbs" }}
 
-    {{!-- Misc section intentionally removed while rebuilding misc items UI + config --}}
+    {{> "systems/hwfwm-system/templates/actor/tabs/treasures/misc.hbs" }}
   </section>
 </div>
