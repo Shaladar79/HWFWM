@@ -1,9 +1,11 @@
 // scripts/sheets/actor/treasures/context.mjs
 //
 // Phase 2 (Extraction): Treasures context builder
-// - Focused scope now: Equipment + Consumables only
-// - Misc is a placeholder shell (empty list) to be rebuilt later
+// - Focused scope now: Equipment + Consumables
+// - Misc now exposes a flat catalog for rendering metadata in misc.hbs
 // - Wealth summary removed
+
+import { getFlatMiscCatalog } from "../treasures-misc.mjs";
 
 /**
  * Build Treasures-related context.
@@ -12,7 +14,7 @@
  * @param {object} context - actor sheet context (unused for now; reserved for future misc rebuild)
  * @param {object} deps
  * @param {Array} deps.items - precomputed items array (Array.from(sheet.document.items))
- * @returns {Promise<{allEquipment:Array, equippedEquipment:Array, allConsumables:Array, allMiscItems:Array}>}
+ * @returns {Promise<{allEquipment:Array, equippedEquipment:Array, allConsumables:Array, allMiscItems:Array, miscCatalog:Object}>}
  */
 export async function buildTreasuresContext(sheet, context, deps = {}) {
   const items = Array.isArray(deps.items) ? deps.items : Array.from(sheet.document?.items ?? []);
@@ -60,15 +62,20 @@ export async function buildTreasuresContext(sheet, context, deps = {}) {
     .sort((a, b) => a.name.localeCompare(b.name));
 
   // ---------------------------------------------------------------------------
-  // Inventory: Misc (SHELL)
-  // - Intentionally empty; misc system + configs will be rebuilt later.
+  // Inventory: Misc
+  // - Actor stores misc rows (system.treasures.miscItems)
+  // - Sheet context provides catalog metadata (miscCatalog) for rendering
   // ---------------------------------------------------------------------------
+  const miscCatalog = getFlatMiscCatalog() ?? {};
+
+  // Legacy placeholder kept for any old template usage (safe to remove later)
   const allMiscItems = [];
 
   return {
     allEquipment: equipment,
     equippedEquipment: equipment.filter((it) => it.equipped === true),
     allConsumables: consumables,
-    allMiscItems
+    allMiscItems,
+    miscCatalog
   };
 }
